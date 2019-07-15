@@ -50,13 +50,13 @@ public class DataElementUIFactory
 	{
 		registerDataElementUI(
 			DataElement.class,
-			rElement -> createDefaultUI(rElement));
+			DataElementUIFactory::createDefaultUI);
 		registerDataElementUI(
 			StringDataElement.class,
-			rElement -> createDefaultUI(rElement));
+			DataElementUIFactory::createDefaultUI);
 		registerDataElementUI(
 			StringListDataElement.class,
-			rElement -> createDefaultUI(rElement));
+			DataElementUIFactory::createDefaultUI);
 		registerDataElementUI(
 			DataElementList.class,
 			e -> new DataElementListUI());
