@@ -4,7 +4,6 @@ buildscript {
 }
 
 apply plugin: 'java'
-apply plugin: 'osgi'
 apply plugin: 'eclipse'
 apply plugin: 'de.esoco.gwt-lib'
 
