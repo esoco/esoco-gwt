@@ -21,7 +21,7 @@ dependencies {
 		compile project(':esoco-business')
 	}
 	else {
-		compile 'de.esoco:esoco-business:1.4.+'
+		compile 'de.esoco:esoco-business:1.5.+'
 	}
 
  	if (project(':gewt').getProjectDir().exists()) {
