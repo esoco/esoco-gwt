@@ -12,9 +12,9 @@ project.group = 'de.esoco'
 sourceCompatibility = 1.8
 
 repositories {
-	jcenter()
+	mavenLocal()
+    jcenter()
 }
-
 // substitute local project dependencies if available
 configurations.all {
 	resolutionStrategy.dependencySubstitution.all { DependencySubstitution dependency ->
@@ -31,7 +31,7 @@ configurations.all {
 }
 
 dependencies {
-	api 'de.esoco:esoco-business:1.5.+'
+	api 'de.esoco:esoco-business:1.6.+'
 	api 'de.esoco:gewt:1.3.+'
 	
 	compileOnly 'javax.websocket:javax.websocket-api:1.1'
