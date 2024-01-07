@@ -16,30 +16,25 @@
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 package de.esoco.gwt.shared;
 
-/********************************************************************
+/**
  * A service exception to signal authentication errors.
  *
  * @author eso
  */
-public class AuthenticationException extends ServiceException
-{
-	//~ Static fields/initializers ---------------------------------------------
+public class AuthenticationException extends ServiceException {
 
 	private static final long serialVersionUID = 1L;
 
-	//~ Constructors -----------------------------------------------------------
-
-	/***************************************
+	/**
 	 * Creates a new instance.
 	 *
 	 * @param sMessage The error message
 	 */
-	public AuthenticationException(String sMessage)
-	{
+	public AuthenticationException(String sMessage) {
 		super(sMessage);
 	}
 
-	/***************************************
+	/**
 	 * Creates a new instance that indicates whether a re-authentication of the
 	 * user is possible to continue an existing current session. The state can
 	 * be queried through the inherited {@link #isRecoverable()} method.
@@ -48,30 +43,26 @@ public class AuthenticationException extends ServiceException
 	 * @param bReAuthenticationPossible TRUE if the current user can be
 	 *                                  re-authenticated
 	 */
-	public AuthenticationException(
-		String  sMessage,
-		boolean bReAuthenticationPossible)
-	{
+	public AuthenticationException(String sMessage,
+		boolean bReAuthenticationPossible) {
 		super(sMessage, bReAuthenticationPossible);
 	}
 
-	/***************************************
+	/**
 	 * Creates a new instance.
 	 *
 	 * @param sMessage The error message
 	 * @param eCause   The causing exception
 	 */
-	public AuthenticationException(String sMessage, Exception eCause)
-	{
+	public AuthenticationException(String sMessage, Exception eCause) {
 		super(sMessage, eCause);
 	}
 
-	/***************************************
+	/**
 	 * Default constructor for serialization.
 	 *
 	 * @see ServiceException#ServiceException()
 	 */
-	AuthenticationException()
-	{
+	AuthenticationException() {
 	}
 }

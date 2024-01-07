@@ -26,32 +26,35 @@ import de.esoco.lib.property.ContentProperties;
 import de.esoco.lib.property.SortDirection;
 import de.esoco.lib.property.StorageProperties;
 
-
-/********************************************************************
+/**
  * Base interface for services that are based on persistent objects from a
  * storage and/or for messages on a mail server.
  *
  * @author eso
  */
-public interface StorageService extends AuthenticatedService
-{
-	//~ Static fields/initializers ---------------------------------------------
+public interface StorageService extends AuthenticatedService {
 
-	/** An error token for exceptions to indicate a locked entity. */
+	/**
+	 * An error token for exceptions to indicate a locked entity.
+	 */
 	public static final String ERROR_ENTITY_LOCKED = "EntityLocked";
 
-	/** An error token for exceptions to indicate the ID a locked entity. */
+	/**
+	 * An error token for exceptions to indicate the ID a locked entity.
+	 */
 	public static final String ERROR_LOCKED_ENTITY_ID = "LockedEntityId";
 
-	//- Commands ---------------------------------------------------------------
+	//- Commands
+	// ---------------------------------------------------------------
 
 	/**
 	 * A command that executes a query on a database storage or on a mail
-	 * server. If the query yields less elements than defined by the given limit
+	 * server. If the query yields less elements than defined by the given
+	 * limit
 	 * the resulting array will contain fewer elements than requested and may
 	 * even be empty. The argument to the query command is a data element named
-	 * with the query key and containing the following properties from {@link
-	 * StorageProperties} (elements with a default value are optional):
+	 * with the query key and containing the following properties from
+	 * {@link StorageProperties} (elements with a default value are optional):
 	 *
 	 * <ul>
 	 *   <li>{@link StorageProperties#QUERY_START}: The index of the first
@@ -70,24 +73,25 @@ public interface StorageService extends AuthenticatedService
 	 *     sorting).</li>
 	 * </ul>
 	 *
-	 * <p>This command returns a {@link QueryResultElement} that contains string
+	 * <p>This command returns a {@link QueryResultElement} that contains
+	 * string
 	 * {@link DataModel DataModels} that represent the queried rows. The string
 	 * values in the row models contain the queried column values.</p>
 	 */
 	public static final Command<StringDataElement,
-								QueryResultElement<DataModel<String>>> QUERY =
-		Command.newInstance("QUERY");
+		QueryResultElement<DataModel<String>>>
+		QUERY = Command.newInstance("QUERY");
 
 	/**
 	 * A command to prepare the download of data for a certain storage query.
 	 * The input argument is the exactly the same data element as that of the
-	 * {@link #QUERY} command. An additional property with the name {@link
-	 * ContentProperties#FILE_NAME} can be set to pre-set a file name of the
-	 * prepared download.
+	 * {@link #QUERY} command. An additional property with the name
+	 * {@link ContentProperties#FILE_NAME} can be set to pre-set a file name of
+	 * the prepared download.
 	 *
 	 * <p>The command return value is a string data element containing the
 	 * relative download URL for the generated data.</p>
 	 */
-	public static final Command<StringDataElement, StringDataElement> PREPARE_DOWNLOAD =
-		Command.newInstance("PREPARE_DOWNLOAD");
+	public static final Command<StringDataElement, StringDataElement>
+		PREPARE_DOWNLOAD = Command.newInstance("PREPARE_DOWNLOAD");
 }

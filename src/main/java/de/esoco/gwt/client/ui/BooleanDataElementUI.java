@@ -28,18 +28,16 @@ import de.esoco.lib.property.UserInterfaceProperties;
 
 import static de.esoco.lib.property.ContentProperties.LABEL;
 
-
-/********************************************************************
+/**
  * The user interface implementation for boolean data elements.
  *
  * @author eso
  */
-public class BooleanDataElementUI extends DataElementUI<BooleanDataElement>
-{
-	//~ Methods ----------------------------------------------------------------
+public class BooleanDataElementUI extends DataElementUI<BooleanDataElement> {
 
-	/***************************************
-	 * Overridden to create an empty label because the label is displayed as the
+	/**
+	 * Overridden to create an empty label because the label is displayed as
+	 * the
 	 * checkbox text. Only if a label has explicitly been set with the user
 	 * interface property {@link UserInterfaceProperties#LABEL} an additional
 	 * label will be displayed with the label text.
@@ -47,19 +45,13 @@ public class BooleanDataElementUI extends DataElementUI<BooleanDataElement>
 	 * @see DataElementUI#getElementLabelText(UserInterfaceContext)
 	 */
 	@Override
-	public String getElementLabelText(UserInterfaceContext rContext)
-	{
+	public String getElementLabelText(UserInterfaceContext rContext) {
 		return getDataElement().getProperty(LABEL, "");
 	}
 
-	/***************************************
-	 * {@inheritDoc}
-	 */
 	@Override
 	protected Component createDisplayUI(ContainerBuilder<?> rBuilder,
-										StyleData			rDisplayStyle,
-										BooleanDataElement  rDataElement)
-	{
+		StyleData rDisplayStyle, BooleanDataElement rDataElement) {
 		CheckBox rCheckBox =
 			createCheckBox(rBuilder, rDisplayStyle, rDataElement);
 
@@ -71,74 +63,53 @@ public class BooleanDataElementUI extends DataElementUI<BooleanDataElement>
 		return rCheckBox;
 	}
 
-	/***************************************
-	 * {@inheritDoc}
-	 */
 	@Override
 	protected Component createInputUI(ContainerBuilder<?> rBuilder,
-									  StyleData			  rInputStyle,
-									  BooleanDataElement  rDataElement)
-	{
+		StyleData rInputStyle, BooleanDataElement rDataElement) {
 		return createCheckBox(rBuilder, rInputStyle, rDataElement);
 	}
 
-	/***************************************
+	/**
 	 * Overridden to do nothing because the label text is displayed as the
 	 * checkbox text.
 	 *
 	 * @see DataElementUI#setHiddenLabelHint(UserInterfaceContext)
 	 */
 	@Override
-	protected void setHiddenLabelHint(UserInterfaceContext rContext)
-	{
+	protected void setHiddenLabelHint(UserInterfaceContext rContext) {
 	}
 
-	/***************************************
-	 * {@inheritDoc}
-	 */
 	@Override
 	protected void transferDataElementValueToComponent(
-		BooleanDataElement rDataElement,
-		Component		   rComponent)
-	{
-		((CheckBox) rComponent).setSelected(Boolean.TRUE.equals(rDataElement
-																.getValue()));
+		BooleanDataElement rDataElement, Component rComponent) {
+		((CheckBox) rComponent).setSelected(
+			Boolean.TRUE.equals(rDataElement.getValue()));
 	}
 
-	/***************************************
-	 * {@inheritDoc}
-	 */
 	@Override
-	protected void transferInputToDataElement(
-		Component		   rComponent,
-		BooleanDataElement rElement)
-	{
-		rElement.setValue(Boolean.valueOf(((CheckBox) rComponent).isSelected()));
+	protected void transferInputToDataElement(Component rComponent,
+		BooleanDataElement rElement) {
+		rElement.setValue(
+			Boolean.valueOf(((CheckBox) rComponent).isSelected()));
 	}
 
-	/***************************************
+	/**
 	 * Creates check box to represent the data element's state.
 	 *
-	 * @param  rBuilder     The builder to create the check box with
-	 * @param  rStyle       The style data
-	 * @param  rDataElement The data element
-	 *
+	 * @param rBuilder     The builder to create the check box with
+	 * @param rStyle       The style data
+	 * @param rDataElement The data element
 	 * @return The new check box
 	 */
 	private CheckBox createCheckBox(ContainerBuilder<?> rBuilder,
-									StyleData			rStyle,
-									BooleanDataElement  rDataElement)
-	{
-		String sLabel =
-			getLabelText(rBuilder.getContext(),
-						 rDataElement,
-						 LABEL_RESOURCE_PREFIX);
+		StyleData rStyle, BooleanDataElement rDataElement) {
+		String sLabel = getLabelText(rBuilder.getContext(), rDataElement,
+			LABEL_RESOURCE_PREFIX);
 
 		CheckBox aCheckBox = rBuilder.addCheckBox(rStyle, sLabel, null);
-		Boolean  rValue    = rDataElement.getValue();
+		Boolean rValue = rDataElement.getValue();
 
-		if (rValue != null)
-		{
+		if (rValue != null) {
 			aCheckBox.setSelected(rValue.booleanValue());
 		}
 

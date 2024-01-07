@@ -18,13 +18,11 @@ package de.esoco.gwt.client.app;
 
 import com.google.gwt.resources.client.CssResource;
 
-
-/********************************************************************
+/**
  * An empty CSS class as the placeholder for generated CSS files with classes
  * that don't need to be accessed by application code.
  *
  * @author eso
  */
-public interface GeneratedCss extends CssResource
-{
+public interface GeneratedCss extends CssResource {
 }

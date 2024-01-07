@@ -35,45 +35,34 @@ import static de.esoco.lib.property.LayoutProperties.HEIGHT;
 import static de.esoco.lib.property.LayoutProperties.WIDTH;
 import static de.esoco.lib.property.StyleProperties.ORIENTATION;
 
-
-/********************************************************************
+/**
  * A panel manager for {@link DataElementList} instances that places the child
  * data elements in a panel that displays the elements in a certain order or
  * sequence.
  *
  * @author eso
  */
-public class DataElementOrderedPanelManager extends DataElementPanelManager
-{
-	//~ Constructors -----------------------------------------------------------
+public class DataElementOrderedPanelManager extends DataElementPanelManager {
 
-	/***************************************
-	 * @see DataElementPanelManager#DataElementPanelManager(PanelManager, DataElementList)
+	/**
+	 * @see DataElementPanelManager#DataElementPanelManager(PanelManager,
+	 * DataElementList)
 	 */
-	public DataElementOrderedPanelManager(
-		PanelManager<?, ?> rParent,
-		DataElementList    rDataElementList)
-	{
+	public DataElementOrderedPanelManager(PanelManager<?, ?> rParent,
+		DataElementList rDataElementList) {
 		super(rParent, rDataElementList);
 	}
 
-	//~ Methods ----------------------------------------------------------------
-
-	/***************************************
-	 * {@inheritDoc}
-	 */
 	@Override
 	protected ContainerBuilder<? extends Panel> createPanel(
-		ContainerBuilder<?> rBuilder,
-		StyleData			rStyleData,
-		LayoutType			eLayout)
-	{
+		ContainerBuilder<?> rBuilder, StyleData rStyleData,
+		LayoutType eLayout) {
 		ContainerBuilder<? extends Panel> aPanelBuilder;
 
-		switch (eLayout)
-		{
+		switch (eLayout) {
 			case DOCK:
-				assert getDataElementList().getElementCount() <= 3 : "Element count for DOCK layout mode must be <= 3";
+				assert getDataElementList().getElementCount() <= 3 :
+					"Element count for DOCK layout mode must be <= 3";
 				aPanelBuilder =
 					rBuilder.addPanel(rStyleData, new DockLayout(true, false));
 				break;
@@ -83,20 +72,16 @@ public class DataElementOrderedPanelManager extends DataElementPanelManager
 				break;
 
 			default:
-				throw new IllegalStateException("Unsupported layout " +
-												eLayout);
+				throw new IllegalStateException(
+					"Unsupported layout " + eLayout);
 		}
 
 		return aPanelBuilder;
 	}
 
-	/***************************************
-	 * {@inheritDoc}
-	 */
 	@Override
 	protected Map<DataElement<?>, StyleData> prepareChildDataElements(
-		DataElementList rDataElementList)
-	{
+		DataElementList rDataElementList) {
 		Map<DataElement<?>, StyleData> rElementStyles = new LinkedHashMap<>();
 
 		Orientation eOrientation =
@@ -106,36 +91,29 @@ public class DataElementOrderedPanelManager extends DataElementPanelManager
 
 		// reorder elements because the center element must be added last
 		AlignedPosition rCenter = AlignedPosition.CENTER;
-		AlignedPosition rFirst  =
-			eOrientation == Orientation.VERTICAL ? AlignedPosition.TOP
-												 : AlignedPosition.LEFT;
-		AlignedPosition rLast   =
-			eOrientation == Orientation.VERTICAL ? AlignedPosition.BOTTOM
-												 : AlignedPosition.RIGHT;
+		AlignedPosition rFirst = eOrientation == Orientation.VERTICAL ?
+		                         AlignedPosition.TOP :
+		                         AlignedPosition.LEFT;
+		AlignedPosition rLast = eOrientation == Orientation.VERTICAL ?
+		                        AlignedPosition.BOTTOM :
+		                        AlignedPosition.RIGHT;
 
-		if (nElementCount == 3)
-		{
+		if (nElementCount == 3) {
 			rElementStyles.put(rDataElementList.getElement(0), rFirst);
 			rElementStyles.put(rDataElementList.getElement(2), rLast);
 			rElementStyles.put(rDataElementList.getElement(1), rCenter);
-		}
-		else if (nElementCount == 2)
-		{
-			if (rDataElementList.getElement(1)
-				.hasProperty(eOrientation == Orientation.VERTICAL ? HEIGHT
-																  : WIDTH))
-			{
+		} else if (nElementCount == 2) {
+			if (rDataElementList
+				.getElement(1)
+				.hasProperty(
+					eOrientation == Orientation.VERTICAL ? HEIGHT : WIDTH)) {
 				rElementStyles.put(rDataElementList.getElement(1), rLast);
 				rElementStyles.put(rDataElementList.getElement(0), rCenter);
-			}
-			else
-			{
+			} else {
 				rElementStyles.put(rDataElementList.getElement(0), rFirst);
 				rElementStyles.put(rDataElementList.getElement(1), rCenter);
 			}
-		}
-		else
-		{
+		} else {
 			rElementStyles.put(rDataElementList.getElement(0), rCenter);
 		}
 

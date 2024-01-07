@@ -59,166 +59,135 @@ import com.google.gwt.util.tools.ArgHandlerFlag;
 import com.google.gwt.util.tools.ArgHandlerString;
 import com.google.gwt.util.tools.ToolBase;
 
-
-/********************************************************************
+/**
  * Variant of {@link InterfaceGenerator} that creates public interfaces and adds
  * a Jalopy exclusion comment (//J-) to the resulting file.
  */
-public class CssInterfaceGenerator extends ToolBase
-{
-	//~ Static fields/initializers ---------------------------------------------
+public class CssInterfaceGenerator extends ToolBase {
 
 	private static final Comparator<String> NAME_COMPARATOR =
-		new Comparator<String>()
-		{
+		new Comparator<String>() {
 			@Override
-			public int compare(String o1, String o2)
-			{
+			public int compare(String o1, String o2) {
 				return o1.compareToIgnoreCase(o2);
 			}
 		};
 
 	private static final TreeLogger.Type LOG_LEVEL = TreeLogger.WARN;
 
-	//~ Instance fields --------------------------------------------------------
+	private String interfaceName;
 
-	private String     interfaceName;
-	private File	   inputFile;
+	private File inputFile;
+
 	private TreeLogger logger;
-	private boolean    standaloneFile;
 
-	//~ Constructors -----------------------------------------------------------
+	private boolean standaloneFile;
 
-	/***************************************
+	/**
 	 * @see InterfaceGenerator#InterfaceGenerator()
 	 */
-	private CssInterfaceGenerator()
-	{
+	private CssInterfaceGenerator() {
 		registerHandler(new ArgHandlerAddPackageHeader());
-		registerHandler(new ArgHandlerString()
-			{
-				@Override
-				public String getPurpose()
-				{
-					return "The name of the generated CssResource subtype";
+		registerHandler(new ArgHandlerString() {
+			@Override
+			public String getPurpose() {
+				return "The name of the generated CssResource subtype";
+			}
+
+			@Override
+			public String getTag() {
+				return "-typeName";
+			}
+
+			@Override
+			public String[] getTagArgs() {
+				return new String[] { "some.package.MyCssResource" };
+			}
+
+			@Override
+			public boolean isRequired() {
+				return true;
+			}
+
+			@Override
+			public boolean setString(String str) {
+				if (str.length() == 0) {
+					return false;
 				}
 
-				@Override
-				public String getTag()
-				{
-					return "-typeName";
+				if (!Character.isJavaIdentifierStart(str.charAt(0))) {
+					return false;
 				}
 
-				@Override
-				public String[] getTagArgs()
-				{
-					return new String[] { "some.package.MyCssResource" };
-				}
+				for (int i = 1, j = str.length(); i < j; i++) {
+					char c = str.charAt(i);
 
-				@Override
-				public boolean isRequired()
-				{
-					return true;
-				}
-
-				@Override
-				public boolean setString(String str)
-				{
-					if (str.length() == 0)
-					{
+					if (!(Character.isJavaIdentifierPart(c) || c == '.')) {
 						return false;
 					}
-
-					if (!Character.isJavaIdentifierStart(str.charAt(0)))
-					{
-						return false;
-					}
-
-					for (int i = 1, j = str.length(); i < j; i++)
-					{
-						char c = str.charAt(i);
-
-						if (!(Character.isJavaIdentifierPart(c) || c == '.'))
-						{
-							return false;
-						}
-					}
-
-					interfaceName = str;
-
-					if (logger.isLoggable(TreeLogger.DEBUG))
-					{
-						logger.log(TreeLogger.DEBUG,
-								   "interfaceName = " + interfaceName);
-					}
-
-					return true;
 				}
-			});
+
+				interfaceName = str;
+
+				if (logger.isLoggable(TreeLogger.DEBUG)) {
+					logger.log(TreeLogger.DEBUG,
+						"interfaceName = " + interfaceName);
+				}
+
+				return true;
+			}
+		});
 
 		// -css in.css
-		registerHandler(new ArgHandlerFile()
-			{
-				@Override
-				public String getPurpose()
-				{
-					return "The input CSS file to process";
-				}
+		registerHandler(new ArgHandlerFile() {
+			@Override
+			public String getPurpose() {
+				return "The input CSS file to process";
+			}
 
-				@Override
-				public String getTag()
-				{
-					return "-css";
-				}
+			@Override
+			public String getTag() {
+				return "-css";
+			}
 
-				@Override
-				public boolean isRequired()
-				{
-					return true;
-				}
+			@Override
+			public boolean isRequired() {
+				return true;
+			}
 
-				@Override
-				public void setFile(File file)
-				{
-					inputFile = file;
+			@Override
+			public void setFile(File file) {
+				inputFile = file;
 
-					if (logger.isLoggable(TreeLogger.DEBUG))
-					{
-						logger.log(TreeLogger.DEBUG,
-								   "inputFile = " + file.getAbsolutePath());
-					}
+				if (logger.isLoggable(TreeLogger.DEBUG)) {
+					logger.log(TreeLogger.DEBUG,
+						"inputFile = " + file.getAbsolutePath());
 				}
-			});
+			}
+		});
 	}
 
-	//~ Static methods ---------------------------------------------------------
-
-	/***************************************
+	/**
 	 * @see InterfaceGenerator#main(String[])
 	 */
-	public static void main(String[] rArgs)
-	{
+	public static void main(String[] rArgs) {
 		(new CssInterfaceGenerator()).execImpl(rArgs);
 	}
 
-	//~ Methods ----------------------------------------------------------------
-
-	/***************************************
+	/**
 	 * Returns a description string
 	 *
 	 * @return The description
 	 */
 	@Override
-	protected String getDescription()
-	{
+	protected String getDescription() {
 		return "Create a CssResource interface based on a CSS file";
 	}
 
-	/***************************************
+	/**
 	 * @see InterfaceGenerator#execImpl(String[])
 	 */
-	private void execImpl(String[] args)
-	{
+	private void execImpl(String[] args) {
 		// Set up logging
 		PrintWriter logWriter = new PrintWriter(System.err);
 
@@ -226,57 +195,44 @@ public class CssInterfaceGenerator extends ToolBase
 
 		((PrintWriterTreeLogger) logger).setMaxDetail(LOG_LEVEL);
 
-		if (processArgs(args))
-		{
-			try
-			{
+		if (processArgs(args)) {
+			try {
 				System.out.println(process());
-			}
-			catch (MalformedURLException e)
-			{
+			} catch (MalformedURLException e) {
 				logger.log(TreeLogger.ERROR, "Unable to load CSS", e);
-			}
-			catch (UnableToCompleteException e)
-			{
+			} catch (UnableToCompleteException e) {
 				logger.log(TreeLogger.ERROR, "Unable to process CSS", e);
-			}
-			finally
-			{
+			} finally {
 				// Make sure the logs are emitted
 				logWriter.flush();
 			}
 		}
 	}
 
-	/***************************************
+	/**
 	 * @see InterfaceGenerator#methodName(String)
 	 */
-	private String methodName(String className)
-	{
-		StringBuilder sb		 = new StringBuilder();
-		char		  c			 = className.charAt(0);
-		boolean		  nextUpCase = false;
+	private String methodName(String className) {
+		StringBuilder sb = new StringBuilder();
+		char c = className.charAt(0);
+		boolean nextUpCase = false;
 
-		if (Character.isJavaIdentifierStart(c))
-		{
+		if (Character.isJavaIdentifierStart(c)) {
 			sb.append(Character.toLowerCase(c));
 		}
 
-		for (int i = 1, j = className.length(); i < j; i++)
-		{
+		for (int i = 1, j = className.length(); i < j; i++) {
 			c = className.charAt(i);
 
-			if (!Character.isJavaIdentifierPart(c))
-			{
+			if (!Character.isJavaIdentifierPart(c)) {
 				nextUpCase = true;
 
 				continue;
 			}
 
-			if (nextUpCase)
-			{
+			if (nextUpCase) {
 				nextUpCase = false;
-				c		   = Character.toUpperCase(c);
+				c = Character.toUpperCase(c);
 			}
 
 			sb.append(c);
@@ -285,12 +241,11 @@ public class CssInterfaceGenerator extends ToolBase
 		return sb.toString();
 	}
 
-	/***************************************
+	/**
 	 * @see InterfaceGenerator#process()
 	 */
-	private String process() throws MalformedURLException,
-									UnableToCompleteException
-	{
+	private String process()
+		throws MalformedURLException, UnableToCompleteException {
 		// Create AST
 		CssStylesheet sheet =
 			GenerateCssAst.exec(logger, inputFile.toURI().toURL());
@@ -313,11 +268,10 @@ public class CssInterfaceGenerator extends ToolBase
 
 		int lastDot = interfaceName.lastIndexOf('.');
 
-		if (standaloneFile)
-		{
+		if (standaloneFile) {
 			sw.println("// DO NOT EDIT");
 			sw.println("// Automatically generated by " +
-					   InterfaceGenerator.class.getName());
+				InterfaceGenerator.class.getName());
 			sw.println("//J-");
 			sw.println("package " + interfaceName.substring(0, lastDot) + ";");
 			sw.println("import " + CssResource.class.getCanonicalName() + ";");
@@ -325,25 +279,22 @@ public class CssInterfaceGenerator extends ToolBase
 		}
 
 		sw.println("public interface " + interfaceName.substring(lastDot + 1) +
-				   " extends CssResource {");
+			" extends CssResource {");
 		sw.indent();
 
-		for (String className : names)
-		{
+		for (String className : names) {
 			String methodName = methodName(className);
 
-			while (!methodNames.add(methodName))
-			{
+			while (!methodNames.add(methodName)) {
 				// Unusual, handles foo-bar and foo--bar
 				methodName += "_";
 			}
 
 			sw.println();
 
-			if (!methodName.equals(className))
-			{
-				sw.println("@ClassName(\"" + Generator.escape(className) +
-						   "\")");
+			if (!methodName.equals(className)) {
+				sw.println(
+					"@ClassName(\"" + Generator.escape(className) + "\")");
 			}
 
 			sw.println("String " + methodName + "();");
@@ -355,73 +306,63 @@ public class CssInterfaceGenerator extends ToolBase
 		return sw.toString();
 	}
 
-	//~ Inner Classes ----------------------------------------------------------
-
-	/********************************************************************
+	/**
 	 * @see InterfaceGenerator.ArgHandlerAddPackageHeader
 	 */
-	private class ArgHandlerAddPackageHeader extends ArgHandlerFlag
-	{
-		//~ Constructors -------------------------------------------------------
+	private class ArgHandlerAddPackageHeader extends ArgHandlerFlag {
 
-		/***************************************
+		/**
 		 * Creates a new instance.
 		 */
-		public ArgHandlerAddPackageHeader()
-		{
+		public ArgHandlerAddPackageHeader() {
 			addTagValue("-standalone", true);
 		}
 
-		//~ Methods ------------------------------------------------------------
-
-		/***************************************
+		/**
 		 * Returns the default value.
 		 *
 		 * @return The default value
 		 */
 		@Override
-		public boolean getDefaultValue()
-		{
+		public boolean getDefaultValue() {
 			return standaloneFile;
 		}
 
-		/***************************************
+		/**
 		 * Returns the label.
 		 *
 		 * @return The label
 		 */
 		@Override
-		public String getLabel()
-		{
+		public String getLabel() {
 			return "addPackageHeader";
 		}
 
-		/***************************************
+		/**
 		 * Returns the purpose snippet.
 		 *
 		 * @return The purpose snippet
 		 */
 		@Override
-		public String getPurposeSnippet()
-		{
-			return "Add package and import statements to generated interface so that " +
-				   "they are still functional when they stand alone.";
+		public String getPurposeSnippet() {
+			return
+				"Add package and import statements to generated interface so" +
+					" " +
+					"that " +
+					"they are still functional when they stand alone.";
 		}
 
-		/***************************************
+		/**
 		 * Sets the flag.
 		 *
-		 * @param  value The new flag
-		 *
+		 * @param value The new flag
 		 * @return Always true
 		 */
 		@Override
-		public boolean setFlag(boolean value)
-		{
+		public boolean setFlag(boolean value) {
 			standaloneFile = value;
 			logger.log(TreeLogger.DEBUG,
-					   value ? "Not creating"
-							 : "Creating" + " a standalone file");
+				value ? "Not creating" : "Creating" + " a standalone file");
 
 			return true;
 		}

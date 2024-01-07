@@ -37,30 +37,25 @@ import static de.esoco.lib.property.LayoutProperties.SAME_ROW;
 import static de.esoco.lib.property.LayoutProperties.VERTICAL_ALIGN;
 import static de.esoco.lib.property.StyleProperties.HIDE_LABEL;
 
-
-/********************************************************************
+/**
  * A layout panel manager subclass that arranges the data element UIs in a CSS
  * grid by setting the corresponding styles based on the data element
  * properties.
  *
  * @author eso
  */
-public class DataElementGridPanelManager extends DataElementLayoutPanelManager
-{
-	//~ Static fields/initializers ---------------------------------------------
+public class DataElementGridPanelManager extends DataElementLayoutPanelManager {
 
 	private static final StyleData ROW_VALIGN_CENTER_STYLE =
 		StyleData.DEFAULT.set(StyleData.WEB_ADDITIONAL_STYLES,
-							  CSS.valignCenter());
+			CSS.valignCenter());
 
 	private static final StyleData ROW_VALIGN_BOTTOM_STYLE =
 		StyleData.DEFAULT.set(StyleData.WEB_ADDITIONAL_STYLES,
-							  CSS.valignBottom());
+			CSS.valignBottom());
 
 	private static GridFormatterFactory rGridFormatterFactory =
 		e -> new ColumnCountGridFormatter(12, "s", "m", "l");
-
-	//~ Instance fields --------------------------------------------------------
 
 	private GridFormatter aGridFormatter;
 
@@ -69,64 +64,50 @@ public class DataElementGridPanelManager extends DataElementLayoutPanelManager
 
 	private StyleData aRowStyle = StyleData.DEFAULT;
 
-	//~ Constructors -----------------------------------------------------------
-
-	/***************************************
+	/**
 	 * @see DataElementLayoutPanelManager#DataElementLayoutPanelManager(PanelManager,
-	 *      DataElementList)
+	 * DataElementList)
 	 */
-	public DataElementGridPanelManager(
-		PanelManager<?, ?> rParent,
-		DataElementList    rDataElementList)
-	{
+	public DataElementGridPanelManager(PanelManager<?, ?> rParent,
+		DataElementList rDataElementList) {
 		super(rParent, rDataElementList);
 	}
 
-	//~ Static methods ---------------------------------------------------------
-
-	/***************************************
+	/**
 	 * A global configuration method to set the grid formatter for all
 	 * grid-based panels.
 	 *
 	 * @param rFactory rFormatter The global grid formatter
 	 */
-	public static void setGridFormatterFactory(GridFormatterFactory rFactory)
-	{
+	public static void setGridFormatterFactory(GridFormatterFactory rFactory) {
 		rGridFormatterFactory = rFactory;
 	}
 
-	//~ Methods ----------------------------------------------------------------
-
-	/***************************************
+	/**
 	 * Sets the style of a completed row of data elements.
 	 */
-	protected void buildCurrentRow()
-	{
-		ContainerBuilder<?> aRowBuilder   = this;
-		boolean			    bFirstElement = true;
+	protected void buildCurrentRow() {
+		ContainerBuilder<?> aRowBuilder = this;
+		boolean bFirstElement = true;
 
 		for (Entry<DataElementUI<?>, StyleData> rUiAndStyle :
-			 aCurrentRow.entrySet())
-		{
-			DataElementUI<?> rUI		   = rUiAndStyle.getKey();
-			DataElement<?>   rDataElement  = rUI.getDataElement();
-			StyleData		 rStyle		   = rUiAndStyle.getValue();
-			int				 nElementCount = aCurrentRow.size();
+			aCurrentRow.entrySet()) {
+			DataElementUI<?> rUI = rUiAndStyle.getKey();
+			DataElement<?> rDataElement = rUI.getDataElement();
+			StyleData rStyle = rUiAndStyle.getValue();
+			int nElementCount = aCurrentRow.size();
 
 			LayoutType eElementLayout = rDataElement.getProperty(LAYOUT, null);
 
-			if (eElementLayout == LayoutType.GRID_ROW && nElementCount == 1)
-			{
+			if (eElementLayout == LayoutType.GRID_ROW && nElementCount == 1) {
 				rStyle =
 					aGridFormatter.applyRowStyle(aCurrentRow.keySet(), rStyle);
-			}
-			else if (bFirstElement)
-			{
+			} else if (bFirstElement) {
 				bFirstElement = false;
 
 				StyleData rRowStyle =
 					aGridFormatter.applyRowStyle(aCurrentRow.keySet(),
-												 aRowStyle);
+						aRowStyle);
 
 				aRowBuilder = addPanel(rRowStyle, LayoutType.GRID_ROW);
 			}
@@ -135,15 +116,13 @@ public class DataElementGridPanelManager extends DataElementLayoutPanelManager
 
 			boolean bAddLabel = !rDataElement.hasFlag(HIDE_LABEL);
 
-			if (bAddLabel || eElementLayout != LayoutType.GRID_COLUMN)
-			{
+			if (bAddLabel || eElementLayout != LayoutType.GRID_COLUMN) {
 				StyleData aColumnStyle = StyleData.DEFAULT;
 
 				Alignment eHAlign =
 					rDataElement.getProperty(HORIZONTAL_ALIGN, null);
 
-				if (eHAlign != null)
-				{
+				if (eHAlign != null) {
 					aColumnStyle = aColumnStyle.set(HORIZONTAL_ALIGN, eHAlign);
 				}
 
@@ -153,20 +132,15 @@ public class DataElementGridPanelManager extends DataElementLayoutPanelManager
 				rUiBuilder =
 					aRowBuilder.addPanel(aColumnStyle, LayoutType.GRID_COLUMN);
 
-				if (bAddLabel)
-				{
+				if (bAddLabel) {
 					String sLabel = rUI.createElementLabelString(getContext());
 
-					if (sLabel.length() > 0)
-					{
-						rUI.createElementLabel(rUiBuilder,
-											   FORM_LABEL_STYLE,
-											   sLabel);
+					if (sLabel.length() > 0) {
+						rUI.createElementLabel(rUiBuilder, FORM_LABEL_STYLE,
+							sLabel);
 					}
 				}
-			}
-			else if (eElementLayout != LayoutType.GRID_ROW)
-			{
+			} else if (eElementLayout != LayoutType.GRID_ROW) {
 				// apply column count to elements with Layout GRID_COLUMN
 				rStyle = aGridFormatter.applyColumnStyle(rUI, rStyle);
 			}
@@ -178,28 +152,18 @@ public class DataElementGridPanelManager extends DataElementLayoutPanelManager
 		aCurrentRow.clear();
 	}
 
-	/***************************************
-	 * {@inheritDoc}
-	 */
 	@Override
-	protected void buildDataElementUI(
-		DataElementUI<?> aDataElementUI,
-		StyleData		 rStyle)
-	{
-		if (!aDataElementUI.getDataElement().hasFlag(SAME_ROW))
-		{
+	protected void buildDataElementUI(DataElementUI<?> aDataElementUI,
+		StyleData rStyle) {
+		if (!aDataElementUI.getDataElement().hasFlag(SAME_ROW)) {
 			buildCurrentRow();
 		}
 
 		aCurrentRow.put(aDataElementUI, rStyle);
 	}
 
-	/***************************************
-	 * {@inheritDoc}
-	 */
 	@Override
-	protected void buildElementUIs()
-	{
+	protected void buildElementUIs() {
 		aGridFormatter =
 			rGridFormatterFactory.createGridFormatter(getDataElementList());
 
@@ -211,25 +175,20 @@ public class DataElementGridPanelManager extends DataElementLayoutPanelManager
 		aGridFormatter = null;
 	}
 
-	/***************************************
+	/**
 	 * Overridden to check the container style for vertical alignment.
 	 *
-	 * @see DataElementLayoutPanelManager#createPanel(ContainerBuilder,StyleData,
-	 *      LayoutType)
+	 * @see DataElementLayoutPanelManager#createPanel(ContainerBuilder,
+	 * StyleData, LayoutType)
 	 */
 	@Override
 	protected ContainerBuilder<?> createPanel(ContainerBuilder<?> rBuilder,
-											  StyleData			  rStyle,
-											  LayoutType		  eLayout)
-	{
+		StyleData rStyle, LayoutType eLayout) {
 		Alignment eVAlign = rStyle.getProperty(VERTICAL_ALIGN, null);
 
-		if (eVAlign == Alignment.CENTER)
-		{
+		if (eVAlign == Alignment.CENTER) {
 			aRowStyle = ROW_VALIGN_CENTER_STYLE;
-		}
-		else if (eVAlign == Alignment.END)
-		{
+		} else if (eVAlign == Alignment.END) {
 			aRowStyle = ROW_VALIGN_BOTTOM_STYLE;
 		}
 

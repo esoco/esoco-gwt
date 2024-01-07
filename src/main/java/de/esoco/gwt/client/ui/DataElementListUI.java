@@ -33,110 +33,86 @@ import static de.esoco.lib.property.LayoutProperties.LAYOUT;
 import static de.esoco.lib.property.StateProperties.STRUCTURE_CHANGED;
 import static de.esoco.lib.property.StyleProperties.STYLE;
 
-
-/********************************************************************
+/**
  * A data element user interface that manages a {@link DataElementList} data
  * element in a child panel manager.
  *
  * @author eso
  */
-public class DataElementListUI extends DataElementUI<DataElementList>
-{
-	//~ Instance fields --------------------------------------------------------
+public class DataElementListUI extends DataElementUI<DataElementList> {
 
 	private DataElementPanelManager aListPanelManager;
 
-	//~ Methods ----------------------------------------------------------------
-
-	/***************************************
-	 * {@inheritDoc}
-	 */
 	@Override
-	public void clearError()
-	{
+	public void clearError() {
 		super.clearError();
 
 		aListPanelManager.clearErrors();
 	}
 
-	/***************************************
-	 * {@inheritDoc}
-	 */
 	@Override
-	public void collectInput(List<DataElement<?>> rModifiedElements)
-	{
+	public void collectInput(List<DataElement<?>> rModifiedElements) {
 		aListPanelManager.collectInput(rModifiedElements);
 	}
 
-	/***************************************
+	/**
 	 * Overridden to return the base type from the panel manager instead.
 	 *
 	 * @see DataElementUI#getBaseStyle()
 	 */
 	@Override
-	public StyleData getBaseStyle()
-	{
+	public StyleData getBaseStyle() {
 		return aListPanelManager.getBaseStyle();
 	}
 
-	/***************************************
+	/**
 	 * Returns the {@link DataElementTablePanelManager} that is used for the
 	 * display of the {@link DataElementList} of this instance.
 	 *
 	 * @return The panel manager or NULL for none
 	 */
-	public final DataElementPanelManager getPanelManager()
-	{
+	public final DataElementPanelManager getPanelManager() {
 		return aListPanelManager;
 	}
 
-	/***************************************
-	 * Updates the child panel manager with the current style and properties and
+	/**
+	 * Updates the child panel manager with the current style and properties
+	 * and
 	 * the data element UIs of all children.
 	 *
 	 * @see DataElementUI#update()
 	 */
 	@Override
-	public void update()
-	{
+	public void update() {
 		updateStyle();
 		aListPanelManager.updateUI();
 	}
 
-	/***************************************
-	 * {@inheritDoc}
-	 */
 	@Override
-	public void updateDataElement(DataElement<?> rNewElement, boolean bUpdateUI)
-	{
-		if (rNewElement.hasFlag(STRUCTURE_CHANGED))
-		{
-			// always use FALSE to not update UI before data element is updated;
+	public void updateDataElement(DataElement<?> rNewElement,
+		boolean bUpdateUI) {
+		if (rNewElement.hasFlag(STRUCTURE_CHANGED)) {
+			// always use FALSE to not update UI before data element is
+			// updated;
 			// UI update will be done in the update() method
 			super.updateDataElement(rNewElement, false);
 
-			if (aListPanelManager != null)
-			{
+			if (aListPanelManager != null) {
 				aListPanelManager.update((DataElementList) rNewElement, false);
 			}
 
-			if (bUpdateUI)
-			{
+			if (bUpdateUI) {
 				update();
 			}
-		}
-		else
-		{
+		} else {
 			DataElementList rDataElementList = getDataElement();
-			String		    sOldStyle		 =
-				rDataElementList.getProperty(STYLE, null);
+			String sOldStyle = rDataElementList.getProperty(STYLE, null);
 
 			rDataElementList.clearProperties();
 			rDataElementList.setProperties(rNewElement, true);
 
-			boolean bStyleChanged =
-				!Objects.equals(sOldStyle,
-								rDataElementList.getProperty(STYLE, null));
+			boolean bStyleChanged = !Objects.equals(sOldStyle,
+				rDataElementList.getProperty(STYLE, null));
 
 			aListPanelManager.updateFromProperties(bStyleChanged);
 
@@ -144,19 +120,18 @@ public class DataElementListUI extends DataElementUI<DataElementList>
 		}
 	}
 
-	/***************************************
-	 * Overridden to create a child {@link DataElementTablePanelManager} for the
+	/**
+	 * Overridden to create a child {@link DataElementTablePanelManager} for
+	 * the
 	 * data element list.
 	 *
 	 * @see DataElementUI#buildDataElementUI(ContainerBuilder, StyleData)
 	 */
 	@Override
-	protected Component buildDataElementUI(
-		ContainerBuilder<?> rBuilder,
-		StyleData			rStyle)
-	{
+	protected Component buildDataElementUI(ContainerBuilder<?> rBuilder,
+		StyleData rStyle) {
 		DataElementList rDataElementList = getDataElement();
-		Container	    rListPanel		 = null;
+		Container rListPanel = null;
 
 		LayoutType eDisplayMode =
 			rDataElementList.getProperty(LAYOUT, LayoutType.TABLE);
@@ -167,8 +142,7 @@ public class DataElementListUI extends DataElementUI<DataElementList>
 		aListPanelManager.buildIn(rBuilder, rStyle);
 		rListPanel = aListPanelManager.getPanel();
 
-		if (eDisplayMode == LayoutType.TABLE)
-		{
+		if (eDisplayMode == LayoutType.TABLE) {
 			// DataElementPanelManager performs event handling for other cases
 			setupInteractionHandling(rListPanel, false);
 		}
@@ -176,40 +150,35 @@ public class DataElementListUI extends DataElementUI<DataElementList>
 		return rListPanel;
 	}
 
-	/***************************************
+	/**
 	 * @see DataElementUI#enableInteraction(boolean)
 	 */
 	@Override
-	protected void enableInteraction(boolean bEnable)
-	{
+	protected void enableInteraction(boolean bEnable) {
 		aListPanelManager.enableInteraction(bEnable);
 	}
 
-	/***************************************
+	/**
 	 * Implemented to close an open child view.
 	 *
 	 * @see DataElementUI#dispose()
 	 */
 	@Override
-	void dispose()
-	{
+	void dispose() {
 		aListPanelManager.dispose();
 
 		super.dispose();
 	}
 
-	/***************************************
+	/**
 	 * Updates the style of the panel.
 	 */
-	private void updateStyle()
-	{
+	private void updateStyle() {
 		DataElementList rDataElementList = getDataElement();
-		String		    sAddStyle		 = aListPanelManager.getStyleName();
+		String sAddStyle = aListPanelManager.getStyleName();
 
-		StyleData rNewStyle =
-			applyElementStyle(rDataElementList,
-							  PanelManager.addStyles(getBaseStyle(),
-													 sAddStyle));
+		StyleData rNewStyle = applyElementStyle(rDataElementList,
+			PanelManager.addStyles(getBaseStyle(), sAddStyle));
 
 		applyStyle();
 		aListPanelManager.getPanel().applyStyle(rNewStyle);

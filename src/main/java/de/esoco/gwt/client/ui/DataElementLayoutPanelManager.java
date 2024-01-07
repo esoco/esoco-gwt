@@ -23,38 +23,27 @@ import de.esoco.ewt.style.StyleData;
 
 import de.esoco.lib.property.LayoutType;
 
-
-/********************************************************************
+/**
  * A panel manager for {@link DataElementList} instances that places the child
  * data elements of the data element list in a layout that is defined by the
  * {@link LayoutType} of the data element list.
  *
  * @author eso
  */
-public class DataElementLayoutPanelManager extends DataElementPanelManager
-{
-	//~ Constructors -----------------------------------------------------------
+public class DataElementLayoutPanelManager extends DataElementPanelManager {
 
-	/***************************************
-	 * @see DataElementPanelManager#DataElementPanelManager(PanelManager, DataElementList)
+	/**
+	 * @see DataElementPanelManager#DataElementPanelManager(PanelManager,
+	 * DataElementList)
 	 */
-	public DataElementLayoutPanelManager(
-		PanelManager<?, ?> rParent,
-		DataElementList    rDataElementList)
-	{
+	public DataElementLayoutPanelManager(PanelManager<?, ?> rParent,
+		DataElementList rDataElementList) {
 		super(rParent, rDataElementList);
 	}
 
-	//~ Methods ----------------------------------------------------------------
-
-	/***************************************
-	 * {@inheritDoc}
-	 */
 	@Override
 	protected ContainerBuilder<?> createPanel(ContainerBuilder<?> rBuilder,
-											  StyleData			  rStyleData,
-											  LayoutType		  eLayout)
-	{
+		StyleData rStyleData, LayoutType eLayout) {
 		return rBuilder.addPanel(rStyleData, eLayout);
 	}
 }

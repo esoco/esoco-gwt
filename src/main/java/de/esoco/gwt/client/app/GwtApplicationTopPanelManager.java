@@ -50,167 +50,137 @@ import static de.esoco.ewt.style.StyleData.WEB_ADDITIONAL_STYLES;
 import static de.esoco.ewt.style.StyleFlag.HYPERLINK;
 import static de.esoco.ewt.style.StyleFlag.VERTICAL_ALIGN_CENTER;
 
-
-/********************************************************************
+/**
  * Panel manager that creates a panel for the top view of the main window.
  *
  * @author eso
  */
-public abstract class GwtApplicationTopPanelManager<P extends GwtApplicationPanelManager<?,
-																						 ?>>
-	extends GwtApplicationPanelManager<Panel, P> implements EwtEventHandler,
-															ClosingHandler,
-															CloseHandler<Window>
-{
-	//~ Instance fields --------------------------------------------------------
+public abstract class GwtApplicationTopPanelManager<P extends GwtApplicationPanelManager<?, ?>>
+	extends GwtApplicationPanelManager<Panel, P>
+	implements EwtEventHandler, ClosingHandler, CloseHandler<Window> {
 
 	private final StyleData aLogoStyle;
+
 	private final StyleData aUserInfoStyle;
+
 	private final StyleData aLogoutLinkStyle;
+
 	private final StyleData aMessageStyle;
 
 	private Label aLogoutLink;
+
 	private Label aMessageLabel;
 
 	private Timer aClearMessageTimer;
 
 	private HandlerRegistration rWindowClosingHandler;
+
 	private HandlerRegistration rCloseHandler;
 
-	//~ Constructors -----------------------------------------------------------
-
-	/***************************************
+	/**
 	 * @see GwtApplicationPanelManager#GwtApplicationPanelManager(GwtApplicationPanelManager,
-	 *      String)
+	 * String)
 	 */
-	protected GwtApplicationTopPanelManager(P	   rParent,
-											String sPanelStyle,
-											String sLogoStyle,
-											String sUserInfoStyle,
-											String sLogoutLinkStyle,
-											String sMessageStyle)
-	{
+	protected GwtApplicationTopPanelManager(P rParent, String sPanelStyle,
+		String sLogoStyle, String sUserInfoStyle, String sLogoutLinkStyle,
+		String sMessageStyle) {
 		super(rParent, sPanelStyle);
 
-		aLogoStyle		 =
-			StyleData.DEFAULT.set(WEB_ADDITIONAL_STYLES, sLogoStyle);
-		aUserInfoStyle   =
+		aLogoStyle = StyleData.DEFAULT.set(WEB_ADDITIONAL_STYLES, sLogoStyle);
+		aUserInfoStyle =
 			AlignedPosition.LEFT.set(WEB_ADDITIONAL_STYLES, sUserInfoStyle);
-		aLogoutLinkStyle =
-			StyleData.DEFAULT.set(WEB_ADDITIONAL_STYLES, sLogoutLinkStyle)
-							 .setFlags(HYPERLINK, VERTICAL_ALIGN_CENTER);
-		aMessageStyle    =
+		aLogoutLinkStyle = StyleData.DEFAULT
+			.set(WEB_ADDITIONAL_STYLES, sLogoutLinkStyle)
+			.setFlags(HYPERLINK, VERTICAL_ALIGN_CENTER);
+		aMessageStyle =
 			AlignedPosition.CENTER.set(WEB_ADDITIONAL_STYLES, sMessageStyle);
 
 		rWindowClosingHandler = Window.addWindowClosingHandler(this);
-		rCloseHandler		  = Window.addCloseHandler(this);
+		rCloseHandler = Window.addCloseHandler(this);
 	}
 
-	//~ Methods ----------------------------------------------------------------
-
-	/***************************************
+	/**
 	 * @see GwtApplicationPanelManager#displayMessage(String, int)
 	 */
 	@Override
-	public void displayMessage(String sMessage, int nDisplayTime)
-	{
-		if (aClearMessageTimer != null)
-		{
+	public void displayMessage(String sMessage, int nDisplayTime) {
+		if (aClearMessageTimer != null) {
 			aClearMessageTimer.cancel();
 			aClearMessageTimer = null;
 		}
 
 		aMessageLabel.setText(sMessage != null ? sMessage : "");
 
-		if (nDisplayTime > 0)
-		{
-			aClearMessageTimer =
-				new Timer()
-				{
-					@Override
-					public void run()
-					{
-						aMessageLabel.setText("");
-					}
-				};
+		if (nDisplayTime > 0) {
+			aClearMessageTimer = new Timer() {
+				@Override
+				public void run() {
+					aMessageLabel.setText("");
+				}
+			};
 
 			aClearMessageTimer.schedule(MESSAGE_DISPLAY_TIME);
 		}
 	}
 
-	/***************************************
-	 * {@inheritDoc}
-	 */
 	@Override
-	public void dispose()
-	{
+	public void dispose() {
 		rWindowClosingHandler.removeHandler();
 		rCloseHandler.removeHandler();
 
 		super.dispose();
 	}
 
-	/***************************************
+	/**
 	 * Returns the component that is used to display messages.
 	 *
 	 * @return The message component
 	 */
-	public final Component getMessageComponent()
-	{
+	public final Component getMessageComponent() {
 		return aMessageLabel;
 	}
 
-	/***************************************
+	/**
 	 * @see EwtEventHandler#handleEvent(EwtEvent)
 	 */
 	@Override
-	public void handleEvent(EwtEvent rEvent)
-	{
+	public void handleEvent(EwtEvent rEvent) {
 		Object rSource = rEvent.getSource();
 
-		if (rSource == aLogoutLink)
-		{
+		if (rSource == aLogoutLink) {
 			checkLogout("$tiConfirmLogout", "$msgConfirmLogout");
 		}
 	}
 
-	/***************************************
+	/**
 	 * Handles the closing or reloading of the browser window.
 	 *
 	 * @see CloseHandler#onClose(CloseEvent)
 	 */
 	@Override
-	public void onClose(CloseEvent<Window> rEvent)
-	{
+	public void onClose(CloseEvent<Window> rEvent) {
 		// logout is not possible from this method, service calls won't be
 		// executed if performed here
 		dispose();
 	}
 
-	/***************************************
-	 * {@inheritDoc}
-	 */
 	@Override
-	public void onWindowClosing(ClosingEvent rEvent)
-	{
-		UserInterfaceContext rContext	   = getContext();
-		String				 sCloseWarning = getCloseWarning();
+	public void onWindowClosing(ClosingEvent rEvent) {
+		UserInterfaceContext rContext = getContext();
+		String sCloseWarning = getCloseWarning();
 
-		if (rContext != null && sCloseWarning != null)
-		{
+		if (rContext != null && sCloseWarning != null) {
 			rEvent.setMessage(rContext.expandResource(sCloseWarning));
 		}
 	}
 
-	/***************************************
+	/**
 	 * Sets the user info display.
 	 *
 	 * @param rUserData The user data to create the info display from
 	 */
-	public void setUserInfo(DataElementList rUserData)
-	{
-		if (rUserData != null)
-		{
+	public void setUserInfo(DataElementList rUserData) {
+		if (rUserData != null) {
 			String sUser =
 				findElement(rUserData, AuthenticatedService.USER_NAME);
 
@@ -218,113 +188,85 @@ public abstract class GwtApplicationTopPanelManager<P extends GwtApplicationPane
 			aLogoutLink.setToolTip("$ttLogout");
 			aLogoutLink.setVisible(true);
 			aMessageLabel.setText("");
-		}
-		else
-		{
+		} else {
 			aLogoutLink.setVisible(false);
 			aMessageLabel.setText("$lblDoLogin");
 		}
 	}
 
-	/***************************************
-	 * {@inheritDoc}
-	 */
 	@Override
-	protected void addComponents()
-	{
+	protected void addComponents() {
 		ContainerBuilder<Panel> aBuilder = createUserInfoPanel(aUserInfoStyle);
 
 		aBuilder.addLabel(aLogoStyle, null, "#$imLogo");
 		addUserComponents(aBuilder);
 
-		aBuilder =
-			addPanel(AlignedPosition.CENTER.setFlags(StyleFlag.VERTICAL_ALIGN_CENTER),
-					 new FlowLayout(true));
+		aBuilder = addPanel(
+			AlignedPosition.CENTER.setFlags(StyleFlag.VERTICAL_ALIGN_CENTER),
+			new FlowLayout(true));
 
 		aMessageLabel = aBuilder.addLabel(aMessageStyle, "$lblDoLogin", null);
 	}
 
-	/***************************************
+	/**
 	 * Adds the user information and logout components.
 	 *
 	 * @param rBuilder The builder to add the components with
 	 */
-	protected void addUserComponents(ContainerBuilder<?> rBuilder)
-	{
+	protected void addUserComponents(ContainerBuilder<?> rBuilder) {
 		aLogoutLink = rBuilder.addLabel(aLogoutLinkStyle, "", "#$imLogout");
 		aLogoutLink.setVisible(false);
 		aLogoutLink.addEventListener(EventType.ACTION, this);
 	}
 
-	/***************************************
+	/**
 	 * Displays a confirmation message box and performs a logout if the user
 	 * accepts.
 	 *
 	 * @param sTitle   The message box title
 	 * @param sMessage The message text
 	 */
-	protected void checkLogout(String sTitle, String sMessage)
-	{
-		if (getCloseWarning() != null)
-		{
-			MessageBox.showQuestion(getPanel().getView(),
-									sTitle,
-									sMessage,
-									MessageBox.ICON_QUESTION,
-				new ResultHandler()
-				{
+	protected void checkLogout(String sTitle, String sMessage) {
+		if (getCloseWarning() != null) {
+			MessageBox.showQuestion(getPanel().getView(), sTitle, sMessage,
+				MessageBox.ICON_QUESTION, new ResultHandler() {
 					@Override
-					public void handleResult(int nButton)
-					{
-						if (nButton == 1)
-						{
+					public void handleResult(int nButton) {
+						if (nButton == 1) {
 							performLogout();
 						}
 					}
 				});
-		}
-		else
-		{
+		} else {
 			performLogout();
 		}
 	}
 
-	/***************************************
-	 * {@inheritDoc}
-	 */
 	@Override
 	protected ContainerBuilder<Panel> createContainer(
-		ContainerBuilder<?> rBuilder,
-		StyleData			rStyleData)
-	{
+		ContainerBuilder<?> rBuilder, StyleData rStyleData) {
 		return rBuilder.addPanel(rStyleData);
 	}
 
-	/***************************************
+	/**
 	 * Creates the user info panel.
 	 *
-	 * @param  rStyle The style data for the panel
-	 *
+	 * @param rStyle The style data for the panel
 	 * @return The user info panel
 	 */
-	protected ContainerBuilder<Panel> createUserInfoPanel(StyleData rStyle)
-	{
+	protected ContainerBuilder<Panel> createUserInfoPanel(StyleData rStyle) {
 		return addPanel(aUserInfoStyle, new TableGridLayout(2));
 	}
 
-	/***************************************
+	/**
 	 * Executes the logout command and invokes the {@link #logout()} method of
 	 * the parent class on success.
 	 */
-	void performLogout()
-	{
-		executeCommand(AuthenticatedService.LOGOUT,
-					   null,
-			new DefaultCommandResultHandler<DataElement<?>>(this)
-			{
+	void performLogout() {
+		executeCommand(AuthenticatedService.LOGOUT, null,
+			new DefaultCommandResultHandler<DataElement<?>>(this) {
 				@Override
-				public void handleCommandResult(DataElement<?> rResult)
-				{
+				public void handleCommandResult(DataElement<?> rResult) {
 					logout();
 				}
 			});

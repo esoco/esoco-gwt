@@ -23,8 +23,7 @@ import java.io.Serializable;
 import java.util.HashMap;
 import java.util.Map;
 
-
-/********************************************************************
+/**
  * This class defines a command for a {@link CommandService}. The type parameter
  * T defines the type of the input value for the command and the parameter R
  * stands for the datatype of the command result. New instances are created with
@@ -36,69 +35,52 @@ import java.util.Map;
  * @author eso
  */
 public class Command<T extends DataElement<?>, R extends DataElement<?>>
-	implements Serializable
-{
-	//~ Static fields/initializers ---------------------------------------------
+	implements Serializable {
 
 	private static final long serialVersionUID = 1L;
 
 	private static final Map<String, Command<?, ?>> aCommandRegistry =
 		new HashMap<>();
 
-	//~ Instance fields --------------------------------------------------------
-
 	private String sName;
 
-	//~ Constructors -----------------------------------------------------------
-
-	/***************************************
+	/**
 	 * Default constructor for GWT serialization.
 	 */
-	Command()
-	{
+	Command() {
 	}
 
-	/***************************************
+	/**
 	 * Creates a new instance. Private, only used internally by the factory
 	 * method {@link #newInstance(String)}.
 	 *
 	 * @param sName The name of the instance
 	 */
-	private Command(String sName)
-	{
+	private Command(String sName) {
 		this.sName = sName;
 	}
 
-	//~ Static methods ---------------------------------------------------------
-
-	/***************************************
+	/**
 	 * Factory method that creates a new command instance.
 	 *
-	 * @param  sName The name of the new instance
-	 *
+	 * @param sName The name of the new instance
 	 * @return A new command instance
-	 *
 	 * @throws IllegalArgumentException If the given name is invalid or if a
 	 *                                  command with the given name exists
 	 *                                  already
 	 */
 	public static <T extends DataElement<?>, R extends DataElement<?>> Command<T, R> newInstance(
-		String sName)
-	{
-		if (sName == null || sName.length() == 0)
-		{
+		String sName) {
+		if (sName == null || sName.length() == 0) {
 			throw new NullPointerException("Name must not be NULL");
 		}
 
 		Command<T, R> aCommand;
 
-		if (aCommandRegistry.containsKey(sName))
-		{
-			throw new IllegalArgumentException("A command type with name " +
-											   sName + " exists already");
-		}
-		else
-		{
+		if (aCommandRegistry.containsKey(sName)) {
+			throw new IllegalArgumentException(
+				"A command type with name " + sName + " exists already");
+		} else {
 			aCommand = new Command<T, R>(sName);
 			aCommandRegistry.put(sName, aCommand);
 		}
@@ -106,68 +88,57 @@ public class Command<T extends DataElement<?>, R extends DataElement<?>>
 		return aCommand;
 	}
 
-	//~ Methods ----------------------------------------------------------------
-
-	/***************************************
+	/**
 	 * @see Object#equals(Object)
 	 */
 	@Override
-	public boolean equals(Object rObject)
-	{
-		if (this == rObject)
-		{
+	public boolean equals(Object rObject) {
+		if (this == rObject) {
 			return true;
 		}
 
-		if (rObject == null || getClass() != rObject.getClass())
-		{
+		if (rObject == null || getClass() != rObject.getClass()) {
 			return false;
 		}
 
 		return sName.equals(((Command<?, ?>) rObject).sName);
 	}
 
-	/***************************************
+	/**
 	 * Returns the name of this command.
 	 *
 	 * @return The command name
 	 */
-	public final String getName()
-	{
+	public final String getName() {
 		return sName;
 	}
 
-	/***************************************
+	/**
 	 * @see Object#hashCode()
 	 */
 	@Override
-	public int hashCode()
-	{
+	public int hashCode() {
 		return sName.hashCode() * 17;
 	}
 
-	/***************************************
+	/**
 	 * @see Object#toString()
 	 */
 	@Override
-	public String toString()
-	{
+	public String toString() {
 		return "Command[" + sName + "]";
 	}
 
-	/***************************************
+	/**
 	 * Returns the singleton command instance for the given name.
 	 *
 	 * @return The command instance for the given name
-	 *
 	 * @throws IllegalStateException If no matching command could be found
 	 */
-	Object readResolve()
-	{
+	Object readResolve() {
 		Command<?, ?> rCommand = aCommandRegistry.get(sName);
 
-		if (rCommand == null)
-		{
+		if (rCommand == null) {
 			throw new IllegalStateException("Undefined command: " + sName);
 		}
 

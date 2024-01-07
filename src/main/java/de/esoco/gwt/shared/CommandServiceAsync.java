@@ -20,21 +20,16 @@ import de.esoco.data.element.DataElement;
 
 import com.google.gwt.user.client.rpc.AsyncCallback;
 
-
-/********************************************************************
+/**
  * The asynchronous variant of the {@link CommandService} interface.
  *
  * @author eso
  */
-public interface CommandServiceAsync
-{
-	//~ Methods ----------------------------------------------------------------
+public interface CommandServiceAsync {
 
-	/***************************************
+	/**
 	 * @see CommandService#executeCommand(Command, DataElement)
 	 */
 	public <T extends DataElement<?>, R extends DataElement<?>> void executeCommand(
-		Command<T, R>    rCommand,
-		T				 rData,
-		AsyncCallback<R> rCallback);
+		Command<T, R> rCommand, T rData, AsyncCallback<R> rCallback);
 }

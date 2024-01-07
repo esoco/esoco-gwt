@@ -29,36 +29,33 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-/********************************************************************
+/**
  * A GWT custom field serializer for the {@link HierarchicalDataObject} class.
  *
  * @author eso
  */
 public class HierarchicalDataObject_CustomFieldSerializer
 	extends CustomFieldSerializer<HierarchicalDataObject> {
-	//~ Static methods
+
 	// ---------------------------------------------------------
 
-	/***************************************
+	/**
 	 * Not used, implemented in {@link #instantiate(SerializationStreamReader)}
 	 * instead.
 	 *
-	 * @param  rReader The stream reader to read the object data from
-	 * @param  rObject The object to de-serialize
-	 *
+	 * @param rReader The stream reader to read the object data from
+	 * @param rObject The object to de-serialize
 	 * @throws SerializationException If the stream access fails
 	 */
 	public static void deserialize(SerializationStreamReader rReader,
 		HierarchicalDataObject rObject) throws SerializationException {
 	}
 
-	/***************************************
+	/**
 	 * Restores the complete object hierarchy from a serialization stream.
 	 *
-	 * @param  rReader The stream reader to read the object data from
-	 *
+	 * @param rReader The stream reader to read the object data from
 	 * @return The restored object
-	 *
 	 * @throws SerializationException If the stream access fails
 	 */
 	public static HierarchicalDataObject instantiate(
@@ -115,12 +112,11 @@ public class HierarchicalDataObject_CustomFieldSerializer
 		return rResult;
 	}
 
-	/***************************************
+	/**
 	 * Writes the complete object hierarchy to a serialization stream.
 	 *
-	 * @param  rWriter The stream writer to write the object data to
-	 * @param  rObject The object to serialize
-	 *
+	 * @param rWriter The stream writer to write the object data to
+	 * @param rObject The object to serialize
 	 * @throws SerializationException If the stream access fails
 	 */
 	public static void serialize(SerializationStreamWriter rWriter,
@@ -158,38 +154,25 @@ public class HierarchicalDataObject_CustomFieldSerializer
 		}
 	}
 
-	//~ Methods
 	// ----------------------------------------------------------------
 
-	/***************************************
-	 * {@inheritDoc}
-	 */
 	@Override
 	public void deserializeInstance(SerializationStreamReader rStreamReader,
 		HierarchicalDataObject rInstance) throws SerializationException {
 		deserialize(rStreamReader, rInstance);
 	}
 
-	/***************************************
-	 * {@inheritDoc}
-	 */
 	@Override
 	public boolean hasCustomInstantiateInstance() {
 		return true;
 	}
 
-	/***************************************
-	 * {@inheritDoc}
-	 */
 	@Override
 	public HierarchicalDataObject instantiateInstance(
 		SerializationStreamReader rStreamReader) throws SerializationException {
 		return instantiate(rStreamReader);
 	}
 
-	/***************************************
-	 * {@inheritDoc}
-	 */
 	@Override
 	public void serializeInstance(SerializationStreamWriter rStreamWriter,
 		HierarchicalDataObject rInstance) throws SerializationException {

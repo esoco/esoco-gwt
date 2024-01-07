@@ -43,94 +43,73 @@ import static de.esoco.lib.property.StyleProperties.HEADER_LABEL;
 import static de.esoco.lib.property.StyleProperties.HIDE_LABEL;
 import static de.esoco.lib.property.StyleProperties.STYLE;
 
-
-/********************************************************************
+/**
  * A panel manager that organizes data elements in a table layout.
  *
  * @author eso
  */
-public class DataElementTablePanelManager extends DataElementPanelManager
-{
-	//~ Instance fields --------------------------------------------------------
+public class DataElementTablePanelManager extends DataElementPanelManager {
 
 	private boolean bHasOptions;
+
 	private boolean bHasLabels;
-	private int     nElementColumns;
 
-	//~ Constructors -----------------------------------------------------------
+	private int nElementColumns;
 
-	/***************************************
+	/**
 	 * Creates a new instance from the elements in a {@link DataElementList}.
 	 *
 	 * @param rParent          The parent panel manager
 	 * @param rDataElementList sName A name for this instance that will be set
 	 *                         as an additional GWT style name
 	 */
-	public DataElementTablePanelManager(
-		PanelManager<?, ?> rParent,
-		DataElementList    rDataElementList)
-	{
+	public DataElementTablePanelManager(PanelManager<?, ?> rParent,
+		DataElementList rDataElementList) {
 		super(rParent, rDataElementList);
 	}
 
-	//~ Methods ----------------------------------------------------------------
-
-	/***************************************
-	 * {@inheritDoc}
-	 */
 	@Override
-	public void rebuild()
-	{
-		getDataElementsLayout().setGridCount(calcLayoutColumns(getDataElementList()
-															   .getElements()));
+	public void rebuild() {
+		getDataElementsLayout().setGridCount(
+			calcLayoutColumns(getDataElementList().getElements()));
 		super.rebuild();
 	}
 
-	/***************************************
-	 * {@inheritDoc}
-	 */
 	@Override
-	public void setElementVisibility(
-		DataElementUI<?> rElementUI,
-		boolean			 bVisible)
-	{
+	public void setElementVisibility(DataElementUI<?> rElementUI,
+		boolean bVisible) {
 		getDataElementsLayout().changeCellStyle(getContainer(),
-												rElementUI
-												.getElementComponent(),
-												CSS.gfEmptyCell(),
-												!bVisible);
+			rElementUI.getElementComponent(), CSS.gfEmptyCell(), !bVisible);
 	}
 
-	/***************************************
+	/**
 	 * Adds the user interfaces for the data elements in this panel.
 	 */
 	@Override
-	protected void buildElementUIs()
-	{
-		List<DataElement<?>> rDataElements = getDataElementList().getElements();
-		UserInterfaceContext rContext	   = getContext();
-		List<Label>			 aHeaders	   = null;
+	protected void buildElementUIs() {
+		List<DataElement<?>> rDataElements =
+			getDataElementList().getElements();
+		UserInterfaceContext rContext = getContext();
+		List<Label> aHeaders = null;
 
-		int     nColumn		  = nElementColumns;
-		int     nHeaderColumn = 0;
-		int     nElementCount = rDataElements.size();
-		boolean bFocusSet     = false;
+		int nColumn = nElementColumns;
+		int nHeaderColumn = 0;
+		int nElementCount = rDataElements.size();
+		boolean bFocusSet = false;
 
-		for (int nElement = 0; nElement < nElementCount; nElement++)
-		{
+		for (int nElement = 0; nElement < nElementCount; nElement++) {
 			DataElement<?> rDataElement = rDataElements.get(nElement);
 
-			String sWidth  = rDataElement.getProperty(HTML_WIDTH, null);
+			String sWidth = rDataElement.getProperty(HTML_WIDTH, null);
 			String sHeight = rDataElement.getProperty(HTML_HEIGHT, null);
 
-			boolean bNewRow    = !rDataElement.hasFlag(SAME_ROW);
+			boolean bNewRow = !rDataElement.hasFlag(SAME_ROW);
 			boolean bImmutable = rDataElement.isImmutable();
-			boolean bHideLabel =
-				rDataElement.hasFlag(HIDE_LABEL) ||
+			boolean bHideLabel = rDataElement.hasFlag(HIDE_LABEL) ||
 				rDataElement.hasFlag(HEADER_LABEL);
 
-			boolean isChildViewElement =
-				rDataElement.hasProperty(UserInterfaceProperties.VIEW_DISPLAY_TYPE);
+			boolean isChildViewElement = rDataElement.hasProperty(
+				UserInterfaceProperties.VIEW_DISPLAY_TYPE);
 
 			int nExtraColumns = bNewRow && bHideLabel && bHasLabels ? 1 : 0;
 
@@ -139,46 +118,39 @@ public class DataElementTablePanelManager extends DataElementPanelManager
 
 			String sStyle = aElementUI.getElementStyleName();
 
-			if (bNewRow && !isChildViewElement)
-			{
+			if (bNewRow && !isChildViewElement) {
 				int nRowElement = nElement;
-				int nCol	    = 0;
+				int nCol = 0;
 
-				aHeaders	  = null;
+				aHeaders = null;
 				nHeaderColumn = 0;
 
-				while (nCol < nElementColumns && nRowElement < nElementCount)
-				{
+				while (nCol < nElementColumns && nRowElement < nElementCount) {
 					DataElement<?> rElement = rDataElements.get(nRowElement++);
 
-					if (aHeaders == null && rElement.hasFlag(HEADER_LABEL))
-					{
+					if (aHeaders == null && rElement.hasFlag(HEADER_LABEL)) {
 						aHeaders = new ArrayList<>();
 					}
 
 					nCol += rElement.getIntProperty(COLUMN_SPAN, 1);
 				}
 
-				if (aHeaders != null)
-				{
+				if (aHeaders != null) {
 					addElementRow(aElementUI, "", nColumn);
 					nColumn = 0;
 
-					for (int i = nElement; i < nRowElement; i++)
-					{
+					for (int i = nElement; i < nRowElement; i++) {
 						DataElement<?> rElement = rDataElements.get(i);
 
 						String sHeaderStyle = rElement.getResourceId();
 
-						Label aHeader =
-							addLabel(addStyles(HEADER_LABEL_STYLE,
-											   sHeaderStyle),
-									 "",
-									 null);
+						Label aHeader = addLabel(
+							addStyles(HEADER_LABEL_STYLE, sHeaderStyle), "",
+							null);
 
 						aHeaders.add(aHeader);
 						addCellStyles(CSS.gfDataElementHeader(),
-									  sHeaderStyle + "Header");
+							sHeaderStyle + "Header");
 						nColumn++;
 					}
 				}
@@ -187,8 +159,7 @@ public class DataElementTablePanelManager extends DataElementPanelManager
 				nColumn = 0;
 			}
 
-			if (bImmutable)
-			{
+			if (bImmutable) {
 				sStyle = CSS.readonly() + " " + sStyle;
 			}
 
@@ -199,84 +170,70 @@ public class DataElementTablePanelManager extends DataElementPanelManager
 			getDataElementUIs().put(rDataElement.getName(), aElementUI);
 			aElementUI.buildUserInterface(this, aElementStyle);
 
-			if ("100%".equals(sWidth) && "100%".equals(sHeight))
-			{
-				aElementUI.getElementComponent()
-						  .getWidget()
-						  .setSize("100%", "100%");
+			if ("100%".equals(sWidth) && "100%".equals(sHeight)) {
+				aElementUI
+					.getElementComponent()
+					.getWidget()
+					.setSize("100%", "100%");
 			}
 
-			if (!bNewRow || bHideLabel)
-			{
-				if (aHeaders != null && rDataElement.hasFlag(HEADER_LABEL))
-				{
+			if (!bNewRow || bHideLabel) {
+				if (aHeaders != null && rDataElement.hasFlag(HEADER_LABEL)) {
 					Label rHeaderLabel = aHeaders.get(nHeaderColumn);
 
-					rHeaderLabel.setText(aElementUI.getElementLabelText(rContext));
-				}
-				else
-				{
+					rHeaderLabel.setText(
+						aElementUI.getElementLabelText(rContext));
+				} else {
 					aElementUI.setHiddenLabelHint(rContext);
 				}
 			}
 
-			if (!isChildViewElement)
-			{
+			if (!isChildViewElement) {
 				nHeaderColumn++;
 				nColumn +=
-					checkLayoutProperties(rDataElement,
-										  sStyle,
-										  sWidth,
-										  sHeight,
-										  nExtraColumns);
+					checkLayoutProperties(rDataElement, sStyle, sWidth,
+						sHeight,
+						nExtraColumns);
 			}
 
-			if (getParent() == null && !(bFocusSet || bImmutable))
-			{
+			if (getParent() == null && !(bFocusSet || bImmutable)) {
 				bFocusSet = aElementUI.requestFocus();
 			}
 		}
 	}
 
-	/***************************************
+	/**
 	 * Calculates the total number of columns for a panel layout containing the
 	 * given data elements.
 	 *
-	 * @param  rDataElements The data elements to analyze
-	 *
+	 * @param rDataElements The data elements to analyze
 	 * @return The new layout
 	 */
-	protected int calcLayoutColumns(Collection<DataElement<?>> rDataElements)
-	{
-		int nExtraColumns	   = 0;
+	protected int calcLayoutColumns(Collection<DataElement<?>> rDataElements) {
+		int nExtraColumns = 0;
 		int nRowElementColumns = 0;
 
 		nElementColumns = 0;
-		bHasOptions     = false;
-		bHasLabels	    = false;
+		bHasOptions = false;
+		bHasLabels = false;
 
-		for (DataElement<?> rDataElement : rDataElements)
-		{
+		for (DataElement<?> rDataElement : rDataElements) {
 			boolean bNewRow = !rDataElement.hasFlag(SAME_ROW);
 
-			if (!bHasOptions && rDataElement.isOptional())
-			{
+			if (!bHasOptions && rDataElement.isOptional()) {
 				bHasOptions = true;
 				nExtraColumns++;
 			}
 
-			if (!bHasLabels &&
-				bNewRow &&
-				!(rDataElement.hasFlag(HIDE_LABEL) ||
-				  rDataElement.hasFlag(HEADER_LABEL)))
-			{
+			if (!bHasLabels && bNewRow && !(rDataElement.hasFlag(HIDE_LABEL) ||
+				rDataElement.hasFlag(HEADER_LABEL))) {
 				bHasLabels = true;
 				nExtraColumns++;
 			}
 
-			if (bNewRow)
-			{
-				nElementColumns = Math.max(nElementColumns, nRowElementColumns);
+			if (bNewRow) {
+				nElementColumns = Math.max(nElementColumns,
+					nRowElementColumns);
 
 				nRowElementColumns = 0;
 			}
@@ -291,45 +248,37 @@ public class DataElementTablePanelManager extends DataElementPanelManager
 		return Math.max(nElementColumns + nExtraColumns, 1);
 	}
 
-	/***************************************
-	 * {@inheritDoc}
-	 */
 	@Override
 	protected ContainerBuilder<? extends Panel> createPanel(
-		ContainerBuilder<?> rBuilder,
-		StyleData			rStyleData,
-		LayoutType			eLayout)
-	{
-		List<DataElement<?>> rDataElements = getDataElementList().getElements();
+		ContainerBuilder<?> rBuilder, StyleData rStyleData,
+		LayoutType eLayout) {
+		List<DataElement<?>> rDataElements =
+			getDataElementList().getElements();
 
 		ContainerBuilder<Panel> aContainerBuilder =
 			rBuilder.addPanel(rStyleData,
-							  new TableGridLayout(calcLayoutColumns(rDataElements),
-												  true));
+				new TableGridLayout(calcLayoutColumns(rDataElements), true));
 
 		return aContainerBuilder;
 	}
 
-	/***************************************
+	/**
 	 * Adds certain style names to a cell in the grid layout of this instance.
 	 *
 	 * @param rStyles sLabelCellStyle
 	 */
-	private void addCellStyles(String... rStyles)
-	{
-		TableGridLayout rLayout    = getDataElementsLayout();
-		Container	    rContainer = getContainer();
+	private void addCellStyles(String... rStyles) {
+		TableGridLayout rLayout = getDataElementsLayout();
+		Container rContainer = getContainer();
 
-		for (String sStyle : rStyles)
-		{
-			if (sStyle.length() > 0)
-			{
+		for (String sStyle : rStyles) {
+			if (sStyle.length() > 0) {
 				rLayout.addCellStyle(rContainer, sStyle);
 			}
 		}
 	}
 
-	/***************************************
+	/**
 	 * Adds a new row of data element UIs to the layout.
 	 *
 	 * @param aElementUI             The first data element UI to add
@@ -338,115 +287,94 @@ public class DataElementTablePanelManager extends DataElementPanelManager
 	 * @param nPreviousRowLastColumn The last column of the previous row
 	 */
 	private void addElementRow(DataElementUI<?> aElementUI,
-							   String			sLabelCellStyle,
-							   int				nPreviousRowLastColumn)
-	{
+		String sLabelCellStyle, int nPreviousRowLastColumn) {
 		DataElement<?> rDataElement = aElementUI.getDataElement();
 
-		while (nPreviousRowLastColumn++ < nElementColumns)
-		{
+		while (nPreviousRowLastColumn++ < nElementColumns) {
 			addEmptyCell();
 		}
 
-		if (aElementUI != null &&
-			!rDataElement.isImmutable() &&
-			rDataElement.isOptional())
-		{
+		if (aElementUI != null && !rDataElement.isImmutable() &&
+			rDataElement.isOptional()) {
 			aElementUI.addOptionSelector(this);
-		}
-		else if (bHasOptions)
-		{
+		} else if (bHasOptions) {
 			addEmptyCell();
 		}
 
-		if (aElementUI != null &&
-			!(rDataElement.hasFlag(HIDE_LABEL) ||
-			  rDataElement.hasFlag(HEADER_LABEL)))
-		{
+		if (aElementUI != null && !(rDataElement.hasFlag(HIDE_LABEL) ||
+			rDataElement.hasFlag(HEADER_LABEL))) {
 			StyleData aElementLabelStyle =
 				addStyles(ELEMENT_LABEL_STYLE, sLabelCellStyle);
 
-			aElementUI.createElementLabel(this,
-										  aElementLabelStyle,
-										  aElementUI.createElementLabelString(getContext()));
+			aElementUI.createElementLabel(this, aElementLabelStyle,
+				aElementUI.createElementLabelString(getContext()));
 			addCellStyles(CSS.gfDataElementLabel(), sLabelCellStyle);
 		}
 	}
 
-	/***************************************
+	/**
 	 * Adds a cell with no content to a container builder with a grid layout.
 	 */
-	private void addEmptyCell()
-	{
+	private void addEmptyCell() {
 		addLabel(StyleData.DEFAULT, "", null);
-		getDataElementsLayout().addCellStyle(getContainer(), CSS.gfEmptyCell());
+		getDataElementsLayout().addCellStyle(getContainer(),
+			CSS.gfEmptyCell());
 	}
 
-	/***************************************
+	/**
 	 * Checks if grid layout properties exist for a data element and applies
 	 * them if necessary. Returns the column span so that it can be subtracted
-	 * from the extra columns in the layout. Also applies a style to the current
+	 * from the extra columns in the layout. Also applies a style to the
+	 * current
 	 * cell.
 	 *
-	 * @param  rDataElement  The data element
-	 * @param  sStyle        The style name for the data element
-	 * @param  sWidth        The HTML width or NULL for none
-	 * @param  sHeight       The HTML height or NULL for none
-	 * @param  nExtraColumns The count of extra columns that the element should
-	 *                       span (zero for none)
-	 *
+	 * @param rDataElement  The data element
+	 * @param sStyle        The style name for the data element
+	 * @param sWidth        The HTML width or NULL for none
+	 * @param sHeight       The HTML height or NULL for none
+	 * @param nExtraColumns The count of extra columns that the element should
+	 *                      span (zero for none)
 	 * @return The column span
 	 */
 	private int checkLayoutProperties(DataElement<?> rDataElement,
-									  String		 sStyle,
-									  String		 sWidth,
-									  String		 sHeight,
-									  int			 nExtraColumns)
-	{
-		Container	    rContainer = getContainer();
-		TableGridLayout rLayout    = getDataElementsLayout();
-		String		    sAddStyle  = rDataElement.getProperty(STYLE, null);
-		int			    nRowSpan   = rDataElement.getIntProperty(ROW_SPAN, 1);
-		int			    nColSpan   =
-			rDataElement.getIntProperty(COLUMN_SPAN, 1);
+		String sStyle, String sWidth, String sHeight, int nExtraColumns) {
+		Container rContainer = getContainer();
+		TableGridLayout rLayout = getDataElementsLayout();
+		String sAddStyle = rDataElement.getProperty(STYLE, null);
+		int nRowSpan = rDataElement.getIntProperty(ROW_SPAN, 1);
+		int nColSpan = rDataElement.getIntProperty(COLUMN_SPAN, 1);
 
-		if (nRowSpan > 1)
-		{
+		if (nRowSpan > 1) {
 			rLayout.joinRows(rContainer, nRowSpan);
 		}
 
-		if (nColSpan + nExtraColumns > 1)
-		{
+		if (nColSpan + nExtraColumns > 1) {
 			rLayout.joinColumns(rContainer, nColSpan + nExtraColumns);
 		}
 
-		if (sWidth != null || sHeight != null)
-		{
+		if (sWidth != null || sHeight != null) {
 			rLayout.setCellSize(rContainer, sWidth, sHeight);
 		}
 
-		if (sAddStyle != null)
-		{
+		if (sAddStyle != null) {
 			sStyle += " " + sAddStyle;
 		}
 
 		sStyle = sStyle.trim();
 
-		if (sStyle.length() > 0)
-		{
+		if (sStyle.length() > 0) {
 			rLayout.addCellStyle(rContainer, sStyle);
 		}
 
 		return nColSpan;
 	}
 
-	/***************************************
+	/**
 	 * Returns the grid layout for the data elements in this panel.
 	 *
 	 * @return The data elements layout
 	 */
-	private TableGridLayout getDataElementsLayout()
-	{
+	private TableGridLayout getDataElementsLayout() {
 		return (TableGridLayout) getContainer().getLayout();
 	}
 }

@@ -21,8 +21,7 @@ import de.esoco.gwt.shared.CommandService;
 import de.esoco.gwt.shared.CommandServiceAsync;
 import de.esoco.gwt.shared.StorageServiceAsync;
 
-
-/********************************************************************
+/**
  * A registry for standard services. An application-specific service can
  * subclass standard services like {@link CommandService}. On creation of the
  * service the application should then register the asynchronous interface of
@@ -31,65 +30,60 @@ import de.esoco.gwt.shared.StorageServiceAsync;
  *
  * @author eso
  */
-public class ServiceRegistry
-{
-	//~ Static fields/initializers ---------------------------------------------
+public class ServiceRegistry {
 
-	private static CommandServiceAsync		 rCommandService;
+	private static CommandServiceAsync rCommandService;
+
 	private static AuthenticatedServiceAsync rAuthenticatedService;
-	private static StorageServiceAsync		 rStorageService;
 
-	//~ Constructors -----------------------------------------------------------
+	private static StorageServiceAsync rStorageService;
 
-	/***************************************
+	/**
 	 * Private, only static use.
 	 */
-	private ServiceRegistry()
-	{
+	private ServiceRegistry() {
 	}
 
-	//~ Static methods ---------------------------------------------------------
-
-	/***************************************
+	/**
 	 * Returns the current command service. If no standard services have been
 	 * registered by calling {@link #registerStandardServices(Object)} this
 	 * method will return NULL.
 	 *
-	 * @return The asynchronous interface of the current command service or NULL
-	 *         for none
+	 * @return The asynchronous interface of the current command service or
+	 * NULL
+	 * for none
 	 */
-	public static AuthenticatedServiceAsync getAuthenticatedService()
-	{
+	public static AuthenticatedServiceAsync getAuthenticatedService() {
 		return rAuthenticatedService;
 	}
 
-	/***************************************
+	/**
 	 * Returns the current authenticated service. If no standard services have
-	 * been registered by calling {@link #registerStandardServices(Object)} this
+	 * been registered by calling {@link #registerStandardServices(Object)}
+	 * this
 	 * method will return NULL.
 	 *
 	 * @return The asynchronous interface of the current authenticated service
-	 *         or NULL for none
+	 * or NULL for none
 	 */
-	public static CommandServiceAsync getCommandService()
-	{
+	public static CommandServiceAsync getCommandService() {
 		return rCommandService;
 	}
 
-	/***************************************
+	/**
 	 * Returns the current storage service. If no standard services have been
 	 * registered by calling {@link #registerStandardServices(Object)} this
 	 * method will return NULL.
 	 *
-	 * @return The asynchronous interface of the current storage service or NULL
-	 *         for none
+	 * @return The asynchronous interface of the current storage service or
+	 * NULL
+	 * for none
 	 */
-	public static StorageServiceAsync getStorageService()
-	{
+	public static StorageServiceAsync getStorageService() {
 		return rStorageService;
 	}
 
-	/***************************************
+	/**
 	 * Initializes the service registry from a certain service class. The given
 	 * class must be the asynchronous variant of a sub-interface of one of the
 	 * GWT framework service classes that are based on {@link CommandService}.
@@ -98,14 +92,14 @@ public class ServiceRegistry
 	 *
 	 * @param rServiceAsync The service class to initialize the registry from
 	 */
-	public static void init(CommandServiceAsync rServiceAsync)
-	{
+	public static void init(CommandServiceAsync rServiceAsync) {
 		registerStandardServices(rServiceAsync);
 	}
 
-	/***************************************
+	/**
 	 * This method can be invoked to register the standard asynchronous service
-	 * interfaces that are implemented by a certain application-specific service
+	 * interfaces that are implemented by a certain application-specific
+	 * service
 	 * for generic use. The standard services can then be queried through the
 	 * other static methods in this class.
 	 *
@@ -113,20 +107,16 @@ public class ServiceRegistry
 	 *                      interface that extends one or more standard service
 	 *                      interfaces
 	 */
-	public static void registerStandardServices(Object rServiceAsync)
-	{
-		if (rServiceAsync instanceof CommandServiceAsync)
-		{
+	public static void registerStandardServices(Object rServiceAsync) {
+		if (rServiceAsync instanceof CommandServiceAsync) {
 			rCommandService = (CommandServiceAsync) rServiceAsync;
 		}
 
-		if (rServiceAsync instanceof AuthenticatedServiceAsync)
-		{
+		if (rServiceAsync instanceof AuthenticatedServiceAsync) {
 			rAuthenticatedService = (AuthenticatedServiceAsync) rServiceAsync;
 		}
 
-		if (rServiceAsync instanceof StorageServiceAsync)
-		{
+		if (rServiceAsync instanceof StorageServiceAsync) {
 			rStorageService = (StorageServiceAsync) rServiceAsync;
 		}
 	}

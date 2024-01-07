@@ -26,75 +26,57 @@ import javax.servlet.http.HttpSessionListener;
 
 import org.obrel.core.RelatedObject;
 
-
-/********************************************************************
+/**
  * A base class that provides a context for GWT web applications. It implements
  * the ServletContextListener interface to initialize and shutdown global data
  * structures and executes schedule processes if setup by subclasses. It also
- * listens via HttpSessionListener for sessions and reports changes to an {@link
- * AuthenticatedServiceImpl} instance if one has been registered with.
+ * listens via HttpSessionListener for sessions and reports changes to an
+ * {@link AuthenticatedServiceImpl} instance if one has been registered with.
  *
  * <p>To enable a service context the following code must be added to the
  * application's web.xml file:</p>
  *
  * <pre>
-    &lt;listener&gt;
-        &lt;listener-class&gt;
-            [full name of the ServiceContext subclass]
-        &lt;listener-class&gt;
-    &lt;listener&gt;
- </pre>
+ * &lt;listener&gt;
+ * &lt;listener-class&gt;
+ * [full name of the ServiceContext subclass]
+ * &lt;listener-class&gt;
+ * &lt;listener&gt;
+ * </pre>
  *
  * @author eso
  */
 public abstract class ServiceContext extends RelatedObject
-	implements ServletContextListener, HttpSessionListener
-{
-	//~ Static fields/initializers ---------------------------------------------
+	implements ServletContextListener, HttpSessionListener {
 
 	private static ServiceContext rServiceContextInstance = null;
 
-	//~ Instance fields --------------------------------------------------------
-
 	private AuthenticatedServiceImpl<?> rService;
-	private ServletContext			    rServletContext;
 
-	//~ Static methods ---------------------------------------------------------
+	private ServletContext rServletContext;
 
-	/***************************************
+	/**
 	 * Returns the instance.
 	 *
 	 * @return The instance
 	 */
-	public static ServiceContext getInstance()
-	{
+	public static ServiceContext getInstance() {
 		return rServiceContextInstance;
 	}
 
-	//~ Methods ----------------------------------------------------------------
-
-	/***************************************
-	 * {@inheritDoc}
-	 */
 	@Override
-	public void contextDestroyed(ServletContextEvent rEvent)
-	{
+	public void contextDestroyed(ServletContextEvent rEvent) {
 		destroy(rServletContext);
 
-		rServletContext		    = null;
+		rServletContext = null;
 		rServiceContextInstance = null;
 
 		Log.info("Service context shutdown complete");
 	}
 
-	/***************************************
-	 * {@inheritDoc}
-	 */
 	@Override
-	public void contextInitialized(ServletContextEvent rEvent)
-	{
-		if (rServiceContextInstance != null)
-		{
+	public void contextInitialized(ServletContextEvent rEvent) {
+		if (rServiceContextInstance != null) {
 			throw new IllegalStateException("Multiple service contexts");
 		}
 
@@ -105,87 +87,69 @@ public abstract class ServiceContext extends RelatedObject
 		rServiceContextInstance = this;
 	}
 
-	/***************************************
+	/**
 	 * Returns the service of this instance.
 	 *
 	 * @return The service or NULL if not set
 	 */
-	public final AuthenticatedServiceImpl<?> getService()
-	{
+	public final AuthenticatedServiceImpl<?> getService() {
 		return rService;
 	}
 
-	/***************************************
+	/**
 	 * Returns the servlet context of this instance.
 	 *
 	 * @return The servlet context
 	 */
-	public final ServletContext getServletContext()
-	{
+	public final ServletContext getServletContext() {
 		return rServletContext;
 	}
 
-	/***************************************
-	 * {@inheritDoc}
-	 */
 	@Override
-	public void sessionCreated(HttpSessionEvent rEvent)
-	{
+	public void sessionCreated(HttpSessionEvent rEvent) {
 	}
 
-	/***************************************
-	 * {@inheritDoc}
-	 */
 	@Override
-	public void sessionDestroyed(HttpSessionEvent rEvent)
-	{
-		if (rService != null)
-		{
+	public void sessionDestroyed(HttpSessionEvent rEvent) {
+		if (rService != null) {
 			rService.removeSession(rEvent.getSession());
 		}
 	}
 
-	/***************************************
+	/**
 	 * Sets the service of this context.
 	 *
 	 * @param rService The service
 	 */
-	public final void setService(AuthenticatedServiceImpl<?> rService)
-	{
+	public final void setService(AuthenticatedServiceImpl<?> rService) {
 		this.rService = rService;
 	}
 
-	/***************************************
+	/**
 	 * This method can be overridden by subclasses to cleanup internal data
 	 * structures. The default implementation does nothing.
 	 *
 	 * @param rServletContext The servlet context
 	 */
-	protected void destroy(ServletContext rServletContext)
-	{
+	protected void destroy(ServletContext rServletContext) {
 	}
 
-	/***************************************
+	/**
 	 * Returns the application name.
 	 *
 	 * @return The application name
 	 */
-	protected String getApplicationName()
-	{
+	protected String getApplicationName() {
 		String sName;
 
-		if (rService != null)
-		{
+		if (rService != null) {
 			sName = rService.getApplicationName();
-		}
-		else
-		{
+		} else {
 			sName = getClass().getSimpleName();
 
 			int nIndex = sName.indexOf(ServiceContext.class.getSimpleName());
 
-			if (nIndex > 0)
-			{
+			if (nIndex > 0) {
 				sName = sName.substring(0, nIndex);
 			}
 		}
@@ -193,13 +157,12 @@ public abstract class ServiceContext extends RelatedObject
 		return sName;
 	}
 
-	/***************************************
+	/**
 	 * This method can be overridden by subclasses to initialize internal data
 	 * structures. The default implementation does nothing.
 	 *
 	 * @param rServletContext The servlet context
 	 */
-	protected void init(ServletContext rServletContext)
-	{
+	protected void init(ServletContext rServletContext) {
 	}
 }

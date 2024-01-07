@@ -34,37 +34,33 @@ import java.util.List;
 
 import static de.esoco.ewt.style.StyleData.WEB_ADDITIONAL_STYLES;
 
-
-/********************************************************************
+/**
  * The user interface implementation for date data elements.
  *
  * @author eso
  */
-public class PeriodDataElementUI extends DataElementUI<PeriodDataElement>
-{
-	//~ Static fields/initializers ---------------------------------------------
+public class PeriodDataElementUI extends DataElementUI<PeriodDataElement> {
 
-	/** Shortcut constant to access the framework CSS */
+	/**
+	 * Shortcut constant to access the framework CSS
+	 */
 	static final EsocoGwtCss CSS = EsocoGwtResources.INSTANCE.css();
 
-	/** Style constant for the period count input field. */
+	/**
+	 * Style constant for the period count input field.
+	 */
 	private static final StyleData PERIOD_COUNT_STYLE =
 		StyleData.DEFAULT.set(WEB_ADDITIONAL_STYLES, CSS.gfPeriodCount());
 
-	/** Style constant for the period unit input field. */
+	/**
+	 * Style constant for the period unit input field.
+	 */
 	private static final StyleData PERIOD_UNIT_STYLE =
 		StyleData.DEFAULT.set(WEB_ADDITIONAL_STYLES, CSS.gfPeriodUnit());
 
-	//~ Methods ----------------------------------------------------------------
-
-	/***************************************
-	 * {@inheritDoc}
-	 */
 	@Override
 	protected Component createInputUI(ContainerBuilder<?> rBuilder,
-									  StyleData			  rStyle,
-									  PeriodDataElement   rDataElement)
-	{
+		StyleData rStyle, PeriodDataElement rDataElement) {
 		rBuilder = rBuilder.addPanel(rStyle, new FlowLayout(true));
 
 		Container aPanel = rBuilder.getContainer();
@@ -76,23 +72,17 @@ public class PeriodDataElementUI extends DataElementUI<PeriodDataElement>
 		return aPanel;
 	}
 
-	/***************************************
-	 * {@inheritDoc}
-	 */
 	@Override
 	protected void transferDataElementValueToComponent(
-		PeriodDataElement rElement,
-		Component		  rComponent)
-	{
+		PeriodDataElement rElement, Component rComponent) {
 		List<Component> rComponents = ((Panel) rComponent).getComponents();
-		Spinner		    aSpinner    = (Spinner) rComponents.get(0);
-		ListBox		    rComboBox   = (ListBox) rComponents.get(1);
+		Spinner aSpinner = (Spinner) rComponents.get(0);
+		ListBox rComboBox = (ListBox) rComponents.get(1);
 
 		@SuppressWarnings("unchecked")
 		List<String> rUnits = (List<String>) rElement.getAllowedValues();
 
-		for (String sUnit : rUnits)
-		{
+		for (String sUnit : rUnits) {
 			rComboBox.add(sUnit);
 		}
 
@@ -100,18 +90,13 @@ public class PeriodDataElementUI extends DataElementUI<PeriodDataElement>
 		rComboBox.setSelection(rUnits.indexOf(rElement.getPeriodUnit()));
 	}
 
-	/***************************************
-	 * {@inheritDoc}
-	 */
 	@Override
-	protected void transferInputToDataElement(
-		Component		  rComponent,
-		PeriodDataElement rElement)
-	{
+	protected void transferInputToDataElement(Component rComponent,
+		PeriodDataElement rElement) {
 		List<Component> rComponents = ((Panel) rComponent).getComponents();
 
-		int    nCount = ((Spinner) rComponents.get(0)).getValue();
-		String sUnit  = ((ListBox) rComponents.get(1)).getSelectedItem();
+		int nCount = ((Spinner) rComponents.get(0)).getValue();
+		String sUnit = ((ListBox) rComponents.get(1)).getSelectedItem();
 
 		rElement.setPeriodCount(nCount);
 		rElement.setPeriodUnit(sUnit);

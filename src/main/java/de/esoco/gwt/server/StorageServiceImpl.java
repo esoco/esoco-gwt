@@ -57,74 +57,55 @@ import static de.esoco.lib.property.ContentProperties.FILE_NAME;
 
 import static org.obrel.core.RelationTypes.newMapType;
 
-
-/********************************************************************
+/**
  * Implementation of the {@link StorageService} interface.
  *
  * @author eso
  */
 public abstract class StorageServiceImpl<E extends Entity>
-	extends AuthenticatedServiceImpl<E> implements StorageService,
-												   StorageAdapterRegistry
-{
-	//~ Static fields/initializers ---------------------------------------------
+	extends AuthenticatedServiceImpl<E>
+	implements StorageService, StorageAdapterRegistry {
 
 	private static final long serialVersionUID = 1L;
 
 	// relation type to store the storage adapters for a session
-	private static final RelationType<Map<StorageAdapterId, StorageAdapter>> STORAGE_ADAPTER_MAP =
-		newMapType(false);
+	private static final RelationType<Map<StorageAdapterId, StorageAdapter>>
+		STORAGE_ADAPTER_MAP = newMapType(false);
 
 	private static long nNextStorageAdapterId = 1;
 
-	static
-	{
+	static {
 		RelationTypes.init(StorageServiceImpl.class);
 	}
 
-	//~ Instance fields --------------------------------------------------------
-
 	private Set<String> aInvalidStorageAdapters;
 
-	//~ Constructors -----------------------------------------------------------
-
-	/***************************************
+	/**
 	 * Creates a new instance.
 	 */
-	public StorageServiceImpl()
-	{
-		StorageManager.setStorageMetaData(
-			DataRelationTypes.SESSION_MANAGER,
+	public StorageServiceImpl() {
+		StorageManager.setStorageMetaData(DataRelationTypes.SESSION_MANAGER,
 			this);
 	}
 
-	//~ Methods ----------------------------------------------------------------
-
-	/***************************************
-	 * {@inheritDoc}
-	 */
 	@Override
 	public final StorageAdapter getStorageAdapter(StorageAdapterId rId)
-		throws StorageException
-	{
+		throws StorageException {
 		return getStorageAdapterMap().get(rId);
 	}
 
-	/***************************************
+	/**
 	 * Handles the {@link StorageService#PREPARE_DOWNLOAD} command.
 	 *
-	 * @param  rQueryParams A data element list containing the query parameters
-	 *
+	 * @param rQueryParams A data element list containing the query parameters
 	 * @return A data element containing the query result
-	 *
 	 * @throws Exception If preparing the download data fails
 	 */
 	public StringDataElement handlePrepareDownload(
-		StringDataElement rQueryParams) throws Exception
-	{
-		String		   sAdapterId = rQueryParams.getName();
-		String		   sFileName  = rQueryParams.getProperty(FILE_NAME, null);
-		StorageAdapter rAdapter   = checkStorageAdapter(sAdapterId);
+		StringDataElement rQueryParams) throws Exception {
+		String sAdapterId = rQueryParams.getName();
+		String sFileName = rQueryParams.getProperty(FILE_NAME, null);
+		StorageAdapter rAdapter = checkStorageAdapter(sAdapterId);
 
 		QueryResultElement<DataModel<String>> rQueryData =
 			rAdapter.performQuery(rQueryParams);
@@ -134,12 +115,10 @@ public abstract class StorageServiceImpl<E extends Entity>
 
 		List<ColumnDefinition> rColumns = rAdapter.getColumns();
 
-		for (ColumnDefinition rColumn : rColumns)
-		{
+		for (ColumnDefinition rColumn : rColumns) {
 			String sColumnTitle = rColumn.getTitle();
 
-			if (sColumnTitle.startsWith("$"))
-			{
+			if (sColumnTitle.startsWith("$")) {
 				sColumnTitle =
 					getResourceString(sColumnTitle.substring(1), null);
 			}
@@ -147,33 +126,23 @@ public abstract class StorageServiceImpl<E extends Entity>
 			aDocumentWriter.addValue(sColumnTitle);
 		}
 
-		for (DataModel<String> rRow : rQueryData)
-		{
+		for (DataModel<String> rRow : rQueryData) {
 			int nColumn = 0;
 
 			aDocumentWriter.newRow();
 
-			for (String sValue : rRow)
-			{
+			for (String sValue : rRow) {
 				ColumnDefinition rColumn = rColumns.get(nColumn++);
-				Object			 rValue  = null;
+				Object rValue = null;
 
-				if (sValue != null)
-				{
-					if (sValue.startsWith("$"))
-					{
+				if (sValue != null) {
+					if (sValue.startsWith("$")) {
 						rValue = getResourceString(sValue.substring(1), null);
-					}
-					else if (rColumn.getDatatype().endsWith("Date"))
-					{
+					} else if (rColumn.getDatatype().endsWith("Date")) {
 						rValue = new Date(Long.parseLong(sValue));
-					}
-					else if (rColumn.getDatatype().endsWith("BigDecimal"))
-					{
+					} else if (rColumn.getDatatype().endsWith("BigDecimal")) {
 						rValue = new BigDecimal(sValue);
-					}
-					else
-					{
+					} else {
 						rValue = sValue;
 					}
 				}
@@ -185,42 +154,32 @@ public abstract class StorageServiceImpl<E extends Entity>
 		byte[] aDocumentData = aDocumentWriter.createDocument();
 
 		DownloadData aDownloadData =
-			new DownloadData(
-				sFileName != null ? sFileName : "download.xls",
+			new DownloadData(sFileName != null ? sFileName : "download.xls",
 				aDocumentWriter.getFileType(),
-				Functions.<FileType, byte[]>value(aDocumentData),
-				true);
+				Functions.<FileType, byte[]>value(aDocumentData), true);
 
-		return new StringDataElement(
-			"DownloadUrl",
+		return new StringDataElement("DownloadUrl",
 			prepareDownload(aDownloadData));
 	}
 
-	/***************************************
+	/**
 	 * Handles the {@link StorageService#QUERY} command.
 	 *
-	 * @param  rQueryParams A data element list containing the query parameters
-	 *
+	 * @param rQueryParams A data element list containing the query parameters
 	 * @return A data element containing the query result
-	 *
 	 * @throws Exception If performing the query fails
 	 */
 	public QueryResultElement<DataModel<String>> handleQuery(
-		StringDataElement rQueryParams) throws Exception
-	{
-		String		   sAdapterId = rQueryParams.getName();
-		StorageAdapter rAdapter   = checkStorageAdapter(sAdapterId);
+		StringDataElement rQueryParams) throws Exception {
+		String sAdapterId = rQueryParams.getName();
+		StorageAdapter rAdapter = checkStorageAdapter(sAdapterId);
 
 		return rAdapter.performQuery(rQueryParams);
 	}
 
-	/***************************************
-	 * {@inheritDoc}
-	 */
 	@Override
 	public StorageAdapterId registerStorageAdapter(StorageAdapter rAdapter)
-		throws StorageException
-	{
+		throws StorageException {
 		StorageAdapterId aId = new StorageAdapterId(nNextStorageAdapterId++);
 
 		Map<StorageAdapterId, StorageAdapter> rAdapterMap =
@@ -231,53 +190,45 @@ public abstract class StorageServiceImpl<E extends Entity>
 		return aId;
 	}
 
-	/***************************************
+	/**
 	 * Subclasses that want to provide a download option from UI tables must
-	 * implement this method to return an implementation of {@link
-	 * TabularDocumentWriter} that processes table data for download. The
+	 * implement this method to return an implementation of
+	 * {@link TabularDocumentWriter} that processes table data for download.
+	 * The
 	 * default implementation throws an {@link UnsupportedOperationException}.
 	 *
 	 * @return An tabular document writer instance
 	 */
-	protected TabularDocumentWriter<byte[]> createTableDownloadDocumentWriter()
-	{
+	protected TabularDocumentWriter<byte[]> createTableDownloadDocumentWriter() {
 		throw new UnsupportedOperationException("not implemented");
 	}
 
-	/***************************************
+	/**
 	 * Retrieves a storage adapter for a certain adapter ID and throws an
 	 * exception if the ID is invalid.
 	 *
-	 * @param  sId The storage adapter ID
-	 *
+	 * @param sId The storage adapter ID
 	 * @return The storage adapter if the ID is valid
-	 *
 	 * @throws ServiceException If the given storage adapter ID is invalid
 	 * @throws StorageException If retrieving the storage adapter fails
 	 */
 	private StorageAdapter checkStorageAdapter(String sId)
-		throws ServiceException, StorageException
-	{
+		throws ServiceException, StorageException {
 		StorageAdapter rStorageAdapter = getStorageAdapter(sId);
 
-		if (rStorageAdapter == null)
-		{
-			if (aInvalidStorageAdapters == null)
-			{
+		if (rStorageAdapter == null) {
+			if (aInvalidStorageAdapters == null) {
 				aInvalidStorageAdapters = new HashSet<String>();
 			}
 
 			String sMessage =
 				String.format("Unknown storage adapter for ID %s", sId);
 
-			if (aInvalidStorageAdapters.contains(sId))
-			{
+			if (aInvalidStorageAdapters.contains(sId)) {
 				Map<String, String> rDummyParams = Collections.emptyMap();
 
 				throw new ServiceException(sMessage, rDummyParams, null);
-			}
-			else
-			{
+			} else {
 				aInvalidStorageAdapters.add(sId);
 				throw new ServiceException(sMessage);
 			}
@@ -286,32 +237,26 @@ public abstract class StorageServiceImpl<E extends Entity>
 		return rStorageAdapter;
 	}
 
-	/***************************************
+	/**
 	 * Returns the storage adapter map for the current session.
 	 *
 	 * @return The storage adapter map
-	 *
 	 * @throws StorageException If the client is not authenticated
 	 */
 	private Map<StorageAdapterId, StorageAdapter> getStorageAdapterMap()
-		throws StorageException
-	{
+		throws StorageException {
 		SessionData rSessionData;
 
-		try
-		{
+		try {
 			rSessionData = getSessionData();
-		}
-		catch (AuthenticationException e)
-		{
+		} catch (AuthenticationException e) {
 			throw new StorageException(e);
 		}
 
 		Map<StorageAdapterId, StorageAdapter> rAdapterMap =
 			rSessionData.get(STORAGE_ADAPTER_MAP);
 
-		if (rAdapterMap == null)
-		{
+		if (rAdapterMap == null) {
 			rAdapterMap = new WeakHashMap<StorageAdapterId, StorageAdapter>();
 			rSessionData.set(STORAGE_ADAPTER_MAP, rAdapterMap);
 		}

@@ -23,47 +23,37 @@ import de.esoco.ewt.component.MainView;
 import de.esoco.ewt.component.View;
 import de.esoco.ewt.style.ViewStyle;
 
-
-/********************************************************************
+/**
  * Base class for application modules.
  *
  * @author eso
  */
-public abstract class GwtApplicationModule implements EWTModule
-{
-	//~ Instance fields --------------------------------------------------------
+public abstract class GwtApplicationModule implements EWTModule {
 
 	private ViewStyle eViewStyle;
 
-	//~ Constructors -----------------------------------------------------------
-
-	/***************************************
-	 * Creates a new instance with the view style {@link ViewStyle#FULL_SIZE
-	 * FULL_SIZE}.
+	/**
+	 * Creates a new instance with the view style
+	 * {@link ViewStyle#FULL_SIZE FULL_SIZE}.
 	 */
-	public GwtApplicationModule()
-	{
+	public GwtApplicationModule() {
 		this(ViewStyle.FULL_SIZE);
 	}
 
-	/***************************************
+	/**
 	 * Creates a new instance with a specific view style.
 	 *
 	 * @param eViewStyle The view style
 	 */
-	public GwtApplicationModule(ViewStyle eViewStyle)
-	{
+	public GwtApplicationModule(ViewStyle eViewStyle) {
 		this.eViewStyle = eViewStyle;
 	}
 
-	//~ Methods ----------------------------------------------------------------
-
-	/***************************************
+	/**
 	 * @see EWTModule#createModuleView(UserInterfaceContext)
 	 */
 	@Override
-	public View createModuleView(UserInterfaceContext rContext)
-	{
+	public View createModuleView(UserInterfaceContext rContext) {
 		MainView aMainView = rContext.createMainView(getMainViewStyle());
 
 		ContainerBuilder<?> aMainViewBuilder =
@@ -74,17 +64,16 @@ public abstract class GwtApplicationModule implements EWTModule
 		return aMainView;
 	}
 
-	/***************************************
+	/**
 	 * @see EWTModule#showModuleView(UserInterfaceContext, View)
 	 */
 	@Override
-	public void showModuleView(UserInterfaceContext rContext, View rView)
-	{
+	public void showModuleView(UserInterfaceContext rContext, View rView) {
 		rView.pack();
 		rContext.displayViewCentered(rView);
 	}
 
-	/***************************************
+	/**
 	 * Must be implemented by subclasses to create the module's main panel with
 	 * the given builder.
 	 *
@@ -92,14 +81,13 @@ public abstract class GwtApplicationModule implements EWTModule
 	 */
 	protected abstract void createModulePanel(ContainerBuilder<?> rBuilder);
 
-	/***************************************
+	/**
 	 * Returns the view style for the main view of this module. May be
 	 * overridden to modify the default style {@link ViewStyle#FULL_SIZE}.
 	 *
 	 * @return The view style
 	 */
-	protected ViewStyle getMainViewStyle()
-	{
+	protected ViewStyle getMainViewStyle() {
 		return eViewStyle;
 	}
 }

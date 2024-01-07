@@ -16,11 +16,10 @@
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 package de.esoco.gwt.shared;
 
-/********************************************************************
+/**
  * The base interface for the GWT RPC service of an GWT application.
  *
  * @author eso
  */
-public interface GwtApplicationServiceAsync extends ProcessServiceAsync
-{
+public interface GwtApplicationServiceAsync extends ProcessServiceAsync {
 }

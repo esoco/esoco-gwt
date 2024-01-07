@@ -35,24 +35,23 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
 
-/********************************************************************
+/**
  * Test case for data elements
  *
  * @author eso
  */
 public class DataElementTest {
-	//~ Enums
+
 	// ------------------------------------------------------------------
 
-	/********************************************************************
+	/**
 	 * Test enum
 	 */
 	enum TestEnum {T1, T2, T3, T4}
 
-	//~ Methods
 	// ----------------------------------------------------------------
 
-	/***************************************
+	/**
 	 * Test attribute query methods.
 	 */
 	@Test
@@ -79,9 +78,10 @@ public class DataElementTest {
 		assertFalse(e.isSelected());
 	}
 
-	/***************************************
-	 * Test of {@link DataElementFactory#createEnumDataElement(String, Class,
-	 * Object, java.util.Collection, java.util.Set)}.
+	/**
+	 * Test of
+	 * {@link DataElementFactory#createEnumDataElement(String, Class, Object,
+	 * java.util.Collection, java.util.Set)}.
 	 */
 	@Test
 	public void testEnum() {
@@ -104,7 +104,7 @@ public class DataElementTest {
 		assertEquals(TestEnum.T2.name(), e2.getValue());
 	}
 
-	/***************************************
+	/**
 	 * Test method
 	 */
 	@Test
@@ -125,7 +125,7 @@ public class DataElementTest {
 		assertNotEquals(null, e1);
 	}
 
-	/***************************************
+	/**
 	 * Test method
 	 */
 	@Test
@@ -179,7 +179,7 @@ public class DataElementTest {
 		assertEquals(2, sub.getElementCount());
 	}
 
-	/***************************************
+	/**
 	 * Test method
 	 */
 	@Test
@@ -211,7 +211,7 @@ public class DataElementTest {
 		}
 	}
 
-	/***************************************
+	/**
 	 * Test method
 	 */
 	@Test
@@ -234,7 +234,7 @@ public class DataElementTest {
 		}
 	}
 
-	/***************************************
+	/**
 	 * Helper method to fill a data element list.
 	 *
 	 * @param rList        rParent The parent list to add the elements to

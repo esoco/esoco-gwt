@@ -35,118 +35,96 @@ import javax.websocket.server.ServerEndpointConfig;
 
 import static java.util.stream.Collectors.toList;
 
-
-/********************************************************************
+/**
  * A server-side WebSocket to send client notifications over.
  *
  * @author eso
  */
-public class ClientNotificationService
-{
-	//~ Static fields/initializers ---------------------------------------------
+public class ClientNotificationService {
 
 	private static final CloseReason CLOSE_REASON_SHUTDOWN =
 		new CloseReason(CloseCodes.GOING_AWAY, "Shutting down");
 
-	//~ Instance fields --------------------------------------------------------
+	private final String sWebSocketPath;
 
-	private final String	    sWebSocketPath;
 	private final List<Session> aSessions = new ArrayList<>();
 
-	//~ Constructors -----------------------------------------------------------
-
-	/***************************************
+	/**
 	 * Creates a new instance.
 	 *
 	 * @param sPath The service-relative path to the web socket of this service
 	 */
-	public ClientNotificationService(String sPath)
-	{
+	public ClientNotificationService(String sPath) {
 		this.sWebSocketPath = sPath.startsWith("/") ? sPath : "/" + sPath;
 	}
 
-	//~ Methods ----------------------------------------------------------------
-
-	/***************************************
+	/**
 	 * Notifies all registered clients of a message.
 	 *
 	 * @param sMessage The message string
 	 */
-	public void notifyClients(String sMessage)
-	{
-		aSessions.forEach(
-			rSession ->
-				Try.run(() -> rSession.getBasicRemote().sendText(sMessage))
-				.orElse(
-					e -> Log.errorf(
-							e,
-							"Notification of client %s failed",
-							rSession.getId())));
+	public void notifyClients(String sMessage) {
+		aSessions.forEach(rSession -> Try
+			.run(() -> rSession.getBasicRemote().sendText(sMessage))
+			.orElse(e -> Log.errorf(e, "Notification of client %s failed",
+				rSession.getId())));
 	}
 
-	/***************************************
-	 * Registers a {@link Endpoint WebSocket Endpoint} class for deployment at a
+	/**
+	 * Registers a {@link Endpoint WebSocket Endpoint} class for deployment
+	 * at a
 	 * certain path relative to the servlet context.
 	 *
-	 * @param  rContext rWebSocketClass The class of the endpoint
-	 *
+	 * @param rContext rWebSocketClass The class of the endpoint
 	 * @throws ServletException If the endpoint registration failed
 	 */
-	public void start(ServletContext rContext) throws ServletException
-	{
+	public void start(ServletContext rContext) throws ServletException {
 		ServerContainer rServerContainer =
 			(ServerContainer) rContext.getAttribute(
 				"javax.websocket.server.ServerContainer");
 
-		if (rServerContainer == null)
-		{
+		if (rServerContainer == null) {
 			throw new ServletException(
 				"No server container for WebSocket deployment found");
 		}
 
 		ClientNotificationWebSocket.setService(this);
 
-		ServerEndpointConfig aConfig =
-			ServerEndpointConfig.Builder.create(
-											ClientNotificationWebSocket.class,
-											rContext.getContextPath() +
-											sWebSocketPath).build();
+		ServerEndpointConfig aConfig = ServerEndpointConfig.Builder
+			.create(ClientNotificationWebSocket.class,
+				rContext.getContextPath() + sWebSocketPath)
+			.build();
 
-		try
-		{
+		try {
 			rServerContainer.addEndpoint(aConfig);
-		}
-		catch (DeploymentException e)
-		{
+		} catch (DeploymentException e) {
 			throw new ServletException(e);
 		}
 
-		Log.infof(
-			"Client notification WebSocket deployed at %s\n",
+		Log.infof("Client notification WebSocket deployed at %s\n",
 			aConfig.getPath());
 	}
 
-	/***************************************
+	/**
 	 * Stops this service by closing all open connections.
 	 */
-	public void stop()
-	{
-		Try.ofAll(
-   			aSessions.stream()
-   			.map(s -> Try.run(() -> s.close(CLOSE_REASON_SHUTDOWN)))
-   			.collect(toList()))
-		   .orElse(e -> Log.error("Error when closing sessions", e));
+	public void stop() {
+		Try
+			.ofAll(aSessions
+				.stream()
+				.map(s -> Try.run(() -> s.close(CLOSE_REASON_SHUTDOWN)))
+				.collect(toList()))
+			.orElse(e -> Log.error("Error when closing sessions", e));
 
 		aSessions.clear();
 	}
 
-	/***************************************
+	/**
 	 * Returns the current sessions.
 	 *
 	 * @return The sessions
 	 */
-	List<Session> getSessions()
-	{
+	List<Session> getSessions() {
 		return aSessions;
 	}
 }

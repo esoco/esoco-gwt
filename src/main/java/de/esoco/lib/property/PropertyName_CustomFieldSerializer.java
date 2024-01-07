@@ -26,19 +26,15 @@ import com.google.gwt.user.client.rpc.SerializationException;
 import com.google.gwt.user.client.rpc.SerializationStreamReader;
 import com.google.gwt.user.client.rpc.SerializationStreamWriter;
 
-
-/********************************************************************
+/**
  * A GWT custom field serializer for the {@link PropertyName} class that
  * restores property names as singletons.
  *
  * @author eso
  */
-public class PropertyName_CustomFieldSerializer
-{
-	//~ Static fields/initializers ---------------------------------------------
+public class PropertyName_CustomFieldSerializer {
 
-	static
-	{
+	static {
 		// initializes property name instances defined in this classes
 		StandardProperties.init();
 		StorageProperties.init();
@@ -50,59 +46,47 @@ public class PropertyName_CustomFieldSerializer
 		DataSetDataElement.init();
 	}
 
-	//~ Static methods ---------------------------------------------------------
-
-	/***************************************
+	/**
 	 * Not used, implemented in {@link #instantiate(SerializationStreamReader)}
 	 * instead.
 	 *
-	 * @param  rReader The stream reader to read the object data from
-	 * @param  rObject The object to de-serialize
-	 *
+	 * @param rReader The stream reader to read the object data from
+	 * @param rObject The object to de-serialize
 	 * @throws SerializationException If the stream access fails
 	 */
-	public static void deserialize(
-		SerializationStreamReader rReader,
-		PropertyName<?>			  rObject) throws SerializationException
-	{
+	public static void deserialize(SerializationStreamReader rReader,
+		PropertyName<?> rObject) throws SerializationException {
 	}
 
-	/***************************************
+	/**
 	 * Restores the property name from a serialization stream.
 	 *
-	 * @param  rReader The stream reader to read the object data from
-	 *
+	 * @param rReader The stream reader to read the object data from
 	 * @return The restored object
-	 *
 	 * @throws SerializationException If the stream access fails
 	 */
 	public static PropertyName<?> instantiate(SerializationStreamReader rReader)
-		throws SerializationException
-	{
-		String		    sName		  = rReader.readString();
+		throws SerializationException {
+		String sName = rReader.readString();
 		PropertyName<?> rPropertyName = PropertyName.valueOf(sName);
 
-		if (rPropertyName == null)
-		{
-			throw new IllegalStateException("No PropertyName instance for " +
-											sName);
+		if (rPropertyName == null) {
+			throw new IllegalStateException(
+				"No PropertyName instance for " + sName);
 		}
 
 		return rPropertyName;
 	}
 
-	/***************************************
+	/**
 	 * Writes the name string to the stream.
 	 *
-	 * @param  rWriter       The stream writer to write the object data to
-	 * @param  rPropertyName The object to serialize
-	 *
+	 * @param rWriter       The stream writer to write the object data to
+	 * @param rPropertyName The object to serialize
 	 * @throws SerializationException If the stream access fails
 	 */
-	public static void serialize(
-		SerializationStreamWriter rWriter,
-		PropertyName<?>			  rPropertyName) throws SerializationException
-	{
+	public static void serialize(SerializationStreamWriter rWriter,
+		PropertyName<?> rPropertyName) throws SerializationException {
 		rWriter.writeString(rPropertyName.getName());
 	}
 }

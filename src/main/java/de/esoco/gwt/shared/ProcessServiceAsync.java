@@ -16,11 +16,10 @@
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 package de.esoco.gwt.shared;
 
-/********************************************************************
+/**
  * The interface for services that can execute {@link Process Processes}.
  *
  * @author eso
  */
-public interface ProcessServiceAsync extends StorageServiceAsync
-{
+public interface ProcessServiceAsync extends StorageServiceAsync {
 }

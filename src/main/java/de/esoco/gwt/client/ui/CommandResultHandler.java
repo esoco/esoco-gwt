@@ -19,25 +19,24 @@ package de.esoco.gwt.client.ui;
 import de.esoco.data.element.DataElement;
 import de.esoco.gwt.shared.Command;
 
-
-/********************************************************************
- * This interface must be implement to handle the result of executing a command.
+/**
+ * This interface must be implement to handle the result of executing a
+ * command.
  *
  * @author eso
  */
-public interface CommandResultHandler<T extends DataElement<?>>
-{
-	//~ Methods ----------------------------------------------------------------
+public interface CommandResultHandler<T extends DataElement<?>> {
 
-	/***************************************
+	/**
 	 * handles a command failure.
 	 *
 	 * @param rCommand The failed command
 	 * @param rCaught  The exception that occurred
 	 */
-	public void handleCommandFailure(Command<?, ?> rCommand, Throwable rCaught);
+	public void handleCommandFailure(Command<?, ?> rCommand,
+		Throwable rCaught);
 
-	/***************************************
+	/**
 	 * Handles the result of a successful command execution.
 	 *
 	 * @param rResult The data element that has been returned by the command

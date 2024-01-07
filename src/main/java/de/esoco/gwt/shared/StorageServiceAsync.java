@@ -16,12 +16,11 @@
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 package de.esoco.gwt.shared;
 
-/********************************************************************
+/**
  * Base interface for services that are based on persistent objects from a
  * storage.
  *
  * @author eso
  */
-public interface StorageServiceAsync extends AuthenticatedServiceAsync
-{
+public interface StorageServiceAsync extends AuthenticatedServiceAsync {
 }

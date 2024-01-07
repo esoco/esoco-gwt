@@ -20,16 +20,13 @@ import de.esoco.entity.Entity;
 
 import de.esoco.gwt.shared.GwtApplicationService;
 
-
-/********************************************************************
+/**
  * Implementation of the service interface of a GWT application RPC.
  *
  * @author eso
  */
 public abstract class GwtApplicationServiceImpl<E extends Entity>
-	extends ProcessServiceImpl<E> implements GwtApplicationService
-{
-	//~ Static fields/initializers ---------------------------------------------
+	extends ProcessServiceImpl<E> implements GwtApplicationService {
 
 	private static final long serialVersionUID = 1L;
 }

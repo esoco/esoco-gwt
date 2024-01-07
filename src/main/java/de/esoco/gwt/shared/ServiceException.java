@@ -20,71 +20,61 @@ import de.esoco.data.process.ProcessState;
 
 import java.util.Map;
 
-
-/********************************************************************
+/**
  * The base class for all exceptions that can be thrown by services.
  *
  * @author eso
  */
-public class ServiceException extends Exception
-{
-	//~ Static fields/initializers ---------------------------------------------
+public class ServiceException extends Exception {
 
 	private static final long serialVersionUID = 1L;
 
-	//~ Instance fields --------------------------------------------------------
+	private String sCauseMessage;
 
-	private String			    sCauseMessage;
 	private Map<String, String> rErrorParameters;
-	private boolean			    bRecoverable;
+
+	private boolean bRecoverable;
 
 	private ProcessState rProcessState = null;
 
-	//~ Constructors -----------------------------------------------------------
-
-	/***************************************
+	/**
 	 * @see Exception#Exception()
 	 */
-	public ServiceException()
-	{
+	public ServiceException() {
 	}
 
-	/***************************************
+	/**
 	 * @see Exception#Exception(String)
 	 */
-	public ServiceException(String sMessage)
-	{
+	public ServiceException(String sMessage) {
 		super(sMessage);
 	}
 
-	/***************************************
+	/**
 	 * @see Exception#Exception(Throwable)
 	 */
-	public ServiceException(Throwable eCause)
-	{
+	public ServiceException(Throwable eCause) {
 		this(null, eCause);
 	}
 
-	/***************************************
+	/**
 	 * @see Exception#Exception(String, Throwable)
 	 */
-	public ServiceException(String sMessage, Throwable eCause)
-	{
+	public ServiceException(String sMessage, Throwable eCause) {
 		super(sMessage, eCause);
 
-		do
-		{
+		do {
 			sCauseMessage = eCause.getMessage();
-			eCause		  = eCause.getCause();
-		}
-		while (eCause != null);
+			eCause = eCause.getCause();
+		} while (eCause != null);
 	}
 
-	/***************************************
+	/**
 	 * Creates a new instance of a recoverable service exception. A recoverable
 	 * exception will return TRUE from the {@link #isRecoverable()} method. It
 	 * provides additional information about the causing problem by returning a
-	 * map containing the causing parameters and a description of the error from
+	 * map containing the causing parameters and a description of the error
+	 * from
 	 * the method {@link #getErrorParameters()} and optionally an updated
 	 * process state from {@link #getProcessState()}.
 	 *
@@ -93,72 +83,67 @@ public class ServiceException extends Exception
 	 * @param rProcessState    An updated process state that reflects parameter
 	 *                         updates for the signaled error
 	 */
-	public ServiceException(String				sMessage,
-							Map<String, String> rErrorParameters,
-							ProcessState		rProcessState)
-	{
+	public ServiceException(String sMessage,
+		Map<String, String> rErrorParameters, ProcessState rProcessState) {
 		super(sMessage);
 
 		this.rErrorParameters = rErrorParameters;
-		this.bRecoverable     = true;
-		this.rProcessState    = rProcessState;
+		this.bRecoverable = true;
+		this.rProcessState = rProcessState;
 	}
 
-	/***************************************
+	/**
 	 * A constructor for subclasses that need to indicate a recoverable state.
 	 *
 	 * @see #ServiceException(String)
 	 */
-	protected ServiceException(String sMessage, boolean bRecoverable)
-	{
+	protected ServiceException(String sMessage, boolean bRecoverable) {
 		this(sMessage);
 
 		this.bRecoverable = bRecoverable;
 	}
 
-	//~ Methods ----------------------------------------------------------------
-
-	/***************************************
-	 * Returns the message of the root cause exception of this instance. This is
+	/**
+	 * Returns the message of the root cause exception of this instance.
+	 * This is
 	 * needed for clients because the chain of cause messages is lost on GWT
 	 * serialization.
 	 *
 	 * @return The causing exception's message or NULL for none
 	 */
-	public final String getCauseMessage()
-	{
+	public final String getCauseMessage() {
 		return sCauseMessage;
 	}
 
-	/***************************************
-	 * Returns the optional parameters of a recoverable exception. The result is
+	/**
+	 * Returns the optional parameters of a recoverable exception. The
+	 * result is
 	 * a map of strings that contains the erroneous parameters as the keys and
 	 * the associated error message as the values.
 	 *
-	 * @return A map from erroneous parameters to error messages (NULL for none)
+	 * @return A map from erroneous parameters to error messages (NULL for
+	 * none)
 	 */
-	public Map<String, String> getErrorParameters()
-	{
+	public Map<String, String> getErrorParameters() {
 		return rErrorParameters;
 	}
 
-	/***************************************
-	 * Returns an optional process state that is associated with this exception.
+	/**
+	 * Returns an optional process state that is associated with this
+	 * exception.
 	 *
 	 * @return The process state or NULL for none
 	 */
-	public ProcessState getProcessState()
-	{
+	public ProcessState getProcessState() {
 		return rProcessState;
 	}
 
-	/***************************************
+	/**
 	 * Indicates whether this exception is recoverable.
 	 *
 	 * @return TRUE if this
 	 */
-	public boolean isRecoverable()
-	{
+	public boolean isRecoverable() {
 		return bRecoverable;
 	}
 }

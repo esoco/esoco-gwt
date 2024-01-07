@@ -23,18 +23,17 @@ import de.esoco.data.element.StringListDataElement;
 
 import de.esoco.lib.property.PropertyName;
 
-
-/********************************************************************
+/**
  * A standard interface for services that require a user to authenticate before
  * service methods can be executed.
  *
  * @author eso
  */
-public interface AuthenticatedService extends CommandService
-{
-	//~ Static fields/initializers ---------------------------------------------
+public interface AuthenticatedService extends CommandService {
 
-	/** A property name for the session ID. */
+	/**
+	 * A property name for the session ID.
+	 */
 	public static final PropertyName<String> SESSION_ID =
 		PropertyName.newStringName("SessionID");
 
@@ -69,11 +68,14 @@ public interface AuthenticatedService extends CommandService
 	 */
 	public static final String USER_ROLES = "Roles";
 
-	//- Commands ---------------------------------------------------------------
+	//- Commands
+	// ---------------------------------------------------------------
 
 	/**
-	 * This command performs a login. The argument is a string data element with
-	 * the login name as it's name and the password as the value. If the call is
+	 * This command performs a login. The argument is a string data element
+	 * with
+	 * the login name as it's name and the password as the value. If the
+	 * call is
 	 * an attempt to re-login an expired session the data element may contain a
 	 * property with the name {@link #SESSION_ID} that contains the previous
 	 * session ID (typically stored by the client in a cookie) to re-use the
@@ -90,7 +92,8 @@ public interface AuthenticatedService extends CommandService
 
 	/**
 	 * This command returns the data of the user that is currently logged in as
-	 * described for the {@link #LOGIN} command. If the user is not logged in an
+	 * described for the {@link #LOGIN} command. If the user is not logged
+	 * in an
 	 * {@link AuthenticationException} will be thrown. No input value is
 	 * required and it should be NULL.
 	 */
@@ -98,7 +101,8 @@ public interface AuthenticatedService extends CommandService
 		Command.newInstance("GET_USER_DATA");
 
 	/**
-	 * This command performs a log out of the current user. If no user is logged
+	 * This command performs a log out of the current user. If no user is
+	 * logged
 	 * in it will have no effect. No input value is required and it should be
 	 * NULL. This is a VOID call, i.e. the returned value is always NULL.
 	 */
@@ -106,10 +110,12 @@ public interface AuthenticatedService extends CommandService
 		Command.newInstance("LOGOUT");
 
 	/**
-	 * A command to change the password of the currently authenticated user. The
-	 * input data element must contain the old password as it's name and the new
+	 * A command to change the password of the currently authenticated user.
+	 * The
+	 * input data element must contain the old password as it's name and the
+	 * new
 	 * password as it's value.
 	 */
-	public static final Command<StringDataElement, DataElement<?>> CHANGE_PASSWORD =
-		Command.newInstance("CHANGE_PASSWORD");
+	public static final Command<StringDataElement, DataElement<?>>
+		CHANGE_PASSWORD = Command.newInstance("CHANGE_PASSWORD");
 }

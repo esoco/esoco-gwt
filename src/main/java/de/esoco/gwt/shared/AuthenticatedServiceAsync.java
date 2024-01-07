@@ -16,11 +16,10 @@
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 package de.esoco.gwt.shared;
 
-/********************************************************************
+/**
  * The asynchronous interface for the {@link AuthenticatedService}.
  *
  * @author eso
  */
-public interface AuthenticatedServiceAsync extends CommandServiceAsync
-{
+public interface AuthenticatedServiceAsync extends CommandServiceAsync {
 }

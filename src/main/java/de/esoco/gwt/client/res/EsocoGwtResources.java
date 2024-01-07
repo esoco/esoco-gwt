@@ -19,23 +19,20 @@ package de.esoco.gwt.client.res;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.resources.client.ClientBundle;
 
-
-/********************************************************************
+/**
  * The resource bundle for the GWT framework.
  *
  * @author eso
  */
-public interface EsocoGwtResources extends ClientBundle
-{
-	//~ Static fields/initializers ---------------------------------------------
+public interface EsocoGwtResources extends ClientBundle {
 
-	/** The singleton instance of this class. */
+	/**
+	 * The singleton instance of this class.
+	 */
 	public static final EsocoGwtResources INSTANCE =
 		GWT.create(EsocoGwtResources.class);
 
-	//~ Methods ----------------------------------------------------------------
-
-	/***************************************
+	/**
 	 * CSS
 	 *
 	 * @return CSS

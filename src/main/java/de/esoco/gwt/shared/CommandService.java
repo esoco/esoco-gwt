@@ -22,8 +22,7 @@ import de.esoco.gwt.server.CommandServiceImpl;
 
 import com.google.gwt.user.client.rpc.RemoteService;
 
-
-/********************************************************************
+/**
  * The interface for an abstract service class that can execute the commands
  * that are defined by derived interfaces. Sub-interfaces define commands as
  * singleton constants of the type {@link Command}. Each command should have a
@@ -33,22 +32,17 @@ import com.google.gwt.user.client.rpc.RemoteService;
  *
  * @author eso
  */
-public interface CommandService extends RemoteService
-{
-	//~ Methods ----------------------------------------------------------------
+public interface CommandService extends RemoteService {
 
-	/***************************************
+	/**
 	 * Executes a command in the service.
 	 *
-	 * @param  rCommand The command to execute
-	 * @param  rData    The data to be processed by the command
-	 *
-	 * @return The resulting data element (will be NULL for commands that do not
-	 *         return a result)
-	 *
-	 * @throws ServiceException
+	 * @param rCommand The command to execute
+	 * @param rData    The data to be processed by the command
+	 * @return The resulting data element (will be NULL for commands that do
+	 * not
+	 * return a result)
 	 */
 	public <T extends DataElement<?>, R extends DataElement<?>> R executeCommand(
-		Command<T, R> rCommand,
-		T			  rData) throws ServiceException;
+		Command<T, R> rCommand, T rData) throws ServiceException;
 }

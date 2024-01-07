@@ -18,15 +18,12 @@ package de.esoco.gwt.shared;
 
 import de.esoco.data.element.DataElementList;
 
-
-/********************************************************************
+/**
  * The base interface for application GWT RPC services.
  *
  * @author eso
  */
-public interface GwtApplicationService extends ProcessService
-{
-	//~ Static fields/initializers ---------------------------------------------
+public interface GwtApplicationService extends ProcessService {
 
 	/**
 	 * Name of the data element in the user data that contains the processes

@@ -24,39 +24,28 @@ import de.esoco.ewt.style.StyleData;
 
 import de.esoco.lib.property.LayoutType;
 
-
-/********************************************************************
- * A panel manager for the layout type {@link LayoutType#INLINE} that adds it's data
- * element UIs to the parent container.
+/**
+ * A panel manager for the layout type {@link LayoutType#INLINE} that adds it's
+ * data element UIs to the parent container.
  *
  * @author eso
  */
-public class DataElementInlinePanelManager extends DataElementPanelManager
-{
-	//~ Constructors -----------------------------------------------------------
+public class DataElementInlinePanelManager extends DataElementPanelManager {
 
-	/***************************************
-	 * @see DataElementPanelManager#DataElementPanelManager(PanelManager, DataElementList)
+	/**
+	 * @see DataElementPanelManager#DataElementPanelManager(PanelManager,
+	 * DataElementList)
 	 */
-	public DataElementInlinePanelManager(
-		PanelManager<?, ?> rParent,
-		DataElementList    rDataElementList)
-	{
+	public DataElementInlinePanelManager(PanelManager<?, ?> rParent,
+		DataElementList rDataElementList) {
 		super(rParent, rDataElementList);
 	}
 
-	//~ Methods ----------------------------------------------------------------
-
-	/***************************************
-	 * {@inheritDoc}
-	 */
 	@Override
 	@SuppressWarnings("unchecked")
 	protected ContainerBuilder<? extends Panel> createPanel(
-		ContainerBuilder<?> rBuilder,
-		StyleData			rStyleData,
-		LayoutType				eLayout)
-	{
+		ContainerBuilder<?> rBuilder, StyleData rStyleData,
+		LayoutType eLayout) {
 		return (ContainerBuilder<? extends Panel>) rBuilder;
 	}
 }

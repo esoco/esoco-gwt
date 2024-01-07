@@ -33,98 +33,72 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.function.Function;
 
-
-/********************************************************************
+/**
  * The central factory for new instances of {@link DataElementUI}.
  *
  * @author eso
  */
-public class DataElementUIFactory
-{
-	//~ Static fields/initializers ---------------------------------------------
+public class DataElementUIFactory {
 
-	private static Map<String, Function<DataElement<?>, DataElementUI<?>>> aDataElementRegistry =
-		new HashMap<>();
+	private static Map<String, Function<DataElement<?>, DataElementUI<?>>>
+		aDataElementRegistry = new HashMap<>();
 
-	static
-	{
-		registerDataElementUI(
-			DataElement.class,
+	static {
+		registerDataElementUI(DataElement.class,
 			DataElementUIFactory::createDefaultUI);
-		registerDataElementUI(
-			StringDataElement.class,
+		registerDataElementUI(StringDataElement.class,
 			DataElementUIFactory::createDefaultUI);
-		registerDataElementUI(
-			StringListDataElement.class,
+		registerDataElementUI(StringListDataElement.class,
 			DataElementUIFactory::createDefaultUI);
-		registerDataElementUI(
-			DataElementList.class,
+		registerDataElementUI(DataElementList.class,
 			e -> new DataElementListUI());
-		registerDataElementUI(
-			BooleanDataElement.class,
+		registerDataElementUI(BooleanDataElement.class,
 			e -> new BooleanDataElementUI());
-		registerDataElementUI(
-			IntegerDataElement.class,
+		registerDataElementUI(IntegerDataElement.class,
 			e -> new IntegerDataElementUI());
-		registerDataElementUI(
-			BigDecimalDataElement.class,
+		registerDataElementUI(BigDecimalDataElement.class,
 			e -> new BigDecimalDataElementUI());
-		registerDataElementUI(
-			DateDataElement.class,
+		registerDataElementUI(DateDataElement.class,
 			e -> new DateDataElementUI());
-		registerDataElementUI(
-			PeriodDataElement.class,
+		registerDataElementUI(PeriodDataElement.class,
 			e -> new PeriodDataElementUI());
-		registerDataElementUI(
-			SelectionDataElement.class,
+		registerDataElementUI(SelectionDataElement.class,
 			e -> new SelectionDataElementUI());
 	}
 
-	//~ Constructors -----------------------------------------------------------
-
-	/***************************************
+	/**
 	 * Private, only static use.
 	 */
-	private DataElementUIFactory()
-	{
+	private DataElementUIFactory() {
 	}
 
-	//~ Static methods ---------------------------------------------------------
-
-	/***************************************
+	/**
 	 * A factory method that creates a new data element user interface object
 	 * for a certain data element.
 	 *
-	 * @param  rPanelManager The parent panel manager of the new element UI
-	 * @param  rElement      The data element to create the user interface for
-	 *
+	 * @param rPanelManager The parent panel manager of the new element UI
+	 * @param rElement      The data element to create the user interface for
 	 * @return An instance of a subclass for the given data element
-	 *
 	 * @throws IllegalArgumentException If no matching UI could be created
 	 */
 	@SuppressWarnings("unchecked")
 	public static <T, D extends DataElement<T>> DataElementUI<?> create(
-		DataElementPanelManager rPanelManager,
-		D						rElement)
-	{
+		DataElementPanelManager rPanelManager, D rElement) {
 		DataElementUI<?> aUI = null;
 
 		Function<DataElement<?>, DataElementUI<?>> rUiFactory =
 			aDataElementRegistry.get(rElement.getClass().getName());
 
-		if (rUiFactory == null)
-		{
+		if (rUiFactory == null) {
 			EWT.log("No UI factory for " + rElement.getClass());
 			rUiFactory = aDataElementRegistry.get(DataElement.class.getName());
 		}
 
-		if (rUiFactory != null)
-		{
+		if (rUiFactory != null) {
 			aUI = rUiFactory.apply(rElement);
 		}
 
-		if (aUI == null)
-		{
+		if (aUI == null) {
 			throw new IllegalArgumentException(
 				"No UI for data element " + rElement);
 		}
@@ -134,26 +108,47 @@ public class DataElementUIFactory
 		return aUI;
 	}
 
-	/***************************************
-	 * Returns the registered data element UI factory for a certain data element
+	/**
+	 * Internal generically typed method to create the default UI for a data
+	 * element that has no specific factory.
+	 *
+	 * @param rElement The element to create the UI for
+	 * @return The new default UI
+	 */
+	@SuppressWarnings("unchecked")
+	static <D extends DataElement<?>> DataElementUI<D> createDefaultUI(
+		D rElement) {
+		DataElementUI<D> aUI;
+
+		if (rElement.getAllowedValues() != null) {
+			aUI = (DataElementUI<D>) new ValueListDataElementUI();
+		} else {
+			aUI = (DataElementUI<D>) new DataElementUI<DataElement<?>>();
+		}
+
+		return aUI;
+	}
+
+	/**
+	 * Returns the registered data element UI factory for a certain data
+	 * element
 	 * type. The returned value can be used to create UI factories with a
 	 * fallback on previously registered UIs.
 	 *
-	 * @param  rDataElementClass The data element type class
-	 *
+	 * @param rDataElementClass The data element type class
 	 * @return The factory function for the type or NULL if none has been
-	 *         registered so far
+	 * registered so far
 	 */
 	@SuppressWarnings("unchecked")
-	public static <D extends DataElement<?>, U extends DataElementUI<D>> Function<D, U>
-	getRegisteredUI(Class<D> rDataElementClass)
-	{
+	public static <D extends DataElement<?>, U extends DataElementUI<D>> Function<D, U> getRegisteredUI(
+		Class<D> rDataElementClass) {
 		return (Function<D, U>) aDataElementRegistry.get(
 			rDataElementClass.getName());
 	}
 
-	/***************************************
-	 * Registers a data element UI factory for a certain data element type. This
+	/**
+	 * Registers a data element UI factory for a certain data element type.
+	 * This
 	 * will replace any previously registered factory if such exists. If an
 	 * existing factory should be extended instead the original can be queried
 	 * with {@link #getRegisteredUI(Class)}.
@@ -162,37 +157,9 @@ public class DataElementUIFactory
 	 * @param rFactory          The factory function for the type
 	 */
 	@SuppressWarnings("unchecked")
-	public static <D extends DataElement<?>, U extends DataElementUI<D>> void
-	registerDataElementUI(Class<D> rDataElementClass, Function<D, U> rFactory)
-	{
-		aDataElementRegistry.put(
-			rDataElementClass.getName(),
+	public static <D extends DataElement<?>, U extends DataElementUI<D>> void registerDataElementUI(
+		Class<D> rDataElementClass, Function<D, U> rFactory) {
+		aDataElementRegistry.put(rDataElementClass.getName(),
 			(Function<DataElement<?>, DataElementUI<?>>) rFactory);
-	}
-
-	/***************************************
-	 * Internal generically typed method to create the default UI for a data
-	 * element that has no specific factory.
-	 *
-	 * @param  rElement The element to create the UI for
-	 *
-	 * @return The new default UI
-	 */
-	@SuppressWarnings("unchecked")
-	static <D extends DataElement<?>> DataElementUI<D> createDefaultUI(
-		D rElement)
-	{
-		DataElementUI<D> aUI;
-
-		if (rElement.getAllowedValues() != null)
-		{
-			aUI = (DataElementUI<D>) new ValueListDataElementUI();
-		}
-		else
-		{
-			aUI = (DataElementUI<D>) new DataElementUI<DataElement<?>>();
-		}
-
-		return aUI;
 	}
 }

@@ -37,8 +37,7 @@ import java.util.Set;
 import com.google.gwt.regexp.shared.MatchResult;
 import com.google.gwt.regexp.shared.RegExp;
 
-
-/********************************************************************
+/**
  * A simple data model implementation that is based on a list. A name can be
  * assigned to instances so that they can be rendered directly in certain user
  * interface elements. This data model is sortable and searchable.
@@ -46,234 +45,166 @@ import com.google.gwt.regexp.shared.RegExp;
  * @author ueggers
  */
 public class FilterableListDataModel<T extends DataModel<String>>
-	extends ListDataModel<T> implements SortableDataModel<T>,
-										FilterableDataModel<T>, Serializable
-{
-	//~ Static fields/initializers ---------------------------------------------
+	extends ListDataModel<T>
+	implements SortableDataModel<T>, FilterableDataModel<T>, Serializable {
 
 	private static final long serialVersionUID = 1L;
-
-	//~ Instance fields --------------------------------------------------------
-
-	private List<T>				   rData;
-	private List<T>				   aDataCopy;
-	private List<ColumnDefinition> rColumns;
-	private boolean				   bNewFilters;
-	private List<String>		   aFieldIds = new ArrayList<String>();
 
 	HashMap<String, SortDirection> aColumnSorting =
 		new LinkedHashMap<String, SortDirection>();
 
 	HashMap<String, String> aFilters = new LinkedHashMap<String, String>();
 
-	private RegExp rConstraintPattern =
-		RegExp.compile("([" +
-					   FilterableDataModel.CONSTRAINT_OR_PREFIX +
-					   FilterableDataModel.CONSTRAINT_AND_PREFIX +
-					   "])([" +
-					   FilterableDataModel.CONSTRAINT_COMPARISON_CHARS +
-					   "])(.*)");
+	private List<T> rData;
 
-	//~ Constructors -----------------------------------------------------------
+	private List<T> aDataCopy;
 
-	/***************************************
+	private List<ColumnDefinition> rColumns;
+
+	private boolean bNewFilters;
+
+	private List<String> aFieldIds = new ArrayList<String>();
+
+	private RegExp rConstraintPattern = RegExp.compile(
+		"([" + FilterableDataModel.CONSTRAINT_OR_PREFIX +
+			FilterableDataModel.CONSTRAINT_AND_PREFIX + "])([" +
+			FilterableDataModel.CONSTRAINT_COMPARISON_CHARS + "])(.*)");
+
+	/**
 	 * Creates a new instance.
 	 *
 	 * @param sName    The name of this model.
 	 * @param rData    The model's data
 	 * @param rColumns The columns definitions
 	 */
-	public FilterableListDataModel(String				  sName,
-								   List<T>				  rData,
-								   List<ColumnDefinition> rColumns)
-	{
+	public FilterableListDataModel(String sName, List<T> rData,
+		List<ColumnDefinition> rColumns) {
 		super(sName, rData);
 
-		this.rData     = rData;
+		this.rData = rData;
 		this.aDataCopy = new ArrayList<T>(rData);
-		this.rColumns  = rColumns;
+		this.rColumns = rColumns;
 
-		for (ColumnDefinition rColumnDefinition : rColumns)
-		{
+		for (ColumnDefinition rColumnDefinition : rColumns) {
 			aFieldIds.add(rColumnDefinition.getId());
 		}
 	}
 
-	//~ Methods ----------------------------------------------------------------
-
-	/***************************************
-	 * {@inheritDoc}
-	 */
 	@Override
-	public T getElement(int nIndex)
-	{
+	public T getElement(int nIndex) {
 		applyConstraints();
 
 		return super.getElement(nIndex);
 	}
 
-	/***************************************
-	 * {@inheritDoc}
-	 */
 	@Override
-	public int getElementCount()
-	{
+	public int getElementCount() {
 		applyConstraints();
 
 		return super.getElementCount();
 	}
 
-	/***************************************
-	 * {@inheritDoc}
-	 */
 	@Override
-	public String getFilter(String sFieldId)
-	{
+	public String getFilter(String sFieldId) {
 		return aFilters.get(sFieldId);
 	}
 
-	/***************************************
-	 * {@inheritDoc}
-	 */
 	@Override
-	public Map<String, String> getFilters()
-	{
+	public Map<String, String> getFilters() {
 		return aFilters;
 	}
 
-	/***************************************
-	 * {@inheritDoc}
-	 */
 	@Override
-	public SortDirection getSortDirection(String sFieldId)
-	{
+	public SortDirection getSortDirection(String sFieldId) {
 		SortDirection eSortDirection = aColumnSorting.get(sFieldId);
 
 		return eSortDirection != null ? eSortDirection : null;
 	}
 
-	/***************************************
-	 * {@inheritDoc}
-	 */
 	@Override
-	public void removeAllFilters()
-	{
+	public void removeAllFilters() {
 		aFilters.clear();
 		bNewFilters = true;
 	}
 
-	/***************************************
-	 * {@inheritDoc}
-	 */
 	@Override
-	public void removeSorting()
-	{
+	public void removeSorting() {
 		aColumnSorting.clear();
 		bNewFilters = true;
 	}
 
-	/***************************************
-	 * {@inheritDoc}
-	 */
 	@Override
-	public void setFilter(String sFieldId, String sFilter)
-	{
-		if (sFilter != null && !sFilter.isEmpty())
-		{
+	public void setFilter(String sFieldId, String sFilter) {
+		if (sFilter != null && !sFilter.isEmpty()) {
 			aFilters.put(sFieldId, sFilter);
-		}
-		else
-		{
+		} else {
 			aFilters.remove(sFieldId);
 		}
 
 		bNewFilters = true;
 	}
 
-	/***************************************
-	 * {@inheritDoc}
-	 */
 	@Override
-	public void setFilters(Map<String, String> rFilters)
-	{
+	public void setFilters(Map<String, String> rFilters) {
 		aFilters.clear();
 		aFilters.putAll(rFilters);
 		bNewFilters = true;
 	}
 
-	/***************************************
-	 * {@inheritDoc}
-	 */
 	@Override
-	public void setSortDirection(String sFieldId, SortDirection rMode)
-	{
-		if (rMode != null)
-		{
+	public void setSortDirection(String sFieldId, SortDirection rMode) {
+		if (rMode != null) {
 			aColumnSorting.put(sFieldId, rMode);
-		}
-		else
-		{
+		} else {
 			aColumnSorting.remove(sFieldId);
 		}
 
 		bNewFilters = true;
 	}
 
-	/***************************************
+	/**
 	 * Applies the defined constraints for sorting and filtering. This
 	 * effectively sets the elements and their order in the data model.
 	 */
-	private void applyConstraints()
-	{
-		if (bNewFilters)
-		{
+	private void applyConstraints() {
+		if (bNewFilters) {
 			performFiltering();
 			performSorting();
 			bNewFilters = false;
 		}
 	}
 
-	/***************************************
+	/**
 	 * Applies all the filtering constraints to the data.
 	 */
-	private void performFiltering()
-	{
+	private void performFiltering() {
 		rData.clear();
 
 		List<T> aAllData = new ArrayList<T>(aDataCopy);
 
-		for (T rT : aAllData)
-		{
-			boolean     bSatisfies = aFilters.isEmpty();
-			Set<String> sFieldIds  = aFilters.keySet();
+		for (T rT : aAllData) {
+			boolean bSatisfies = aFilters.isEmpty();
+			Set<String> sFieldIds = aFilters.keySet();
 
 			int nIndex = 0;
 
-			for (String sFieldId : sFieldIds)
-			{
+			for (String sFieldId : sFieldIds) {
 				String sValue = rT.getElement(aFieldIds.indexOf(sFieldId));
 
 				String sConstraints = aFilters.get(sFieldId);
 
-				boolean bAttrOr =
-					sConstraints.charAt(0) ==
+				boolean bAttrOr = sConstraints.charAt(0) ==
 					FilterableDataModel.CONSTRAINT_OR_PREFIX;
 
 				boolean bSatisfiesConstraints =
 					satisfiesConstraints(sConstraints, sValue);
 
-				if (nIndex == 0)
-				{
+				if (nIndex == 0) {
 					bSatisfies = bSatisfiesConstraints;
-				}
-				else
-				{
-					if (bAttrOr)
-					{
+				} else {
+					if (bAttrOr) {
 						bSatisfies = bSatisfiesConstraints || bSatisfies;
-					}
-					else
-					{
+					} else {
 						bSatisfies = bSatisfiesConstraints && bSatisfies;
 					}
 				}
@@ -281,25 +212,21 @@ public class FilterableListDataModel<T extends DataModel<String>>
 				nIndex++;
 			}
 
-			if (bSatisfies)
-			{
+			if (bSatisfies) {
 				rData.add(rT);
 			}
 		}
 	}
 
-	/***************************************
+	/**
 	 * Performs the sorting according to the sorting preferences.
 	 */
 
-	private void performSorting()
-	{
-		if (aColumnSorting.size() > 0)
-		{
+	private void performSorting() {
+		if (aColumnSorting.size() > 0) {
 			Set<String> sFieldIds = aColumnSorting.keySet();
 
-			for (final String sFielId : sFieldIds)
-			{
+			for (final String sFielId : sFieldIds) {
 				final SortDirection eSortDirection =
 					aColumnSorting.get(sFielId);
 
@@ -308,103 +235,86 @@ public class FilterableListDataModel<T extends DataModel<String>>
 				final ColumnDefinition rColumnDefinition =
 					rColumns.get(nFieldIndex);
 
-				Collections.sort(rData,
-					new Comparator<DataModel<String>>()
-					{
-						@Override
-						public int compare(
-							DataModel<String> rDataModel,
-							DataModel<String> rDataModelCmp)
-						{
-							String sValue = rDataModel.getElement(nFieldIndex);
+				Collections.sort(rData, new Comparator<DataModel<String>>() {
+					@Override
+					public int compare(DataModel<String> rDataModel,
+						DataModel<String> rDataModelCmp) {
+						String sValue = rDataModel.getElement(nFieldIndex);
 
-							String sCompareValue =
-								rDataModelCmp.getElement(nFieldIndex);
+						String sCompareValue =
+							rDataModelCmp.getElement(nFieldIndex);
 
-							int nResult = 0;
+						int nResult = 0;
 
-							if (eSortDirection == SortDirection.DESCENDING)
-							{
-								nResult =
-									compareFieldValues(sCompareValue, sValue);
-							}
-							else
-							{
-								nResult =
-									compareFieldValues(sValue, sCompareValue);
-							}
-
-							return nResult;
+						if (eSortDirection == SortDirection.DESCENDING) {
+							nResult = compareFieldValues(sCompareValue,
+								sValue);
+						} else {
+							nResult = compareFieldValues(sValue,
+								sCompareValue);
 						}
 
-						private int compareFieldValues(
-							String sValue,
-							String sCompareValue)
-						{
-							int nResult = 0;
+						return nResult;
+					}
 
-							if (rColumnDefinition.getDatatype()
-								.equals(Integer.class.getName()))
-							{
-								nResult =
-									Integer.valueOf(sValue)
-										   .compareTo(Integer.valueOf(sCompareValue));
-							}
-							else
-							{
-								nResult = sValue.compareTo(sCompareValue);
-							}
+					private int compareFieldValues(String sValue,
+						String sCompareValue) {
+						int nResult = 0;
 
-							return nResult;
+						if (rColumnDefinition
+							.getDatatype()
+							.equals(Integer.class.getName())) {
+							nResult = Integer
+								.valueOf(sValue)
+								.compareTo(Integer.valueOf(sCompareValue));
+						} else {
+							nResult = sValue.compareTo(sCompareValue);
 						}
-					});
+
+						return nResult;
+					}
+				});
 			}
 		}
 	}
 
-	/***************************************
+	/**
 	 * Checks whether a given value satisfies a given search constraints. The
-	 * search constrains are parsed and split up using {@link
-	 * FilterableDataModel#CONSTRAINT_SEPARATOR}. The resulting string elements
-	 * contain a constraint prefix, a comparison operator and a constraint
-	 * value. The regular expression {@link #rConstraintPattern} is used to
-	 * retrieve the three parts from the string elements.
+	 * search constrains are parsed and split up using
+	 * {@link FilterableDataModel#CONSTRAINT_SEPARATOR}. The resulting string
+	 * elements contain a constraint prefix, a comparison operator and a
+	 * constraint value. The regular expression {@link #rConstraintPattern} is
+	 * used to retrieve the three parts from the string elements.
 	 *
-	 * @param  sConstraints The search constraints in string representation
-	 * @param  sValue       a value to be checked.
-	 *
+	 * @param sConstraints The search constraints in string representation
+	 * @param sValue       a value to be checked.
 	 * @return TRUE if a given value satisfies the given search constraints
-	 *         FALSE otherwise.
+	 * FALSE otherwise.
 	 */
-	private boolean satisfiesConstraints(String sConstraints, String sValue)
-	{
+	private boolean satisfiesConstraints(String sConstraints, String sValue) {
 		boolean bSatisfies = true;
 
 		String[] rContraints =
 			sConstraints.split(FilterableDataModel.CONSTRAINT_SEPARATOR);
 
-		for (int i = 0; i < rContraints.length; i++)
-		{
+		for (int i = 0; i < rContraints.length; i++) {
 			String sConstraint = rContraints[i];
 
 			MatchResult rConstraintMatcher =
 				rConstraintPattern.exec(sConstraint);
 
-			if (rConstraintMatcher != null)
-			{
-				String sPrefix		    = rConstraintMatcher.getGroup(1);
-				String sComparison	    = rConstraintMatcher.getGroup(2);
+			if (rConstraintMatcher != null) {
+				String sPrefix = rConstraintMatcher.getGroup(1);
+				String sComparison = rConstraintMatcher.getGroup(2);
 				String sConstraintValue = rConstraintMatcher.getGroup(3);
 
-				boolean bOr =
-					sPrefix.equals(String.valueOf(FilterableDataModel.CONSTRAINT_OR_PREFIX));
+				boolean bOr = sPrefix.equals(
+					String.valueOf(FilterableDataModel.CONSTRAINT_OR_PREFIX));
 
 				boolean bSatisfiesConstraint = false;
 
-				if (sConstraintValue != null && sValue != null)
-				{
-					switch (sComparison)
-					{
+				if (sConstraintValue != null && sValue != null) {
+					switch (sComparison) {
 						case "=":
 							bSatisfiesConstraint =
 								satisfiesEquals(sConstraintValue, sValue);
@@ -421,8 +331,7 @@ public class FilterableListDataModel<T extends DataModel<String>>
 							String[] rConstraintItems =
 								sConstraintValue.split(",");
 
-							for (String sConstraintItem : rConstraintItems)
-							{
+							for (String sConstraintItem : rConstraintItems) {
 								bSatisfiesConstraint |=
 									satisfiesEquals(sConstraintItem, sValue);
 							}
@@ -451,18 +360,12 @@ public class FilterableListDataModel<T extends DataModel<String>>
 					}
 				}
 
-				if (i == 0)
-				{
+				if (i == 0) {
 					bSatisfies = bSatisfies && bSatisfiesConstraint;
-				}
-				else
-				{
-					if (bOr)
-					{
+				} else {
+					if (bOr) {
 						bSatisfies = bSatisfies || bSatisfiesConstraint;
-					}
-					else
-					{
+					} else {
 						bSatisfies = bSatisfies && bSatisfiesConstraint;
 					}
 				}
@@ -472,42 +375,36 @@ public class FilterableListDataModel<T extends DataModel<String>>
 		return bSatisfies;
 	}
 
-	/***************************************
+	/**
 	 * Checks whether the given value satisfies the given constraint value when
 	 * the equals "=" operator is applied. This check also respects wildcards
 	 * (*) in the constraint value.
 	 *
-	 * @param  sConstraintValue The search constraint value
-	 * @param  sValue           The value to check for a match.
-	 *
-	 * @return Whether the given value satisfies the given constraint value when
-	 *         the equals "=" operator is applied.
+	 * @param sConstraintValue The search constraint value
+	 * @param sValue           The value to check for a match.
+	 * @return Whether the given value satisfies the given constraint value
+	 * when
+	 * the equals "=" operator is applied.
 	 */
-	private boolean satisfiesEquals(String sConstraintValue, String sValue)
-	{
+	private boolean satisfiesEquals(String sConstraintValue, String sValue) {
 		boolean bSatisfiesConstraint = false;
 
-		if (sConstraintValue.contains("*"))
-		{
+		if (sConstraintValue.contains("*")) {
 			String sFlags = "";
 
-			if (RegExp.compile("[A-Z]+")
-				.exec(sConstraintValue.replaceAll("\\*", "")) ==
-				null)
-			{
+			if (RegExp
+				.compile("[A-Z]+")
+				.exec(sConstraintValue.replaceAll("\\*", "")) == null) {
 				sFlags += "i";
 			}
 
-			RegExp	    rCompile =
-				RegExp.compile("^" +
-							   sConstraintValue.replaceAll("\\*", ".*"),
-							   sFlags);
-			MatchResult rExec    = rCompile.exec(sValue);
+			RegExp rCompile =
+				RegExp.compile("^" + sConstraintValue.replaceAll("\\*", ".*"),
+					sFlags);
+			MatchResult rExec = rCompile.exec(sValue);
 
 			bSatisfiesConstraint = rExec != null;
-		}
-		else
-		{
+		} else {
 			bSatisfiesConstraint = sConstraintValue.equals(sValue);
 		}
 

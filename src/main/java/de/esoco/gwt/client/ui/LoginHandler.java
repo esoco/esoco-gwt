@@ -18,24 +18,21 @@ package de.esoco.gwt.client.ui;
 
 import de.esoco.data.element.DataElementList;
 
-
-/********************************************************************
+/**
  * An interface that must be implemented to handle login callbacks.
  *
  * @author eso
  */
-public interface LoginHandler
-{
-	//~ Methods ----------------------------------------------------------------
+public interface LoginHandler {
 
-	/***************************************
+	/**
 	 * Will be invoked if the login failed.
 	 *
 	 * @param rError The exception that signaled the failure
 	 */
 	public void loginFailed(Exception rError);
 
-	/***************************************
+	/**
 	 * Will be invoked if the login was successful.
 	 *
 	 * @param rUserData A list of data elements containing information related

@@ -20,40 +20,29 @@ import de.esoco.data.element.DataElement;
 
 import de.esoco.gwt.shared.Command;
 
-
-/********************************************************************
+/**
  * A default command result handler implementation that forwards failures to the
  * method {@link PanelManager#handleCommandFailure(Command, Throwable)}.
  *
  * @author eso
  */
 public abstract class DefaultCommandResultHandler<T extends DataElement<?>>
-	implements CommandResultHandler<T>
-{
-	//~ Instance fields --------------------------------------------------------
+	implements CommandResultHandler<T> {
 
 	private PanelManager<?, ?> rPanelManager;
 
-	//~ Constructors -----------------------------------------------------------
-
-	/***************************************
+	/**
 	 * Creates a new instance.
 	 *
 	 * @param rPanelManager The panel manager this instance belongs to
 	 */
-	public DefaultCommandResultHandler(PanelManager<?, ?> rPanelManager)
-	{
+	public DefaultCommandResultHandler(PanelManager<?, ?> rPanelManager) {
 		this.rPanelManager = rPanelManager;
 	}
 
-	//~ Methods ----------------------------------------------------------------
-
-	/***************************************
-	 * {@inheritDoc}
-	 */
 	@Override
-	public void handleCommandFailure(Command<?, ?> rCommand, Throwable rCaught)
-	{
+	public void handleCommandFailure(Command<?, ?> rCommand,
+		Throwable rCaught) {
 		rPanelManager.handleCommandFailure(rCommand, rCaught);
 	}
 }

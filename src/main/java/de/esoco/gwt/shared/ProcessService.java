@@ -21,20 +21,21 @@ import de.esoco.data.process.ProcessState;
 
 import de.esoco.lib.property.PropertyName;
 
-
-/********************************************************************
+/**
  * The interface for services that can execute {@link Process Processes}.
  *
  * @author eso
  */
-public interface ProcessService extends StorageService
-{
-	//~ Static fields/initializers ---------------------------------------------
+public interface ProcessService extends StorageService {
 
-	/** The path to the application processes. */
+	/**
+	 * The path to the application processes.
+	 */
 	public static final String APPLICATION_PROCESS_PATH = "__AppProcesses";
 
-	/** The standard name of the main application process. */
+	/**
+	 * The standard name of the main application process.
+	 */
 	public static final String APPLICATION_MAIN_PROCESS = "__AppMainProcess";
 
 	/**
@@ -51,7 +52,8 @@ public interface ProcessService extends StorageService
 	public static final PropertyName<Boolean> PROCESS_AUTHENTICATED =
 		PropertyName.newBooleanName("PROCESS_AUTHENTICATED");
 
-	// - Commands --------------------------------------------------------------
+	// - Commands
+	// --------------------------------------------------------------
 
 	/**
 	 * Executes a process for the current user. If the argument is an instance
@@ -68,6 +70,6 @@ public interface ProcessService extends StorageService
 	 * ProcessState#setExecutionMode(de.esoco.data.process.ProcessState.ProcessExecutionMode)
 	 * }.</p>
 	 */
-	public static final Command<ProcessDescription, ProcessState> EXECUTE_PROCESS =
-		Command.newInstance("EXECUTE_PROCESS");
+	public static final Command<ProcessDescription, ProcessState>
+		EXECUTE_PROCESS = Command.newInstance("EXECUTE_PROCESS");
 }

@@ -18,12 +18,10 @@ package de.esoco.gwt.client;
 
 import com.google.gwt.user.client.rpc.AsyncCallback;
 
-
-/********************************************************************
+/**
  * A callback interface for services that can be used independently from GWT.
  *
  * @author eso
  */
-public interface ServiceCallback<T> extends AsyncCallback<T>
-{
+public interface ServiceCallback<T> extends AsyncCallback<T> {
 }
