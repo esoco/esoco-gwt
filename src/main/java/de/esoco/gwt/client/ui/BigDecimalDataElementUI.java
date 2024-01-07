@@ -56,99 +56,98 @@ public class BigDecimalDataElementUI
 	}
 
 	@Override
-	protected Component createDisplayUI(ContainerBuilder<?> rBuilder,
-		StyleData rStyle, BigDecimalDataElement rDataElement) {
-		DisplayStyle eDisplayStyle =
-			rStyle.getProperty(BigDecimalDataElement.DISPLAY_STYLE,
+	protected Component createDisplayUI(ContainerBuilder<?> builder,
+		StyleData style, BigDecimalDataElement dataElement) {
+		DisplayStyle displayStyle =
+			style.getProperty(BigDecimalDataElement.DISPLAY_STYLE,
 				DisplayStyle.DECIMAL);
 
-		Component rComponent;
+		Component component;
 
-		if (eDisplayStyle == DisplayStyle.MULTI_FORMAT) {
+		if (displayStyle == DisplayStyle.MULTI_FORMAT) {
 			MultiFormatDisplay<BigDecimal, NumberDisplayFormat>
-				aMultiFormatDisplay =
+				multiFormatDisplay =
 				new MultiFormatDisplay<>(NumberDisplayFormat.DECIMAL,
 					NumberDisplayFormat.HEXADECIMAL,
 					NumberDisplayFormat.BINARY);
 
-			rComponent = rBuilder.addComposite(aMultiFormatDisplay, rStyle);
+			component = builder.addComposite(multiFormatDisplay, style);
 		} else {
-			rComponent = super.createDisplayUI(rBuilder, rStyle, rDataElement);
+			component = super.createDisplayUI(builder, style, dataElement);
 		}
 
-		return rComponent;
+		return component;
 	}
 
 	@Override
-	protected Component createInputUI(ContainerBuilder<?> rBuilder,
-		StyleData rStyle, BigDecimalDataElement rDataElement) {
-		DisplayStyle eDisplayStyle =
-			rStyle.getProperty(BigDecimalDataElement.DISPLAY_STYLE,
+	protected Component createInputUI(ContainerBuilder<?> builder,
+		StyleData style, BigDecimalDataElement dataElement) {
+		DisplayStyle displayStyle =
+			style.getProperty(BigDecimalDataElement.DISPLAY_STYLE,
 				DisplayStyle.DECIMAL);
 
-		Component rComponent;
+		Component component;
 
-		if (eDisplayStyle == DisplayStyle.CALCULATOR) {
-			Calculator aCalculator = new Calculator();
+		if (displayStyle == DisplayStyle.CALCULATOR) {
+			Calculator calculator = new Calculator();
 
-			rComponent = rBuilder.addComposite(aCalculator, rStyle);
+			component = builder.addComposite(calculator, style);
 		} else {
-			convertInputConstraintToLocale(rDataElement);
-			rComponent = super.createInputUI(rBuilder, rStyle, rDataElement);
+			convertInputConstraintToLocale(dataElement);
+			component = super.createInputUI(builder, style, dataElement);
 		}
 
-		return rComponent;
+		return component;
 	}
 
 	@Override
 	@SuppressWarnings("unchecked")
 	protected void transferDataElementValueToComponent(
-		BigDecimalDataElement rDataElement, Component rComponent) {
-		if (rComponent instanceof Calculator) {
-			((Calculator) rComponent).setValue(rDataElement.getValue());
+		BigDecimalDataElement dataElement, Component component) {
+		if (component instanceof Calculator) {
+			((Calculator) component).setValue(dataElement.getValue());
 		}
 
-		if (rComponent instanceof MultiFormatDisplay) {
-			((MultiFormatDisplay<BigDecimal, NumberDisplayFormat>) rComponent).update(
-				rDataElement.getValue());
+		if (component instanceof MultiFormatDisplay) {
+			((MultiFormatDisplay<BigDecimal, NumberDisplayFormat>) component).update(
+				dataElement.getValue());
 		} else {
-			super.transferDataElementValueToComponent(rDataElement,
-				rComponent);
+			super.transferDataElementValueToComponent(dataElement, component);
 		}
 	}
 
 	@Override
-	protected void transferInputToDataElement(Component rComponent,
-		BigDecimalDataElement rDataElement) {
-		BigDecimal rValue;
+	protected void transferInputToDataElement(Component component,
+		BigDecimalDataElement dataElement) {
+		BigDecimal value;
 
-		if (rComponent instanceof Calculator) {
-			rValue = ((Calculator) rComponent).getValue();
+		if (component instanceof Calculator) {
+			value = ((Calculator) component).getValue();
 		} else {
-			String sText = ((TextControl) rComponent).getText();
+			String text = ((TextControl) component).getText();
 
 			try {
-				String sFormat =
-					rDataElement.getProperty(FORMAT, DEFAULT_FORMAT);
-				int nScale = 0;
+				String format = dataElement.getProperty(FORMAT,
+					DEFAULT_FORMAT);
+				int scale = 0;
 
-				int nDecimalPoint = sFormat.indexOf('.');
+				int decimalPoint = format.indexOf('.');
 
-				if (nDecimalPoint >= 0) {
-					nScale = sFormat.length() - (nDecimalPoint + 1);
+				if (decimalPoint >= 0) {
+					scale = format.length() - (decimalPoint + 1);
 				}
 
 				// TODO: check for actual decimal group characters
-				sText = sText.replace(',', '.');
-				rValue = new BigDecimal(sText);
+				text = text.replace(',', '.');
+				value = new BigDecimal(text);
 
-				rValue = rValue.setScale(nScale, RoundingMode.HALF_UP);
+				value = value.setScale(scale, RoundingMode.HALF_UP);
 			} catch (Exception e) {
-				rValue = null;
+				value = null;
 			}
 		}
 
-		rDataElement.setValue(rValue);
+		dataElement.setValue(value);
 	}
 
 	/**
@@ -157,35 +156,35 @@ public class BigDecimalDataElementUI
 	 * @see DataElementUI#updateTextComponent(TextControl)
 	 */
 	@Override
-	protected void updateTextComponent(TextControl rTextComponent) {
+	protected void updateTextComponent(TextControl textComponent) {
 		convertInputConstraintToLocale(getDataElement());
-		super.updateTextComponent(rTextComponent);
+		super.updateTextComponent(textComponent);
 	}
 
 	/**
 	 * Converts the input constraint of the data element to the current user's
 	 * locale.
 	 *
-	 * @param rDataElement The data element to convert the constraint of
+	 * @param dataElement The data element to convert the constraint of
 	 */
 	private void convertInputConstraintToLocale(
-		BigDecimalDataElement rDataElement) {
-		String sConstraint = rDataElement.getProperty(INPUT_CONSTRAINT,
+		BigDecimalDataElement dataElement) {
+		String constraint = dataElement.getProperty(INPUT_CONSTRAINT,
 			BigDecimalDataElement.DEFAULT_CONSTRAINT);
 
-		NumberConstants rNumberConstants =
+		NumberConstants numberConstants =
 			LocaleInfo.getCurrentLocale().getNumberConstants();
 
-		String sGroupingSeparator = rNumberConstants.groupingSeparator();
-		String sDecimalSeparator = rNumberConstants.decimalSeparator();
+		String groupingSeparator = numberConstants.groupingSeparator();
+		String decimalSeparator = numberConstants.decimalSeparator();
 
-		sConstraint =
-			sConstraint.replaceAll(BigDecimalDataElement.DECIMAL_GROUP_CHAR,
-				"\\\\" + sGroupingSeparator);
-		sConstraint =
-			sConstraint.replaceAll(BigDecimalDataElement.DECIMAL_SEPARATOR_CHAR,
-				"\\\\" + sDecimalSeparator);
+		constraint =
+			constraint.replaceAll(BigDecimalDataElement.DECIMAL_GROUP_CHAR,
+				"\\\\" + groupingSeparator);
+		constraint =
+			constraint.replaceAll(BigDecimalDataElement.DECIMAL_SEPARATOR_CHAR,
+				"\\\\" + decimalSeparator);
 
-		rDataElement.setProperty(INPUT_CONSTRAINT, sConstraint);
+		dataElement.setProperty(INPUT_CONSTRAINT, constraint);
 	}
 }

@@ -59,46 +59,46 @@ public class LoginPanelManager extends PanelManager<Panel, PanelManager<?, ?>>
 
 	private static final String SESSION_ID_COOKIE = "_SID";
 
-	private final LoginHandler rLoginHandler;
+	private final LoginHandler loginHandler;
 
-	private final boolean bReauthenticate;
+	private final boolean reauthenticate;
 
-	private final String sUserCookie;
+	private final String userCookie;
 
-	private final String sSessionCookie;
+	private final String sessionCookie;
 
-	private TextField aUserField;
+	private TextField userField;
 
-	private TextField aPasswordField;
+	private TextField passwordField;
 
-	private Button aLoginButton;
+	private Button loginButton;
 
-	private Label aFailureMessage;
+	private Label failureMessage;
 
 	/**
 	 * @see PanelManager#PanelManager(PanelManager, String)
 	 */
-	public LoginPanelManager(PanelManager<?, ?> rParent,
-		LoginHandler rLoginHandler, String sCookiePrefix,
-		boolean bReauthenticate) {
-		super(rParent, EsocoGwtResources.INSTANCE.css().gfLoginPanel());
+	public LoginPanelManager(PanelManager<?, ?> parent,
+		LoginHandler loginHandler, String cookiePrefix,
+		boolean reauthenticate) {
+		super(parent, EsocoGwtResources.INSTANCE.css().gfLoginPanel());
 
-		this.rLoginHandler = rLoginHandler;
-		this.bReauthenticate = bReauthenticate;
+		this.loginHandler = loginHandler;
+		this.reauthenticate = reauthenticate;
 
-		sUserCookie = sCookiePrefix + USER_NAME_COOKIE;
-		sSessionCookie = sCookiePrefix + SESSION_ID_COOKIE;
+		userCookie = cookiePrefix + USER_NAME_COOKIE;
+		sessionCookie = cookiePrefix + SESSION_ID_COOKIE;
 	}
 
 	/**
 	 * Handles events in the login components.
 	 *
-	 * @param rEvent The event that occurred
+	 * @param event The event that occurred
 	 */
 	@Override
-	public void handleEvent(EwtEvent rEvent) {
-		if (rEvent.getSource() == aUserField) {
-			aPasswordField.requestFocus();
+	public void handleEvent(EwtEvent event) {
+		if (event.getSource() == userField) {
+			passwordField.requestFocus();
 		} else // return in password field or login button
 		{
 			login();
@@ -109,77 +109,77 @@ public class LoginPanelManager extends PanelManager<Panel, PanelManager<?, ?>>
 	 * Sets the focus to the first input field.
 	 */
 	public void requestFocus() {
-		if (aUserField != null && aUserField.getText().length() == 0) {
-			aUserField.requestFocus();
+		if (userField != null && userField.getText().length() == 0) {
+			userField.requestFocus();
 		} else {
-			aPasswordField.requestFocus();
+			passwordField.requestFocus();
 		}
 	}
 
 	@Override
 	protected void addComponents() {
-		ContainerBuilder<Panel> aBuilder =
+		ContainerBuilder<Panel> builder =
 			createLoginComponentsPanel(AlignedPosition.CENTER);
 
-		String sUserName = Cookies.getCookie(sUserCookie);
+		String userName = Cookies.getCookie(userCookie);
 
-		addLoginPanelHeader(aBuilder, AlignedPosition.TOP);
+		addLoginPanelHeader(builder, AlignedPosition.TOP);
 
-		aUserField = addUserComponents(aBuilder, sUserName, bReauthenticate);
-		aPasswordField = addPasswortComponents(aBuilder);
-		aFailureMessage = addFailureMessageComponents(aBuilder);
-		aLoginButton = addSubmitLoginComponents(aBuilder);
+		userField = addUserComponents(builder, userName, reauthenticate);
+		passwordField = addPasswortComponents(builder);
+		failureMessage = addFailureMessageComponents(builder);
+		loginButton = addSubmitLoginComponents(builder);
 
-		if (aUserField != null) {
-			aUserField.addEventListener(EventType.ACTION, this);
+		if (userField != null) {
+			userField.addEventListener(EventType.ACTION, this);
 		}
 
-		aPasswordField.addEventListener(EventType.ACTION, this);
-		aLoginButton.addEventListener(EventType.ACTION, this);
-		aFailureMessage.setVisible(false);
+		passwordField.addEventListener(EventType.ACTION, this);
+		loginButton.addEventListener(EventType.ACTION, this);
+		failureMessage.setVisible(false);
 	}
 
 	/**
 	 * Adds the components to displays a login failure message.
 	 *
-	 * @param rBuilder The container build to create the components with
+	 * @param builder The container build to create the components with
 	 * @return The failure message label
 	 */
-	protected Label addFailureMessageComponents(ContainerBuilder<?> rBuilder) {
-		String sError = EsocoGwtResources.INSTANCE.css().error();
+	protected Label addFailureMessageComponents(ContainerBuilder<?> builder) {
+		String error = EsocoGwtResources.INSTANCE.css().error();
 
-		StyleData rErrorStyle =
-			StyleData.DEFAULT.set(StyleData.WEB_ADDITIONAL_STYLES, sError);
+		StyleData errorStyle =
+			StyleData.DEFAULT.set(StyleData.WEB_ADDITIONAL_STYLES, error);
 
-		rBuilder.addLabel(StyleData.DEFAULT, "", null);
+		builder.addLabel(StyleData.DEFAULT, "", null);
 
-		return rBuilder.addLabel(rErrorStyle, "$lblLoginFailed", null);
+		return builder.addLabel(errorStyle, "$lblLoginFailed", null);
 	}
 
 	/**
 	 * Adds the header of the login panel.
 	 *
-	 * @param rBuilder     The container builder to add the header with
-	 * @param rHeaderStyle The style for the panel header
+	 * @param builder     The container builder to add the header with
+	 * @param headerStyle The style for the panel header
 	 */
-	protected void addLoginPanelHeader(ContainerBuilder<?> rBuilder,
-		StyleData rHeaderStyle) {
-		rBuilder.addLabel(rHeaderStyle, null, "#$imLogin");
-		rBuilder.addLabel(rHeaderStyle, "$lblLogin", null);
+	protected void addLoginPanelHeader(ContainerBuilder<?> builder,
+		StyleData headerStyle) {
+		builder.addLabel(headerStyle, null, "#$imLogin");
+		builder.addLabel(headerStyle, "$lblLogin", null);
 	}
 
 	/**
 	 * Adds the components for the password input.
 	 *
-	 * @param rBuilder The builder to create the components with
+	 * @param builder The builder to create the components with
 	 * @return The password input field
 	 */
-	protected TextField addPasswortComponents(ContainerBuilder<?> rBuilder) {
-		rBuilder.addLabel(
+	protected TextField addPasswortComponents(ContainerBuilder<?> builder) {
+		builder.addLabel(
 			StyleData.DEFAULT.setFlags(StyleFlag.HORIZONTAL_ALIGN_RIGHT),
 			"$lblPassword", null);
 
-		return rBuilder.addTextField(
+		return builder.addTextField(
 			StyleData.DEFAULT.set(TEXT_FIELD_STYLE, TextFieldStyle.PASSWORD),
 			"");
 	}
@@ -187,60 +187,60 @@ public class LoginPanelManager extends PanelManager<Panel, PanelManager<?, ?>>
 	/**
 	 * Adds the components for the submission of the login data.
 	 *
-	 * @param rBuilder The builder to create the components with
+	 * @param builder The builder to create the components with
 	 * @return The login button
 	 */
-	protected Button addSubmitLoginComponents(ContainerBuilder<?> rBuilder) {
-		StyleData rButtonStyle =
+	protected Button addSubmitLoginComponents(ContainerBuilder<?> builder) {
+		StyleData buttonStyle =
 			StyleData.DEFAULT.setFlags(StyleFlag.HORIZONTAL_ALIGN_CENTER);
 
-		rBuilder.addLabel(StyleData.DEFAULT, "", null);
+		builder.addLabel(StyleData.DEFAULT, "", null);
 
-		return rBuilder.addButton(rButtonStyle, "$btnLogin", null);
+		return builder.addButton(buttonStyle, "$btnLogin", null);
 	}
 
 	/**
 	 * Adds the components for the user input.
 	 *
-	 * @param rBuilder        The builder to create the components with
-	 * @param sUserName       The user name preset
-	 * @param bReauthenticate TRUE for a re-authentication of the current user
+	 * @param builder        The builder to create the components with
+	 * @param userName       The user name preset
+	 * @param reauthenticate TRUE for a re-authentication of the current user
 	 * @return The user input field or NULL if no user input is needed (in the
 	 * case of re-authentication)
 	 */
-	protected TextField addUserComponents(ContainerBuilder<?> rBuilder,
-		String sUserName, boolean bReauthenticate) {
-		TextField aUserInputField = null;
+	protected TextField addUserComponents(ContainerBuilder<?> builder,
+		String userName, boolean reauthenticate) {
+		TextField userInputField = null;
 
-		rBuilder.addLabel(
+		builder.addLabel(
 			StyleData.DEFAULT.setFlags(StyleFlag.HORIZONTAL_ALIGN_RIGHT),
 			"$lblLoginName", null);
 
-		if (bReauthenticate) {
-			rBuilder.addLabel(StyleData.DEFAULT, sUserName, null);
+		if (reauthenticate) {
+			builder.addLabel(StyleData.DEFAULT, userName, null);
 		} else {
-			aUserInputField = rBuilder.addTextField(StyleData.DEFAULT, "");
-			aUserInputField.setText(sUserName);
+			userInputField = builder.addTextField(StyleData.DEFAULT, "");
+			userInputField.setText(userName);
 		}
 
-		return aUserInputField;
+		return userInputField;
 	}
 
 	@Override
 	protected ContainerBuilder<Panel> createContainer(
-		ContainerBuilder<?> rBuilder, StyleData rStyleData) {
-		return rBuilder.addPanel(rStyleData);
+		ContainerBuilder<?> builder, StyleData styleData) {
+		return builder.addPanel(styleData);
 	}
 
 	/**
 	 * Creates the panel for the login components.
 	 *
-	 * @param rPanelStyle The style to be used for the panel
+	 * @param panelStyle The style to be used for the panel
 	 * @return The container builder for the new panel
 	 */
 	protected ContainerBuilder<Panel> createLoginComponentsPanel(
-		StyleData rPanelStyle) {
-		return addPanel(rPanelStyle, new TableGridLayout(2, true, 3));
+		StyleData panelStyle) {
+		return addPanel(panelStyle, new TableGridLayout(2, true, 3));
 	}
 
 	/**
@@ -252,25 +252,24 @@ public class LoginPanelManager extends PanelManager<Panel, PanelManager<?, ?>>
 	 * (from the session cookie) with the property
 	 * {@link AuthenticatedService#SESSION_ID}.
 	 *
-	 * @param sUserName The login user name
-	 * @param sPassword The login password
+	 * @param userName The login user name
+	 * @param password The login password
 	 * @return The login data object
 	 */
-	protected StringDataElement createLoginData(String sUserName,
-		String sPassword) {
-		String sSessionId = Cookies.getCookie(sSessionCookie);
-		StringDataElement aLoginData =
-			new StringDataElement(sUserName, sPassword);
+	protected StringDataElement createLoginData(String userName,
+		String password) {
+		String sessionId = Cookies.getCookie(sessionCookie);
+		StringDataElement loginData = new StringDataElement(userName,
+			password);
 
-		aLoginData.setProperty(AuthenticatedService.LOGIN_USER_INFO,
+		loginData.setProperty(AuthenticatedService.LOGIN_USER_INFO,
 			createLoginUserInfo());
 
-		if (sSessionId != null) {
-			aLoginData.setProperty(AuthenticatedService.SESSION_ID,
-				sSessionId);
+		if (sessionId != null) {
+			loginData.setProperty(AuthenticatedService.SESSION_ID, sessionId);
 		}
 
-		return aLoginData;
+		return loginData;
 	}
 
 	/**
@@ -279,20 +278,20 @@ public class LoginPanelManager extends PanelManager<Panel, PanelManager<?, ?>>
 	 * @return The user info string
 	 */
 	protected String createLoginUserInfo() {
-		StringBuilder aLoginUserInfo = new StringBuilder();
+		StringBuilder loginUserInfo = new StringBuilder();
 
-		aLoginUserInfo.append("UserAgent: ");
-		aLoginUserInfo.append(Window.Navigator.getUserAgent());
-		aLoginUserInfo.append("\nApp: ");
-		aLoginUserInfo.append(Window.Navigator.getAppName());
-		aLoginUserInfo.append(" (");
-		aLoginUserInfo.append(Window.Navigator.getAppCodeName());
-		aLoginUserInfo.append(")\nVersion: ");
-		aLoginUserInfo.append(Window.Navigator.getAppVersion());
-		aLoginUserInfo.append("\nPlatform: ");
-		aLoginUserInfo.append(Window.Navigator.getPlatform());
+		loginUserInfo.append("UserAgent: ");
+		loginUserInfo.append(Window.Navigator.getUserAgent());
+		loginUserInfo.append("\nApp: ");
+		loginUserInfo.append(Window.Navigator.getAppName());
+		loginUserInfo.append(" (");
+		loginUserInfo.append(Window.Navigator.getAppCodeName());
+		loginUserInfo.append(")\nVersion: ");
+		loginUserInfo.append(Window.Navigator.getAppVersion());
+		loginUserInfo.append("\nPlatform: ");
+		loginUserInfo.append(Window.Navigator.getPlatform());
 
-		return aLoginUserInfo.toString();
+		return loginUserInfo.toString();
 	}
 
 	/**
@@ -303,67 +302,67 @@ public class LoginPanelManager extends PanelManager<Panel, PanelManager<?, ?>>
 	 * will be used to create the login components to query for the user login.
 	 * The builder reference will then be set to NULL.
 	 *
-	 * @param rCaught The exception that occurred
+	 * @param caught The exception that occurred
 	 */
-	protected void handleLoginFailure(Throwable rCaught) {
-		aLoginButton.setEnabled(true);
-		aFailureMessage.setVisible(true);
-		rLoginHandler.loginFailed((Exception) rCaught);
+	protected void handleLoginFailure(Throwable caught) {
+		loginButton.setEnabled(true);
+		failureMessage.setVisible(true);
+		loginHandler.loginFailed((Exception) caught);
 	}
 
 	/**
 	 * Handles a successful authentication by invoking the login method
 	 * {@link LoginHandler#loginSuccessful(DataElementList)}.
 	 *
-	 * @param rUserData The user data instance returned by the service
+	 * @param userData The user data instance returned by the service
 	 */
-	protected void handleLoginSuccess(DataElementList rUserData) {
-		String sSessionID =
-			rUserData.getProperty(AuthenticatedService.SESSION_ID, null);
+	protected void handleLoginSuccess(DataElementList userData) {
+		String sessionID =
+			userData.getProperty(AuthenticatedService.SESSION_ID, null);
 
-		if (sSessionID == null) {
+		if (sessionID == null) {
 			throw new IllegalArgumentException("No Session ID in user data");
 		}
 
-		if (aPasswordField != null) {
-			aPasswordField.setText("");
-			aFailureMessage.setVisible(false);
+		if (passwordField != null) {
+			passwordField.setText("");
+			failureMessage.setVisible(false);
 
-			aUserField = null;
-			aPasswordField = null;
+			userField = null;
+			passwordField = null;
 		}
 
-		Cookies.setCookie(sSessionCookie, sSessionID);
-		rLoginHandler.loginSuccessful(rUserData);
+		Cookies.setCookie(sessionCookie, sessionID);
+		loginHandler.loginSuccessful(userData);
 	}
 
 	/**
 	 * Performs the login with the data from the input fields.
 	 */
 	protected void login() {
-		aLoginButton.setEnabled(false);
+		loginButton.setEnabled(false);
 
-		String sUserName = bReauthenticate ?
-		                   Cookies.getCookie(sUserCookie) :
-		                   aUserField.getText();
+		String userName = reauthenticate ?
+		                  Cookies.getCookie(userCookie) :
+		                  userField.getText();
 
-		String sPassword = aPasswordField.getText();
+		String password = passwordField.getText();
 
-		setUserNameCookie(sUserName);
+		setUserNameCookie(userName);
 
 		ServiceRegistry
 			.getCommandService()
 			.executeCommand(AuthenticatedService.LOGIN,
-				createLoginData(sUserName, sPassword),
+				createLoginData(userName, password),
 				new AsyncCallback<DataElementList>() {
 					@Override
-					public void onFailure(Throwable rCaught) {
-						handleLoginFailure(rCaught);
+					public void onFailure(Throwable caught) {
+						handleLoginFailure(caught);
 					}
 
 					@Override
-					public void onSuccess(DataElementList rResult) {
-						handleLoginSuccess(rResult);
+					public void onSuccess(DataElementList result) {
+						handleLoginSuccess(result);
 					}
 				});
 	}
@@ -372,12 +371,12 @@ public class LoginPanelManager extends PanelManager<Panel, PanelManager<?, ?>>
 	 * Sets a cookie with the user name for re-use on subsequent logins. The
 	 * expiration period of this cookie is 3 months.
 	 *
-	 * @param sUserName The user name to set
+	 * @param userName The user name to set
 	 */
-	protected void setUserNameCookie(String sUserName) {
-		Date aExpiryDate = new Date();
+	protected void setUserNameCookie(String userName) {
+		Date expiryDate = new Date();
 
-		CalendarUtil.addMonthsToDate(aExpiryDate, 3);
-		Cookies.setCookie(sUserCookie, sUserName, aExpiryDate);
+		CalendarUtil.addMonthsToDate(expiryDate, 3);
+		Cookies.setCookie(userCookie, userName, expiryDate);
 	}
 }

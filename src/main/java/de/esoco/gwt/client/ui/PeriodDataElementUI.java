@@ -59,46 +59,46 @@ public class PeriodDataElementUI extends DataElementUI<PeriodDataElement> {
 		StyleData.DEFAULT.set(WEB_ADDITIONAL_STYLES, CSS.gfPeriodUnit());
 
 	@Override
-	protected Component createInputUI(ContainerBuilder<?> rBuilder,
-		StyleData rStyle, PeriodDataElement rDataElement) {
-		rBuilder = rBuilder.addPanel(rStyle, new FlowLayout(true));
+	protected Component createInputUI(ContainerBuilder<?> builder,
+		StyleData style, PeriodDataElement dataElement) {
+		builder = builder.addPanel(style, new FlowLayout(true));
 
-		Container aPanel = rBuilder.getContainer();
+		Container panel = builder.getContainer();
 
-		rBuilder.addSpinner(PERIOD_COUNT_STYLE, 1, 1000, 1);
-		rBuilder.addListBox(PERIOD_UNIT_STYLE);
-		transferDataElementValueToComponent(rDataElement, aPanel);
+		builder.addSpinner(PERIOD_COUNT_STYLE, 1, 1000, 1);
+		builder.addListBox(PERIOD_UNIT_STYLE);
+		transferDataElementValueToComponent(dataElement, panel);
 
-		return aPanel;
+		return panel;
 	}
 
 	@Override
 	protected void transferDataElementValueToComponent(
-		PeriodDataElement rElement, Component rComponent) {
-		List<Component> rComponents = ((Panel) rComponent).getComponents();
-		Spinner aSpinner = (Spinner) rComponents.get(0);
-		ListBox rComboBox = (ListBox) rComponents.get(1);
+		PeriodDataElement element, Component component) {
+		List<Component> components = ((Panel) component).getComponents();
+		Spinner spinner = (Spinner) components.get(0);
+		ListBox comboBox = (ListBox) components.get(1);
 
 		@SuppressWarnings("unchecked")
-		List<String> rUnits = (List<String>) rElement.getAllowedValues();
+		List<String> units = (List<String>) element.getAllowedValues();
 
-		for (String sUnit : rUnits) {
-			rComboBox.add(sUnit);
+		for (String unit : units) {
+			comboBox.add(unit);
 		}
 
-		aSpinner.setValue(rElement.getPeriodCount());
-		rComboBox.setSelection(rUnits.indexOf(rElement.getPeriodUnit()));
+		spinner.setValue(element.getPeriodCount());
+		comboBox.setSelection(units.indexOf(element.getPeriodUnit()));
 	}
 
 	@Override
-	protected void transferInputToDataElement(Component rComponent,
-		PeriodDataElement rElement) {
-		List<Component> rComponents = ((Panel) rComponent).getComponents();
+	protected void transferInputToDataElement(Component component,
+		PeriodDataElement element) {
+		List<Component> components = ((Panel) component).getComponents();
 
-		int nCount = ((Spinner) rComponents.get(0)).getValue();
-		String sUnit = ((ListBox) rComponents.get(1)).getSelectedItem();
+		int count = ((Spinner) components.get(0)).getValue();
+		String unit = ((ListBox) components.get(1)).getSelectedItem();
 
-		rElement.setPeriodCount(nCount);
-		rElement.setPeriodUnit(sUnit);
+		element.setPeriodCount(count);
+		element.setPeriodUnit(unit);
 	}
 }

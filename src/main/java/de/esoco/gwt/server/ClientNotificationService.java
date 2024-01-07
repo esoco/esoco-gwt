@@ -45,29 +45,29 @@ public class ClientNotificationService {
 	private static final CloseReason CLOSE_REASON_SHUTDOWN =
 		new CloseReason(CloseCodes.GOING_AWAY, "Shutting down");
 
-	private final String sWebSocketPath;
+	private final String webSocketPath;
 
-	private final List<Session> aSessions = new ArrayList<>();
+	private final List<Session> sessions = new ArrayList<>();
 
 	/**
 	 * Creates a new instance.
 	 *
-	 * @param sPath The service-relative path to the web socket of this service
+	 * @param path The service-relative path to the web socket of this service
 	 */
-	public ClientNotificationService(String sPath) {
-		this.sWebSocketPath = sPath.startsWith("/") ? sPath : "/" + sPath;
+	public ClientNotificationService(String path) {
+		this.webSocketPath = path.startsWith("/") ? path : "/" + path;
 	}
 
 	/**
 	 * Notifies all registered clients of a message.
 	 *
-	 * @param sMessage The message string
+	 * @param message The message string
 	 */
-	public void notifyClients(String sMessage) {
-		aSessions.forEach(rSession -> Try
-			.run(() -> rSession.getBasicRemote().sendText(sMessage))
+	public void notifyClients(String message) {
+		sessions.forEach(session -> Try
+			.run(() -> session.getBasicRemote().sendText(message))
 			.orElse(e -> Log.errorf(e, "Notification of client %s failed",
-				rSession.getId())));
+				session.getId())));
 	}
 
 	/**
@@ -75,34 +75,34 @@ public class ClientNotificationService {
 	 * at a
 	 * certain path relative to the servlet context.
 	 *
-	 * @param rContext rWebSocketClass The class of the endpoint
+	 * @param context rWebSocketClass The class of the endpoint
 	 * @throws ServletException If the endpoint registration failed
 	 */
-	public void start(ServletContext rContext) throws ServletException {
-		ServerContainer rServerContainer =
-			(ServerContainer) rContext.getAttribute(
+	public void start(ServletContext context) throws ServletException {
+		ServerContainer serverContainer =
+			(ServerContainer) context.getAttribute(
 				"javax.websocket.server.ServerContainer");
 
-		if (rServerContainer == null) {
+		if (serverContainer == null) {
 			throw new ServletException(
 				"No server container for WebSocket deployment found");
 		}
 
 		ClientNotificationWebSocket.setService(this);
 
-		ServerEndpointConfig aConfig = ServerEndpointConfig.Builder
+		ServerEndpointConfig config = ServerEndpointConfig.Builder
 			.create(ClientNotificationWebSocket.class,
-				rContext.getContextPath() + sWebSocketPath)
+				context.getContextPath() + webSocketPath)
 			.build();
 
 		try {
-			rServerContainer.addEndpoint(aConfig);
+			serverContainer.addEndpoint(config);
 		} catch (DeploymentException e) {
 			throw new ServletException(e);
 		}
 
 		Log.infof("Client notification WebSocket deployed at %s\n",
-			aConfig.getPath());
+			config.getPath());
 	}
 
 	/**
@@ -110,13 +110,13 @@ public class ClientNotificationService {
 	 */
 	public void stop() {
 		Try
-			.ofAll(aSessions
+			.ofAll(sessions
 				.stream()
 				.map(s -> Try.run(() -> s.close(CLOSE_REASON_SHUTDOWN)))
 				.collect(toList()))
 			.orElse(e -> Log.error("Error when closing sessions", e));
 
-		aSessions.clear();
+		sessions.clear();
 	}
 
 	/**
@@ -125,6 +125,6 @@ public class ClientNotificationService {
 	 * @return The sessions
 	 */
 	List<Session> getSessions() {
-		return aSessions;
+		return sessions;
 	}
 }

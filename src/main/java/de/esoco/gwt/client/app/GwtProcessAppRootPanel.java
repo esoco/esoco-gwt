@@ -36,9 +36,9 @@ import de.esoco.gwt.client.ui.PanelManager;
 public class GwtProcessAppRootPanel extends
 	GwtApplicationPanelManager<Container, GwtApplicationPanelManager<?, ?>> {
 
-	private DataElementList rUserData;
+	private DataElementList userData;
 
-	private ProcessPanelManager aProcessPanel;
+	private ProcessPanelManager processPanel;
 
 	/**
 	 * Creates a new instance.
@@ -51,15 +51,15 @@ public class GwtProcessAppRootPanel extends
 	}
 
 	@Override
-	public void displayMessage(String sMessage, int nDisplayTime) {
+	public void displayMessage(String message, int displayTime) {
 		MessageBox.showNotification(getContainer().getView(),
 			"$tiErrorMessage",
-			sMessage, MessageBox.ICON_ERROR);
+			message, MessageBox.ICON_ERROR);
 	}
 
 	@Override
 	public void dispose() {
-		rUserData = null;
+		userData = null;
 
 		removeApplicationPanel();
 
@@ -73,13 +73,13 @@ public class GwtProcessAppRootPanel extends
 	 * @return The process panel manager
 	 */
 	public ProcessPanelManager getProcessPanel() {
-		return aProcessPanel;
+		return processPanel;
 	}
 
 	@Override
 	public void updateUI() {
-		if (aProcessPanel != null) {
-			aProcessPanel.updateUI();
+		if (processPanel != null) {
+			processPanel.updateUI();
 		}
 	}
 
@@ -91,11 +91,11 @@ public class GwtProcessAppRootPanel extends
 	@Override
 	@SuppressWarnings("unchecked")
 	protected ContainerBuilder<Container> createContainer(
-		ContainerBuilder<?> rBuilder, StyleData rStyleData) {
+		ContainerBuilder<?> builder, StyleData styleData) {
 		// as the root panel only displays a process and therefore has no
 		// own UI just return parent builder to inline the process panel in
 		// the main application view
-		return (ContainerBuilder<Container>) rBuilder;
+		return (ContainerBuilder<Container>) builder;
 	}
 
 	/**
@@ -103,29 +103,28 @@ public class GwtProcessAppRootPanel extends
 	 * process. Can be overridden to return a different instance than the
 	 * default implementation {@link ProcessPanelManager}.
 	 *
-	 * @param rProcessState The current process state
+	 * @param processState The current process state
 	 * @return A new process panel manager instance
 	 */
 	protected ProcessPanelManager createProcessPanel(
-		ProcessState rProcessState) {
-		ProcessPanelManager aProcessPanelManager =
-			new ProcessPanelManager(this, rProcessState.getName(), false,
-				true);
+		ProcessState processState) {
+		ProcessPanelManager processPanelManager =
+			new ProcessPanelManager(this, processState.getName(), false, true);
 
-		aProcessPanelManager.setDisableOnInteraction(true);
+		processPanelManager.setDisableOnInteraction(true);
 
-		return aProcessPanelManager;
+		return processPanelManager;
 	}
 
 	@Override
-	protected void displayProcess(ProcessState rProcessState) {
-		if (rProcessState.isFinished()) {
-			processFinished(null, rProcessState);
+	protected void displayProcess(ProcessState processState) {
+		if (processState.isFinished()) {
+			processFinished(null, processState);
 		} else {
-			aProcessPanel = createProcessPanel(rProcessState);
+			processPanel = createProcessPanel(processState);
 
-			aProcessPanel.buildIn(this, AlignedPosition.CENTER);
-			aProcessPanel.handleCommandResult(rProcessState);
+			processPanel.buildIn(this, AlignedPosition.CENTER);
+			processPanel.handleCommandResult(processState);
 		}
 	}
 
@@ -136,7 +135,7 @@ public class GwtProcessAppRootPanel extends
 	 */
 	@Override
 	protected String getCloseWarning() {
-		return aProcessPanel != null ? "$msgWindowCloseWarning" : null;
+		return processPanel != null ? "$msgWindowCloseWarning" : null;
 	}
 
 	@Override
@@ -146,7 +145,7 @@ public class GwtProcessAppRootPanel extends
 
 	@Override
 	protected DataElementList getUserData() {
-		return rUserData;
+		return userData;
 	}
 
 	/**
@@ -155,9 +154,9 @@ public class GwtProcessAppRootPanel extends
 	 * @see GwtApplicationPanelManager#handleError(Throwable)
 	 */
 	@Override
-	protected void handleError(Throwable eCaught) {
-		if (aProcessPanel != null) {
-			aProcessPanel.handleError(eCaught);
+	protected void handleError(Throwable caught) {
+		if (processPanel != null) {
+			processPanel.handleError(caught);
 		} else {
 			displayMessage("$msgServiceCallFailed", MESSAGE_DISPLAY_TIME);
 		}
@@ -175,8 +174,8 @@ public class GwtProcessAppRootPanel extends
 	 * @see GwtApplicationPanelManager#performLogin(boolean)
 	 */
 	@Override
-	protected void performLogin(boolean bReauthenticate) {
-		if (bReauthenticate) {
+	protected void performLogin(boolean reauthenticate) {
+		if (reauthenticate) {
 			super.performLogin(true);
 		} else {
 			executeMainApplicationProcess();
@@ -184,22 +183,22 @@ public class GwtProcessAppRootPanel extends
 	}
 
 	@Override
-	protected void processFinished(PanelManager<?, ?> rPanelManager,
-		ProcessState rProcessState) {
+	protected void processFinished(PanelManager<?, ?> panelManager,
+		ProcessState processState) {
 		logout();
 	}
 
 	@Override
-	protected void processUpdated(PanelManager<?, ?> rPanelManager,
-		ProcessState rProcessState) {
+	protected void processUpdated(PanelManager<?, ?> panelManager,
+		ProcessState processState) {
 		// not needed as there is only one application process
 	}
 
 	@Override
 	protected void removeApplicationPanel() {
-		if (aProcessPanel != null) {
-			aProcessPanel.dispose();
-			aProcessPanel = null;
+		if (processPanel != null) {
+			processPanel.dispose();
+			processPanel = null;
 		}
 
 		removeAllComponents();

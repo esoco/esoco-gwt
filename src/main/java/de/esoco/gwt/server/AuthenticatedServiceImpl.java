@@ -25,17 +25,14 @@ import de.esoco.data.UploadHandler;
 import de.esoco.data.element.DataElement;
 import de.esoco.data.element.DataElementList;
 import de.esoco.data.element.StringDataElement;
-
 import de.esoco.entity.Entity;
 import de.esoco.entity.EntityFunctions;
 import de.esoco.entity.EntityManager;
 import de.esoco.entity.ExtraAttributes;
-
 import de.esoco.gwt.shared.AuthenticatedService;
 import de.esoco.gwt.shared.AuthenticationException;
 import de.esoco.gwt.shared.Command;
 import de.esoco.gwt.shared.ServiceException;
-
 import de.esoco.lib.logging.Log;
 import de.esoco.lib.logging.LogAspect;
 import de.esoco.lib.net.AuthorizationCallback;
@@ -45,18 +42,9 @@ import de.esoco.lib.net.ExternalServiceAccess;
 import de.esoco.lib.net.ExternalServiceDefinition;
 import de.esoco.lib.net.ExternalServiceRequest;
 import de.esoco.lib.property.HasProperties;
-
-import java.io.IOException;
-import java.io.PrintWriter;
-
-import java.net.URL;
-
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Iterator;
-import java.util.Map;
-import java.util.Set;
-import java.util.regex.Pattern;
+import org.obrel.core.ProvidesConfiguration;
+import org.obrel.core.RelationType;
+import org.obrel.core.RelationTypes;
 
 import javax.servlet.ServletContext;
 import javax.servlet.ServletException;
@@ -64,13 +52,17 @@ import javax.servlet.ServletOutputStream;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
-
-import org.obrel.core.ProvidesConfiguration;
-import org.obrel.core.RelationType;
-import org.obrel.core.RelationTypes;
+import java.io.IOException;
+import java.io.PrintWriter;
+import java.net.URL;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Iterator;
+import java.util.Map;
+import java.util.Set;
+import java.util.regex.Pattern;
 
 import static de.esoco.data.SessionData.SESSION_START_TIME;
-
 import static org.obrel.core.RelationTypes.newMapType;
 import static org.obrel.core.RelationTypes.newSetType;
 
@@ -113,7 +105,7 @@ public abstract class AuthenticatedServiceImpl<E extends Entity>
 	private static final RelationType<Set<ExternalService>> EXTERNAL_SERVICES =
 		newSetType(true);
 
-	private static int nNextUploadId = 1;
+	private static int nextUploadId = 1;
 
 	static {
 		RelationTypes.init(AuthenticatedServiceImpl.class);
@@ -122,12 +114,12 @@ public abstract class AuthenticatedServiceImpl<E extends Entity>
 	/**
 	 * Returns the session data structures for all registered clients.
 	 *
-	 * @param rServletContext The servlet context to return the sessions for
+	 * @param servletContext The servlet context to return the sessions for
 	 * @return The client sessions
 	 */
 	protected static Collection<SessionData> getClientSessions(
-		ServletContext rServletContext) {
-		return getSessionContext(rServletContext)
+		ServletContext servletContext) {
+		return getSessionContext(servletContext)
 			.get(SessionData.USER_SESSIONS)
 			.values();
 	}
@@ -136,116 +128,113 @@ public abstract class AuthenticatedServiceImpl<E extends Entity>
 	 * Returns the session context from a certain {@link ServletContext}. If no
 	 * session context exists yet it will be created.
 	 *
-	 * @param rServletContext The servlet context
+	 * @param servletContext The servlet context
 	 * @return The session context
 	 */
-	static SessionContext getSessionContext(ServletContext rServletContext) {
-		SessionContext rSessionContext =
-			(SessionContext) rServletContext.getAttribute(ATTR_SESSION_CONTEXT);
+	static SessionContext getSessionContext(ServletContext servletContext) {
+		SessionContext sessionContext =
+			(SessionContext) servletContext.getAttribute(ATTR_SESSION_CONTEXT);
 
-		if (rSessionContext == null) {
-			rSessionContext = new SessionContext();
-			rServletContext.setAttribute(ATTR_SESSION_CONTEXT,
-				rSessionContext);
+		if (sessionContext == null) {
+			sessionContext = new SessionContext();
+			servletContext.setAttribute(ATTR_SESSION_CONTEXT, sessionContext);
 		}
 
-		return rSessionContext;
+		return sessionContext;
 	}
 
 	/**
 	 * Returns the session data for a request. This method first checks whether
 	 * the session is properly authenticated and throws an exception otherwise.
 	 *
-	 * @param rRequest             The session to return the session data for
-	 * @param bCheckAuthentication TRUE to throw an exception if no user is
-	 *                             authenticated for the current session
+	 * @param request             The session to return the session data for
+	 * @param checkAuthentication TRUE to throw an exception if no user is
+	 *                            authenticated for the current session
 	 * @return The session data object
 	 * @throws AuthenticationException If the session is not authenticated
 	 */
-	static SessionData getSessionData(HttpServletRequest rRequest,
-		boolean bCheckAuthentication) throws AuthenticationException {
-		String sSessionId = rRequest.getSession().getId();
+	static SessionData getSessionData(HttpServletRequest request,
+		boolean checkAuthentication) throws AuthenticationException {
+		String sessionId = request.getSession().getId();
 
-		Map<String, SessionData> rSessionMap =
-			getSessionMap(rRequest.getServletContext());
+		Map<String, SessionData> sessionMap =
+			getSessionMap(request.getServletContext());
 
-		SessionData rSessionData = rSessionMap.get(sSessionId);
+		SessionData sessionData = sessionMap.get(sessionId);
 
-		if (bCheckAuthentication && rSessionData == null) {
+		if (checkAuthentication && sessionData == null) {
 			throw new AuthenticationException("UserNotAuthenticated");
 		}
 
-		return rSessionData;
+		return sessionData;
 	}
 
 	/**
 	 * Returns the mapping from user names to {@link SessionData} objects.
 	 *
-	 * @param rServletContext The servlet context to read the map from
+	 * @param servletContext The servlet context to read the map from
 	 * @return The session map
 	 */
 	static Map<String, SessionData> getSessionMap(
-		ServletContext rServletContext) {
-		return getSessionContext(rServletContext).get(
-			SessionData.USER_SESSIONS);
+		ServletContext servletContext) {
+		return getSessionContext(servletContext).get(SessionData.USER_SESSIONS);
 	}
 
 	/**
 	 * Sets an error message and status code in a servlet response.
 	 *
-	 * @param rResponse   The response object
-	 * @param nStatusCode The status code
-	 * @param sMessage    The error message
+	 * @param response   The response object
+	 * @param statusCode The status code
+	 * @param message    The error message
 	 * @throws IOException If writing to the output stream fails
 	 */
-	static void setErrorResponse(HttpServletResponse rResponse,
-		int nStatusCode,
-		String sMessage) throws IOException {
-		rResponse.setStatus(nStatusCode);
+	static void setErrorResponse(HttpServletResponse response, int statusCode,
+		String message) throws IOException {
+		response.setStatus(statusCode);
 
-		ServletOutputStream rOut = rResponse.getOutputStream();
+		ServletOutputStream out = response.getOutputStream();
 
-		rOut.print(sMessage);
-		rOut.close();
+		out.print(message);
+		out.close();
 	}
 
 	@Override
 	public String authorizeExternalServiceAccess(
-		ExternalServiceDefinition rServiceDefinition,
-		AuthorizationCallback rCallback, boolean bForceAuth,
-		Object... rAccessScopes) throws Exception {
-		ExternalService aService =
-			ExternalService.create(rServiceDefinition, getUser(),
+		ExternalServiceDefinition serviceDefinition,
+		AuthorizationCallback callback, boolean forceAuth,
+		Object... accessScopes) throws Exception {
+		ExternalService service =
+			ExternalService.create(serviceDefinition, getUser(),
 				getServiceConfiguration());
 
-		String sCallbackUrl = getBaseUrl() + DEFAULT_OAUTH_CALLBACK_URL;
+		String callbackUrl = getBaseUrl() + DEFAULT_OAUTH_CALLBACK_URL;
 
-		Object rAuth =
-			aService.authorizeAccess(sCallbackUrl, bForceAuth, rAccessScopes);
+		Object auth =
+			service.authorizeAccess(callbackUrl, forceAuth, accessScopes);
 
-		String sRequestUrl = null;
+		String requestUrl = null;
 
-		if (rAuth instanceof URL) {
-			aService.set(AUTHORIZATION_CALLBACK, rCallback);
-			getSessionContext().get(EXTERNAL_SERVICES).add(aService);
-			sRequestUrl = rAuth.toString();
-		} else if (rAuth instanceof String) {
-			rCallback.authorizationSuccess(rAuth.toString());
+		if (auth instanceof URL) {
+			service.set(AUTHORIZATION_CALLBACK, callback);
+			getSessionContext().get(EXTERNAL_SERVICES).add(service);
+			requestUrl = auth.toString();
+		} else if (auth instanceof String) {
+			callback.authorizationSuccess(auth.toString());
 		} else {
 			throw new UnsupportedOperationException(
-				"Unsupported service result: " + rAuth);
+				"Unsupported service result: " + auth);
 		}
 
-		return sRequestUrl;
+		return requestUrl;
 	}
 
 	@Override
 	public ExternalServiceRequest createExternalServiceRequest(
-		ExternalServiceDefinition rServiceDefinition, AccessType eAccessType,
-		String sRequestUrl) throws Exception {
+		ExternalServiceDefinition serviceDefinition, AccessType accessType,
+		String requestUrl) throws Exception {
 		return ExternalService
-			.create(rServiceDefinition, getUser(), getServiceConfiguration())
-			.createRequest(eAccessType, sRequestUrl);
+			.create(serviceDefinition, getUser(), getServiceConfiguration())
+			.createRequest(accessType, requestUrl);
 	}
 
 	/**
@@ -253,14 +242,14 @@ public abstract class AuthenticatedServiceImpl<E extends Entity>
 	 */
 	@Override
 	public void destroy() {
-		Collection<SessionData> rSessions =
+		Collection<SessionData> sessions =
 			getClientSessions(getServletContext());
 
-		for (SessionData rSessionData : rSessions) {
+		for (SessionData sessionData : sessions) {
 			try {
-				endSession(rSessionData);
+				endSession(sessionData);
 			} catch (Exception e) {
-				Log.warnf(e, "Logout of session failed: %s", rSessionData);
+				Log.warnf(e, "Logout of session failed: %s", sessionData);
 			}
 		}
 
@@ -275,21 +264,21 @@ public abstract class AuthenticatedServiceImpl<E extends Entity>
 	 * @return The base URL of this service
 	 */
 	public String getBaseUrl() {
-		HttpServletRequest rRequest = getThreadLocalRequest();
-		StringBuilder aUrl = new StringBuilder(rRequest.getScheme());
+		HttpServletRequest request = getThreadLocalRequest();
+		StringBuilder url = new StringBuilder(request.getScheme());
 
-		aUrl.append("://");
-		aUrl.append(rRequest.getServerName());
+		url.append("://");
+		url.append(request.getServerName());
 
-		if (rRequest.getServerPort() != 80 && rRequest.getServerPort() != 443) {
-			aUrl.append(':');
-			aUrl.append(rRequest.getServerPort());
+		if (request.getServerPort() != 80 && request.getServerPort() != 443) {
+			url.append(':');
+			url.append(request.getServerPort());
 		}
 
-		aUrl.append(rRequest.getContextPath());
-		aUrl.append(rRequest.getServletPath());
+		url.append(request.getContextPath());
+		url.append(request.getServletPath());
 
-		return aUrl.toString();
+		return url.toString();
 	}
 
 	/**
@@ -335,18 +324,18 @@ public abstract class AuthenticatedServiceImpl<E extends Entity>
 	 */
 	@Override
 	public String getSessionId() {
-		HttpServletRequest rRequest = getThreadLocalRequest();
-		String sId = null;
+		HttpServletRequest request = getThreadLocalRequest();
+		String id = null;
 
-		if (rRequest != null) {
-			HttpSession rSession = rRequest.getSession();
+		if (request != null) {
+			HttpSession session = request.getSession();
 
-			if (rSession != null) {
-				sId = rSession.getId();
+			if (session != null) {
+				id = session.getId();
 			}
 		}
 
-		return sId;
+		return id;
 	}
 
 	/**
@@ -361,31 +350,31 @@ public abstract class AuthenticatedServiceImpl<E extends Entity>
 	/**
 	 * Handles the {@link AuthenticatedService#CHANGE_PASSWORD} command.
 	 *
-	 * @param rPasswordChangeRequest A data element containing the password
-	 *                               change request
+	 * @param passwordChangeRequest A data element containing the password
+	 *                              change request
 	 * @throws ServiceException        If the authentication cannot be
 	 *                                 processed
 	 * @throws AuthenticationException If the authentication fails
 	 * @throws Exception               If the password change fails
 	 */
-	public void handleChangePassword(StringDataElement rPasswordChangeRequest)
+	public void handleChangePassword(StringDataElement passwordChangeRequest)
 		throws Exception {
-		changePassword(rPasswordChangeRequest);
+		changePassword(passwordChangeRequest);
 	}
 
 	/**
 	 * Handles the {@link AuthenticatedService#GET_USER_DATA} command.
 	 *
-	 * @param rIgnored Not used, should always be NULL
+	 * @param ignored Not used, should always be NULL
 	 * @return A data element list containing the user data if the user is
 	 * logged in
 	 * @throws AuthenticationException If the user is not logged in
 	 */
-	public DataElementList handleGetUserData(Object rIgnored)
+	public DataElementList handleGetUserData(Object ignored)
 		throws AuthenticationException {
-		SessionData rSessionData = getSessionData();
+		SessionData sessionData = getSessionData();
 
-		resetSessionData(rSessionData);
+		resetSessionData(sessionData);
 
 		return getUserData();
 	}
@@ -393,25 +382,25 @@ public abstract class AuthenticatedServiceImpl<E extends Entity>
 	/**
 	 * Handles the {@link AuthenticatedService#LOGIN} command.
 	 *
-	 * @param rLoginData A string data element containing the login credentials
+	 * @param loginData A string data element containing the login credentials
 	 * @return A data element list containing the user data if the
 	 * authentication was successful
 	 * @throws ServiceException        If the authentication cannot be
 	 *                                 processed
 	 * @throws AuthenticationException If the authentication fails
 	 */
-	public DataElementList handleLogin(StringDataElement rLoginData)
+	public DataElementList handleLogin(StringDataElement loginData)
 		throws AuthenticationException, ServiceException {
-		return loginUser(rLoginData,
-			rLoginData.getProperty(LOGIN_USER_INFO, ""));
+		return loginUser(loginData, loginData.getProperty(LOGIN_USER_INFO,
+			""));
 	}
 
 	/**
 	 * Handles the {@link AuthenticatedService#LOGOUT} command.
 	 *
-	 * @param rIgnored Not used, should always be NULL
+	 * @param ignored Not used, should always be NULL
 	 */
-	public void handleLogout(DataElement<?> rIgnored) {
+	public void handleLogout(DataElement<?> ignored) {
 		logoutCurrentUser();
 	}
 
@@ -425,97 +414,96 @@ public abstract class AuthenticatedServiceImpl<E extends Entity>
 	public void init() throws ServletException {
 		EntityManager.setSessionManager(this);
 
-		ServiceContext rContext = ServiceContext.getInstance();
+		ServiceContext context = ServiceContext.getInstance();
 
-		if (rContext != null) {
-			rContext.setService(this);
+		if (context != null) {
+			context.setService(this);
 		}
 	}
 
 	@Override
 	@SuppressWarnings("unchecked")
-	public DataElementList loginUser(StringDataElement rLoginData,
-		String sClientInfo) throws AuthenticationException, ServiceException {
-		String sLoginName = rLoginData.getName();
-		boolean bReLogin = rLoginData.getValue() == null;
-		E rUser;
+	public DataElementList loginUser(StringDataElement loginData,
+		String clientInfo) throws ServiceException {
+		String loginName = loginData.getName();
+		boolean reLogin = loginData.getValue() == null;
+		E user;
 
-		if (bReLogin) {
-			SessionData rSessionData = getSessionData();
+		if (reLogin) {
+			SessionData sessionData = getSessionData();
 
-			endSession(rSessionData);
+			endSession(sessionData);
 
-			if (rSessionData
+			if (sessionData
 				.get(SessionData.SESSION_LOGIN_NAME)
-				.equals(sLoginName)) {
-				rUser = (E) rSessionData.get(SessionData.SESSION_USER);
+				.equals(loginName)) {
+				user = (E) sessionData.get(SessionData.SESSION_USER);
 			} else {
 				throw new AuthenticationException("ReLoginNotPossible");
 			}
 		} else {
-			rUser = authenticate(rLoginData);
-			rLoginData.setValue(null);
+			user = authenticate(loginData);
+			loginData.setValue(null);
 		}
 
-		if (rUser == null) {
+		if (user == null) {
 			throw new AuthenticationException(
-				"Invalid password for " + sLoginName);
+				"Invalid password for " + loginName);
 		} else {
-			HttpServletRequest rRequest = getThreadLocalRequest();
+			HttpServletRequest request = getThreadLocalRequest();
 
-			if (!bReLogin) {
-				String sClientAddr = rRequest.getRemoteAddr();
-				String sForwardAddr = rRequest.getHeader("X-Forwarded-For");
+			if (!reLogin) {
+				String clientAddr = request.getRemoteAddr();
+				String forwardAddr = request.getHeader("X-Forwarded-For");
 
-				if (sForwardAddr != null && sForwardAddr.length() > 0 &&
-					!sForwardAddr.equals(sClientAddr)) {
-					sClientAddr = sForwardAddr;
+				if (forwardAddr != null && forwardAddr.length() > 0 &&
+					!forwardAddr.equals(clientAddr)) {
+					clientAddr = forwardAddr;
 				}
 
 				Log.infof("[LOGIN] User %s from %s authenticated in %s\n%s",
-					rUser, sClientAddr, getApplicationName(), sClientInfo);
+					user, clientAddr, getApplicationName(), clientInfo);
 			}
 
-			authorizeUser(rUser, rLoginData);
+			authorizeUser(user, loginData);
 
-			Map<String, SessionData> rSessionMap =
+			Map<String, SessionData> sessionMap =
 				getSessionMap(getServletContext());
 
-			HttpSession rSession = rRequest.getSession();
-			String sSessionId = rSession.getId();
-			SessionData rSessionData = rSessionMap.get(sSessionId);
-			DataElementList aUserData = null;
+			HttpSession session = request.getSession();
+			String sessionId = session.getId();
+			SessionData sessionData = sessionMap.get(sessionId);
+			DataElementList userData = null;
 
-			String sPreviousSessionId =
-				rLoginData.getProperty(SESSION_ID, null);
+			String previousSessionId = loginData.getProperty(SESSION_ID, null);
 
-			if (sPreviousSessionId != null) {
-				SessionData rPreviousSessionData =
-					rSessionMap.remove(sPreviousSessionId);
+			if (previousSessionId != null) {
+				SessionData previousSessionData =
+					sessionMap.remove(previousSessionId);
 
-				if (rSessionData == null && rPreviousSessionData != null) {
-					rSessionData = rPreviousSessionData;
+				if (sessionData == null && previousSessionData != null) {
+					sessionData = previousSessionData;
 				}
 
-				rSessionMap.put(sSessionId, rSessionData);
+				sessionMap.put(sessionId, sessionData);
 			}
 
-			rSession.setAttribute(LOGIN_NAME, sLoginName);
+			session.setAttribute(LOGIN_NAME, loginName);
 
-			if (rSessionData == null) {
-				rSessionData = createSessionData();
+			if (sessionData == null) {
+				sessionData = createSessionData();
 			} else {
-				aUserData = rSessionData.get(SessionData.SESSION_USER_DATA);
+				userData = sessionData.get(SessionData.SESSION_USER_DATA);
 			}
 
-			if (aUserData == null) {
-				aUserData = new DataElementList("UserData", null);
+			if (userData == null) {
+				userData = new DataElementList("UserData", null);
 			}
 
-			rSessionData.update(rUser, sLoginName, aUserData);
-			initUserData(aUserData, rUser, sLoginName);
+			sessionData.update(user, loginName, userData);
+			initUserData(userData, user, loginName);
 
-			return aUserData;
+			return userData;
 		}
 	}
 
@@ -528,29 +516,29 @@ public abstract class AuthenticatedServiceImpl<E extends Entity>
 	 * @see SessionManager#prepareDownload(DownloadData)
 	 */
 	@Override
-	public String prepareDownload(DownloadData rData) throws Exception {
-		String sUrl = DEFAULT_DOWNLOAD_URL + rData.getFileName();
+	public String prepareDownload(DownloadData data) throws Exception {
+		String url = DEFAULT_DOWNLOAD_URL + data.getFileName();
 
-		getSessionData().get(SESSION_DOWNLOADS).put(sUrl, rData);
+		getSessionData().get(SESSION_DOWNLOADS).put(url, data);
 
-		return sUrl;
+		return url;
 	}
 
 	@Override
-	public String prepareUpload(UploadHandler rUploadHandler)
+	public String prepareUpload(UploadHandler uploadHandler)
 		throws AuthenticationException {
-		String sUploadId = Integer.toString(nNextUploadId++);
-		String sUploadUrl = DEFAULT_UPLOAD_URL + "?id=" + sUploadId;
+		String uploadId = Integer.toString(nextUploadId++);
+		String uploadUrl = DEFAULT_UPLOAD_URL + "?id=" + uploadId;
 
-		getSessionData().get(SESSION_UPLOADS).put(sUploadId, rUploadHandler);
+		getSessionData().get(SESSION_UPLOADS).put(uploadId, uploadHandler);
 
-		return sUploadUrl;
+		return uploadUrl;
 	}
 
 	@Override
-	public void removeDownload(String sUrl) {
+	public void removeDownload(String url) {
 		try {
-			getSessionData().get(SESSION_DOWNLOADS).remove(sUrl);
+			getSessionData().get(SESSION_DOWNLOADS).remove(url);
 		} catch (AuthenticationException e) {
 			Log.warn("Removing download failed", e);
 		}
@@ -559,29 +547,29 @@ public abstract class AuthenticatedServiceImpl<E extends Entity>
 	/**
 	 * Removes a session from the context of this service.
 	 *
-	 * @param rSession The session to remove
+	 * @param session The session to remove
 	 */
-	public void removeSession(HttpSession rSession) {
-		Map<String, SessionData> rSessionMap =
+	public void removeSession(HttpSession session) {
+		Map<String, SessionData> sessionMap =
 			getSessionMap(getServletContext());
 
-		String sSessionId = rSession.getId();
-		SessionData rSessionData = rSessionMap.get(sSessionId);
+		String sessionId = session.getId();
+		SessionData sessionData = sessionMap.get(sessionId);
 
-		if (rSessionData != null) {
-			endSession(rSessionData);
-			rSessionMap.remove(sSessionId);
+		if (sessionData != null) {
+			endSession(sessionData);
+			sessionMap.remove(sessionId);
 		}
 
-		rSession.removeAttribute(LOGIN_NAME);
+		session.removeAttribute(LOGIN_NAME);
 	}
 
 	@Override
-	public void removeUpload(String sUrl) {
-		String sId = sUrl.substring(sUrl.indexOf("id=") + 3);
+	public void removeUpload(String url) {
+		String id = url.substring(url.indexOf("id=") + 3);
 
 		try {
-			getSessionData().get(SESSION_UPLOADS).remove(sId);
+			getSessionData().get(SESSION_UPLOADS).remove(id);
 		} catch (AuthenticationException e) {
 			Log.warn("Removing upload failed", e);
 		}
@@ -589,23 +577,23 @@ public abstract class AuthenticatedServiceImpl<E extends Entity>
 
 	@Override
 	public void revokeExternalServiceAccess(
-		ExternalServiceDefinition rServiceDefinition) throws Exception {
-		ExternalService aService =
-			ExternalService.create(rServiceDefinition, getUser(),
+		ExternalServiceDefinition serviceDefinition) throws Exception {
+		ExternalService service =
+			ExternalService.create(serviceDefinition, getUser(),
 				getServiceConfiguration());
 
-		aService.revokeAccess();
+		service.revokeAccess();
 	}
 
 	/**
 	 * Adds a log aspect to the logging framework after injecting the session
 	 * manager (i.e. _this_ instance) into it.
 	 *
-	 * @param rLogAspect The log aspect to add
+	 * @param logAspect The log aspect to add
 	 */
-	protected void addLogAspect(LogAspect<?> rLogAspect) {
-		rLogAspect.set(DataRelationTypes.SESSION_MANAGER, this);
-		Log.addLogAspect(rLogAspect);
+	protected void addLogAspect(LogAspect<?> logAspect) {
+		logAspect.set(DataRelationTypes.SESSION_MANAGER, this);
+		Log.addLogAspect(logAspect);
 	}
 
 	/**
@@ -615,12 +603,12 @@ public abstract class AuthenticatedServiceImpl<E extends Entity>
 	 * successful. The input is a string data element with the login name as
 	 * it's name and the password as the value.
 	 *
-	 * @param rLoginData A string data element containing the login credentials
+	 * @param loginData A string data element containing the login credentials
 	 * @return The entity of the authenticated person if the authentication was
 	 * successful
 	 * @throws AuthenticationException If the authentication fails
 	 */
-	protected abstract E authenticate(StringDataElement rLoginData)
+	protected abstract E authenticate(StringDataElement loginData)
 		throws AuthenticationException;
 
 	/**
@@ -628,11 +616,11 @@ public abstract class AuthenticatedServiceImpl<E extends Entity>
 	 * this means depends on the subclass implementation and is application
 	 * dependent. This default implementation does nothing.
 	 *
-	 * @param rUser      The authenticated user
-	 * @param rLoginData Additional properties from the login data if available
+	 * @param user      The authenticated user
+	 * @param loginData Additional properties from the login data if available
 	 * @throws AuthenticationException If the authorization fails
 	 */
-	protected void authorizeUser(E rUser, HasProperties rLoginData)
+	protected void authorizeUser(E user, HasProperties loginData)
 		throws AuthenticationException {
 	}
 
@@ -645,12 +633,12 @@ public abstract class AuthenticatedServiceImpl<E extends Entity>
 	 * validate it before performing the password update. The default
 	 * implementation does nothing.
 	 *
-	 * @param rPasswordChangeRequest A data element containing the password
-	 *                               change request
+	 * @param passwordChangeRequest A data element containing the password
+	 *                              change request
 	 * @throws Exception Any exception may be thrown if the password change
 	 *                   fails
 	 */
-	protected void changePassword(StringDataElement rPasswordChangeRequest)
+	protected void changePassword(StringDataElement passwordChangeRequest)
 		throws Exception {
 	}
 
@@ -661,8 +649,8 @@ public abstract class AuthenticatedServiceImpl<E extends Entity>
 	 */
 	@Override
 	protected <T extends DataElement<?>> void checkCommandExecution(
-		Command<T, ?> rCommand, T rData) throws ServiceException {
-		if (!(LOGIN.equals(rCommand) || LOGOUT.equals(rCommand))) {
+		Command<T, ?> command, T data) throws ServiceException {
+		if (!(LOGIN.equals(command) || LOGOUT.equals(command))) {
 			// if not performing a login or logout throw an exception if the
 			// user is not authenticated
 			getSessionData();
@@ -676,36 +664,34 @@ public abstract class AuthenticatedServiceImpl<E extends Entity>
 	 * @return The new session data instance
 	 */
 	protected SessionData createSessionData() {
-		String sSessionId = getThreadLocalRequest().getSession().getId();
-		SessionData rSessionData = new SessionData();
+		String sessionId = getThreadLocalRequest().getSession().getId();
+		SessionData sessionData = new SessionData();
 
-		getSessionMap(getServletContext()).put(sSessionId, rSessionData);
+		getSessionMap(getServletContext()).put(sessionId, sessionData);
 
-		return rSessionData;
+		return sessionData;
 	}
 
 	/**
 	 * Overridden to implement authenticated download functionality.
 	 *
-	 * @param rRequest  The request
-	 * @param rResponse The response
+	 * @param request  The request
+	 * @param response The response
 	 * @throws ServletException On servlet errors
 	 * @throws IOException      On I/O errors
 	 */
 	@Override
-	protected void doGet(HttpServletRequest rRequest,
-		HttpServletResponse rResponse) throws ServletException, IOException {
-		SessionData rSessionData = getSessionMap(getServletContext()).get(
-			rRequest.getSession().getId());
+	protected void doGet(HttpServletRequest request,
+		HttpServletResponse response) throws ServletException, IOException {
+		SessionData sessionData = getSessionMap(getServletContext()).get(
+			request.getSession().getId());
 
-		if (rSessionData == null) {
-			setErrorResponse(rResponse, HttpServletResponse.SC_UNAUTHORIZED,
+		if (sessionData == null) {
+			setErrorResponse(response, HttpServletResponse.SC_UNAUTHORIZED,
 				"User not authorized");
-		} else if (!processDownloadRequest(rRequest, rResponse,
-			rSessionData) &&
-			!processExternalServiceResponse(rRequest, rResponse,
-				rSessionData)) {
-			super.doGet(rRequest, rResponse);
+		} else if (!processDownloadRequest(request, response, sessionData) &&
+			!processExternalServiceResponse(request, response, sessionData)) {
+			super.doGet(request, response);
 		}
 	}
 
@@ -715,9 +701,9 @@ public abstract class AuthenticatedServiceImpl<E extends Entity>
 	 * should
 	 * always be invoked after a subclass has performed it's cleanup.
 	 *
-	 * @param rSessionData The session data for the session that is logged out
+	 * @param sessionData The session data for the session that is logged out
 	 */
-	protected void endSession(SessionData rSessionData) {
+	protected void endSession(SessionData sessionData) {
 	}
 
 	/**
@@ -764,145 +750,144 @@ public abstract class AuthenticatedServiceImpl<E extends Entity>
 	 * update
 	 * them if necessary.</p>
 	 *
-	 * @param rUserData  The list of data elements for the current user
-	 * @param rUser      The entity for the user to initialize the data from
-	 * @param sLoginName The login name of the current user
+	 * @param userData  The list of data elements for the current user
+	 * @param user      The entity for the user to initialize the data from
+	 * @param loginName The login name of the current user
 	 * @throws ServiceException If initializing the data fails
 	 */
-	protected void initUserData(DataElementList rUserData, E rUser,
-		String sLoginName) throws ServiceException {
-		HttpServletRequest rRequest = getThreadLocalRequest();
+	protected void initUserData(DataElementList userData, E user,
+		String loginName) throws ServiceException {
+		HttpServletRequest request = getThreadLocalRequest();
 
-		rUserData.set(LOGIN_NAME, sLoginName);
-		rUserData.set(USER_NAME, EntityFunctions.format(rUser));
-		rUserData.setProperty(SESSION_ID, rRequest.getSession().getId());
+		userData.set(LOGIN_NAME, loginName);
+		userData.set(USER_NAME, EntityFunctions.format(user));
+		userData.setProperty(SESSION_ID, request.getSession().getId());
 	}
 
 	/**
 	 * Checks for and if necessary processes a download GET request.
 	 *
-	 * @param rRequest     sUrl The request URL
-	 * @param rResponse    The servlet response
-	 * @param rSessionData The session data for the current user
+	 * @param request     url The request URL
+	 * @param response    The servlet response
+	 * @param sessionData The session data for the current user
 	 * @return TRUE if a download request has been detected and processed
 	 * @throws IOException      If an IO operation fails
 	 * @throws ServletException If handling the request fails
 	 */
-	protected boolean processDownloadRequest(HttpServletRequest rRequest,
-		HttpServletResponse rResponse, SessionData rSessionData) {
-		String sUrl = rRequest.getRequestURI();
-		boolean bIsDownloadRequest = false;
+	protected boolean processDownloadRequest(HttpServletRequest request,
+		HttpServletResponse response, SessionData sessionData) {
+		String url = request.getRequestURI();
+		boolean isDownloadRequest = false;
 
-		if (sUrl != null) {
-			Map<String, DownloadData> rSessionDownloads =
-				rSessionData.get(SESSION_DOWNLOADS);
+		if (url != null) {
+			Map<String, DownloadData> sessionDownloads =
+				sessionData.get(SESSION_DOWNLOADS);
 
-			sUrl = getDownloadUrl(sUrl);
+			url = getDownloadUrl(url);
 
-			DownloadData rDownloadData = rSessionDownloads.get(sUrl);
+			DownloadData downloadData = sessionDownloads.get(url);
 
-			if (rDownloadData != null) {
+			if (downloadData != null) {
 				try {
-					bIsDownloadRequest = true;
-					addResponseHeader(rResponse, rDownloadData);
-					rResponse.setCharacterEncoding("UTF-8");
-					rResponse.setContentType(rDownloadData
+					isDownloadRequest = true;
+					addResponseHeader(response, downloadData);
+					response.setCharacterEncoding("UTF-8");
+					response.setContentType(downloadData
 						.getFileType()
 						.getMimeType()
 						.getDefinition());
 
 					// this allows to use Window.Location.assign() for the
 					// download URL without actually replacing the window URL
-					rResponse.setHeader("Content-Disposition", "attachment");
+					response.setHeader("Content-Disposition", "attachment");
 
-					writeDownloadDataToResponse(rResponse, rDownloadData);
+					writeDownloadDataToResponse(response, downloadData);
 				} catch (Throwable e) {
 					Log.error("Processing of download request failed", e);
 				} finally {
-					if (rDownloadData.isRemoveAfterDownload()) {
-						rSessionDownloads.remove(sUrl);
+					if (downloadData.isRemoveAfterDownload()) {
+						sessionDownloads.remove(url);
 					}
 				}
 			}
 		}
 
-		return bIsDownloadRequest;
+		return isDownloadRequest;
 	}
 
 	/**
 	 * Checks for and if necessary processes a download GET request.
 	 *
-	 * @param rRequest     sUrl The request URL
-	 * @param rResponse    The servlet response
-	 * @param rSessionData The session data for the current user
+	 * @param request      url The request URL
+	 * @param httpResponse The servlet response
+	 * @param sessionData  The session data for the current user
 	 * @return TRUE if a download request has been detected and processed
 	 * @throws ServletException If handling the response fails
 	 */
-	protected boolean processExternalServiceResponse(
-		HttpServletRequest rRequest, HttpServletResponse rResponse,
-		SessionData rSessionData) throws ServletException {
-		String sUrl = rRequest.getRequestURI();
+	protected boolean processExternalServiceResponse(HttpServletRequest request,
+		HttpServletResponse httpResponse, SessionData sessionData)
+		throws ServletException {
+		String url = request.getRequestURI();
 
-		boolean bIsOAuthResponse =
-			(sUrl != null && sUrl.indexOf(DEFAULT_OAUTH_CALLBACK_URL) >= 0);
+		boolean isOAuthResponse =
+			(url != null && url.indexOf(DEFAULT_OAUTH_CALLBACK_URL) >= 0);
 
-		if (bIsOAuthResponse) {
-			Iterator<ExternalService> rServices =
+		if (isOAuthResponse) {
+			Iterator<ExternalService> services =
 				getSessionContext().get(EXTERNAL_SERVICES).iterator();
 
-			ExternalService rService = null;
+			ExternalService service = null;
 
-			while (rServices.hasNext()) {
-				ExternalService rCheckService = rServices.next();
-				String sRequestId =
-					rRequest.getParameter(rCheckService.getRequestIdParam());
+			while (services.hasNext()) {
+				ExternalService checkService = services.next();
+				String requestId =
+					request.getParameter(checkService.getRequestIdParam());
 
-				if (sRequestId != null &&
-					sRequestId.equals(rCheckService.getServiceId())) {
-					rService = rCheckService;
-					rServices.remove();
+				if (requestId != null &&
+					requestId.equals(checkService.getServiceId())) {
+					service = checkService;
+					services.remove();
 
 					break;
 				}
 			}
 
-			if (rService != null) {
-				AuthorizationCallback rCallback =
-					rService.get(AUTHORIZATION_CALLBACK);
+			if (service != null) {
+				AuthorizationCallback callback =
+					service.get(AUTHORIZATION_CALLBACK);
 
 				try {
-					String sCode = rRequest.getParameter(
-						rService.getCallbackCodeRequestParam());
+					String code = request.getParameter(
+						service.getCallbackCodeRequestParam());
 
-					String sAccessToken = rService.processCallback(sCode);
-					String sResponse = String.format(
-						"<h2>Server-Freigabe erhalten</h2>" +
-							"<p>Der Server hat den Zugriff authorisiert. " +
-							"Bitte kehren Sie zur vorherigen Seite zurück, " +
-							"um auf die Server-Daten zuzugreifen.</p>");
+					String accessToken = service.processCallback(code);
+					String response = "<h2>Server-Freigabe erhalten</h2>" +
+						"<p>Der Server hat den Zugriff authorisiert. " +
+						"Bitte kehren Sie zur vorherigen Seite zurück, " +
+						"um auf die Server-Daten zuzugreifen.</p>";
 
-					rCallback.authorizationSuccess(sAccessToken);
-					rResponse.getWriter().println(sResponse);
+					callback.authorizationSuccess(accessToken);
+					httpResponse.getWriter().println(response);
 				} catch (Exception e) {
 					try {
-						rResponse
+						httpResponse
 							.getWriter()
 							.println("Error: " + e.getMessage());
-					} catch (IOException eIO) {
-						Log.error("Response access error", eIO);
+					} catch (IOException iO) {
+						Log.error("Response access error", iO);
 					}
 
 					Log.error("External service response processing failed",
 						e);
-					rCallback.authorizationFailure(e);
+					callback.authorizationFailure(e);
 				}
 			} else {
 				throw new ServletException(
-					"No external service for '" + rRequest + "'");
+					"No external service for '" + request + "'");
 			}
 		}
 
-		return bIsOAuthResponse;
+		return isOAuthResponse;
 	}
 
 	/**
@@ -913,44 +898,44 @@ public abstract class AuthenticatedServiceImpl<E extends Entity>
 	 *
 	 * <p>Subclasses should always invoke the superclass implementation.</p>
 	 *
-	 * @param rSessionData The session data to reset
+	 * @param sessionData The session data to reset
 	 */
-	protected void resetSessionData(SessionData rSessionData) {
+	protected void resetSessionData(SessionData sessionData) {
 	}
 
 	/**
 	 * Internal method to query the {@link SessionData} for the session of the
 	 * current request.
 	 *
-	 * @param bCheckAuthentication TRUE to throw an exception if no user is
-	 *                             authenticated for the current session
+	 * @param checkAuthentication TRUE to throw an exception if no user is
+	 *                            authenticated for the current session
 	 * @return The session data (may be NULL if no session is available and the
 	 * check authentication parameter is FALSE)
 	 * @throws AuthenticationException If no session data is available and the
 	 *                                 check authentication parameter is TRUE
 	 */
-	SessionData getSessionData(boolean bCheckAuthentication)
+	SessionData getSessionData(boolean checkAuthentication)
 		throws AuthenticationException {
-		SessionData rSessionData =
-			getSessionData(getThreadLocalRequest(), bCheckAuthentication);
+		SessionData sessionData =
+			getSessionData(getThreadLocalRequest(), checkAuthentication);
 
-		if (rSessionData != null && bCheckAuthentication) {
-			checkAuthenticationTimeout(rSessionData);
+		if (sessionData != null && checkAuthentication) {
+			checkAuthenticationTimeout(sessionData);
 		}
 
-		return rSessionData;
+		return sessionData;
 	}
 
 	/**
 	 * adds the header to the {@link HttpServletResponse} based on information
-	 * taken from rDownloadData.
+	 * taken from downloadData.
 	 */
-	private void addResponseHeader(HttpServletResponse rResponse,
-		DownloadData rDownloadData) {
-		String sHeader = String.format("attachment;filename=\"%s\"",
-			rDownloadData.getFileName());
+	private void addResponseHeader(HttpServletResponse response,
+		DownloadData downloadData) {
+		String header = String.format("attachment;filename=\"%s\"",
+			downloadData.getFileName());
 
-		rResponse.addHeader("Content-Disposition", sHeader);
+		response.addHeader("Content-Disposition", header);
 	}
 
 	/**
@@ -962,24 +947,24 @@ public abstract class AuthenticatedServiceImpl<E extends Entity>
 	 * the type {@link #AUTHENTICATION_TIMEOUT}. If not set it defaults to zero
 	 * which disables the timeout.
 	 *
-	 * @param rSessionData The session to check for the timeout
+	 * @param sessionData The session to check for the timeout
 	 * @throws AuthenticationException If the session timeout has been reached
 	 */
 	@SuppressWarnings("boxing")
-	private void checkAuthenticationTimeout(SessionData rSessionData)
+	private void checkAuthenticationTimeout(SessionData sessionData)
 		throws AuthenticationException {
-		int nAuthenticationTimeout;
+		int authenticationTimeout;
 
-		nAuthenticationTimeout =
+		authenticationTimeout =
 			getServiceConfiguration().getConfigValue(AUTHENTICATION_TIMEOUT,
 				0);
 
-		if (nAuthenticationTimeout > 0) {
-			long nSessionTime = rSessionData.get(SESSION_START_TIME).getTime();
+		if (authenticationTimeout > 0) {
+			long sessionTime = sessionData.get(SESSION_START_TIME).getTime();
 
-			nSessionTime = (System.currentTimeMillis() - nSessionTime) / 1000;
+			sessionTime = (System.currentTimeMillis() - sessionTime) / 1000;
 
-			if (nSessionTime > nAuthenticationTimeout) {
+			if (sessionTime > authenticationTimeout) {
 				throw new AuthenticationException("UserSessionExpired", true);
 			}
 		}
@@ -988,66 +973,66 @@ public abstract class AuthenticatedServiceImpl<E extends Entity>
 	/**
 	 * Returns the download URL part of a certain URL string.
 	 *
-	 * @param sUrl The full URL string
+	 * @param url The full URL string
 	 * @return The download URL part
 	 */
-	private String getDownloadUrl(String sUrl) {
-		int nStart = sUrl.indexOf(DEFAULT_DOWNLOAD_URL);
+	private String getDownloadUrl(String url) {
+		int start = url.indexOf(DEFAULT_DOWNLOAD_URL);
 
-		if (nStart > 0) {
-			sUrl = sUrl.substring(nStart);
+		if (start > 0) {
+			url = url.substring(start);
 		}
 
-		return sUrl;
+		return url;
 	}
 
 	/**
 	 * Returns true if the given contenType is knwown to be character based.
 	 *
-	 * @param rContentType The character based data
+	 * @param contentType The character based data
 	 * @return The character based data
 	 */
-	private boolean isCharacterBasedData(String rContentType) {
-		Pattern aCaseInsensitivePattern =
+	private boolean isCharacterBasedData(String contentType) {
+		Pattern caseInsensitivePattern =
 			Pattern.compile(".*(?i)text.*", Pattern.CASE_INSENSITIVE);
 
-		return aCaseInsensitivePattern.matcher(rContentType).matches();
+		return caseInsensitivePattern.matcher(contentType).matches();
 	}
 
 	/**
 	 * Uses a {@link ServletOutputStream} to write the data of an HTTP servlet
 	 * response.
 	 *
-	 * @param rResponse The response object
-	 * @param rData     The response data
+	 * @param response The response object
+	 * @param data     The response data
 	 */
-	private void writeBinaryOutput(HttpServletResponse rResponse, Object rData)
+	private void writeBinaryOutput(HttpServletResponse response, Object data)
 		throws IOException {
-		ServletOutputStream rOut = rResponse.getOutputStream();
+		ServletOutputStream out = response.getOutputStream();
 
 		// TODO: support additional data formats
-		if (rData instanceof byte[]) {
-			byte[] rBytes = (byte[]) rData;
+		if (data instanceof byte[]) {
+			byte[] bytes = (byte[]) data;
 
-			rOut.write(rBytes, 0, rBytes.length);
+			out.write(bytes, 0, bytes.length);
 		} else {
-			rOut.print(rData.toString());
+			out.print(data.toString());
 		}
 
-		rOut.flush();
-		rOut.close();
+		out.flush();
+		out.close();
 	}
 
 	/**
 	 * Uses a {@link PrintWriter} to write output to the
 	 * {@link HttpServletResponse}
 	 */
-	private void writeCharacterBasedOutput(HttpServletResponse rResponse,
-		String sContent) throws IOException {
-		PrintWriter aPrintWriter = rResponse.getWriter();
+	private void writeCharacterBasedOutput(HttpServletResponse response,
+		String content) throws IOException {
+		PrintWriter printWriter = response.getWriter();
 
-		aPrintWriter.print(sContent);
-		aPrintWriter.close();
+		printWriter.print(content);
+		printWriter.close();
 	}
 
 	/**
@@ -1056,17 +1041,17 @@ public abstract class AuthenticatedServiceImpl<E extends Entity>
 	 * the appropriate method the write the data to the
 	 * {@link HttpServletResponse}.
 	 */
-	private void writeDownloadDataToResponse(HttpServletResponse rResponse,
-		DownloadData rDownloadData) throws IOException {
-		String sContentType =
-			rDownloadData.getFileType().getMimeType().getDefinition();
-		Object rData = rDownloadData.createData();
+	private void writeDownloadDataToResponse(HttpServletResponse response,
+		DownloadData downloadData) throws IOException {
+		String contentType =
+			downloadData.getFileType().getMimeType().getDefinition();
+		Object data = downloadData.createData();
 
-		if (rData != null) {
-			if (isCharacterBasedData(sContentType)) {
-				writeCharacterBasedOutput(rResponse, rData.toString());
+		if (data != null) {
+			if (isCharacterBasedData(contentType)) {
+				writeCharacterBasedOutput(response, data.toString());
 			} else {
-				writeBinaryOutput(rResponse, rData);
+				writeBinaryOutput(response, data);
 			}
 		}
 	}

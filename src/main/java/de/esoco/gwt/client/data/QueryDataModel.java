@@ -16,12 +16,11 @@
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 package de.esoco.gwt.client.data;
 
+import com.google.gwt.user.client.rpc.AsyncCallback;
 import de.esoco.data.element.QueryResultElement;
 import de.esoco.data.element.StringDataElement;
-
 import de.esoco.gwt.client.ServiceRegistry;
 import de.esoco.gwt.shared.StorageService;
-
 import de.esoco.lib.model.Callback;
 import de.esoco.lib.model.DataModel;
 import de.esoco.lib.model.Downloadable;
@@ -31,14 +30,11 @@ import de.esoco.lib.model.SortableDataModel;
 import de.esoco.lib.property.SortDirection;
 
 import java.io.Serializable;
-
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-
-import com.google.gwt.user.client.rpc.AsyncCallback;
 
 import static de.esoco.lib.property.ContentProperties.FILE_NAME;
 import static de.esoco.lib.property.StorageProperties.QUERY_LIMIT;
@@ -58,30 +54,30 @@ public class QueryDataModel implements RemoteDataModel<DataModel<String>>,
 
 	private static final long serialVersionUID = 1L;
 
-	private String sQueryId;
+	private String queryId;
 
-	private int nQuerySize;
+	private int querySize;
 
-	private transient int nWindowSize;
+	private transient int windowSize;
 
-	private transient int nWindowStart;
+	private transient int windowStart;
 
-	private transient List<DataModel<String>> aCurrentData;
+	private transient List<DataModel<String>> currentData;
 
-	private transient Map<String, String> aFilters = new HashMap<>();
+	private transient Map<String, String> filters = new HashMap<>();
 
-	private transient Map<String, SortDirection> aSortFields = new HashMap<>();
+	private transient Map<String, SortDirection> sortFields = new HashMap<>();
 
 	/**
 	 * Creates a new instance for a certain query. If the query size is not
 	 * known it should be set to zero.
 	 *
-	 * @param sQueryId   The query ID
-	 * @param nQuerySize The (initial) query size (zero if unknown)
+	 * @param queryId   The query ID
+	 * @param querySize The (initial) query size (zero if unknown)
 	 */
-	public QueryDataModel(String sQueryId, int nQuerySize) {
-		this.sQueryId = sQueryId;
-		this.nQuerySize = nQuerySize;
+	public QueryDataModel(String queryId, int querySize) {
+		this.queryId = queryId;
+		this.querySize = querySize;
 	}
 
 	/**
@@ -95,15 +91,15 @@ public class QueryDataModel implements RemoteDataModel<DataModel<String>>,
 	 */
 	@Override
 	public int getAvailableElementCount() {
-		return aCurrentData.size();
+		return currentData.size();
 	}
 
 	/**
 	 * @see DataModel#getElement(int)
 	 */
 	@Override
-	public DataModel<String> getElement(int nIndex) {
-		return aCurrentData.get(nIndex - nWindowStart);
+	public DataModel<String> getElement(int index) {
+		return currentData.get(index - windowStart);
 	}
 
 	/**
@@ -111,15 +107,15 @@ public class QueryDataModel implements RemoteDataModel<DataModel<String>>,
 	 */
 	@Override
 	public int getElementCount() {
-		return nQuerySize;
+		return querySize;
 	}
 
 	/**
 	 * @see FilterableDataModel#getFilter(String)
 	 */
 	@Override
-	public String getFilter(String sFieldId) {
-		return aFilters.get(sFieldId);
+	public String getFilter(String fieldId) {
+		return filters.get(fieldId);
 	}
 
 	/**
@@ -127,7 +123,7 @@ public class QueryDataModel implements RemoteDataModel<DataModel<String>>,
 	 */
 	@Override
 	public Map<String, String> getFilters() {
-		return aFilters;
+		return filters;
 	}
 
 	/**
@@ -136,15 +132,15 @@ public class QueryDataModel implements RemoteDataModel<DataModel<String>>,
 	 * @return The query ID
 	 */
 	public final String getQueryId() {
-		return sQueryId;
+		return queryId;
 	}
 
 	/**
 	 * @see SortableDataModel#getSortDirection(String)
 	 */
 	@Override
-	public SortDirection getSortDirection(String sFieldId) {
-		return aSortFields.get(sFieldId);
+	public SortDirection getSortDirection(String fieldId) {
+		return sortFields.get(fieldId);
 	}
 
 	/**
@@ -152,7 +148,7 @@ public class QueryDataModel implements RemoteDataModel<DataModel<String>>,
 	 */
 	@Override
 	public int getWindowSize() {
-		return nWindowSize;
+		return windowSize;
 	}
 
 	/**
@@ -160,7 +156,7 @@ public class QueryDataModel implements RemoteDataModel<DataModel<String>>,
 	 */
 	@Override
 	public int getWindowStart() {
-		return nWindowStart;
+		return windowStart;
 	}
 
 	/**
@@ -171,7 +167,7 @@ public class QueryDataModel implements RemoteDataModel<DataModel<String>>,
 	 */
 	@Override
 	public Iterator<DataModel<String>> iterator() {
-		return aCurrentData.iterator();
+		return currentData.iterator();
 	}
 
 	/**
@@ -181,25 +177,25 @@ public class QueryDataModel implements RemoteDataModel<DataModel<String>>,
 	 * @see Downloadable#prepareDownload(String, int, Callback)
 	 */
 	@Override
-	public void prepareDownload(String sFileName, int nMaxRows,
-		final Callback<String> rCallback) {
-		if (aCurrentData != null) {
-			StringDataElement aQueryData = createQueryData(0, nMaxRows);
+	public void prepareDownload(String fileName, int maxRows,
+		final Callback<String> callback) {
+		if (currentData != null) {
+			StringDataElement queryData = createQueryData(0, maxRows);
 
-			aQueryData.setProperty(FILE_NAME, sFileName);
+			queryData.setProperty(FILE_NAME, fileName);
 
 			ServiceRegistry
 				.getStorageService()
-				.executeCommand(StorageService.PREPARE_DOWNLOAD, aQueryData,
+				.executeCommand(StorageService.PREPARE_DOWNLOAD, queryData,
 					new AsyncCallback<StringDataElement>() {
 						@Override
 						public void onFailure(Throwable e) {
-							rCallback.onError(e);
+							callback.onError(e);
 						}
 
 						@Override
-						public void onSuccess(StringDataElement rDownloadUrl) {
-							rCallback.onSuccess(rDownloadUrl.getValue());
+						public void onSuccess(StringDataElement downloadUrl) {
+							callback.onSuccess(downloadUrl.getValue());
 						}
 					});
 		}
@@ -210,7 +206,7 @@ public class QueryDataModel implements RemoteDataModel<DataModel<String>>,
 	 */
 	@Override
 	public void removeAllFilters() {
-		aFilters.clear();
+		filters.clear();
 	}
 
 	/**
@@ -218,25 +214,25 @@ public class QueryDataModel implements RemoteDataModel<DataModel<String>>,
 	 */
 	@Override
 	public void removeSorting() {
-		aSortFields.clear();
+		sortFields.clear();
 	}
 
 	/**
 	 * Resets the query size to force a re-initialization.
 	 */
 	public void resetQuerySize() {
-		nQuerySize = 0;
+		querySize = 0;
 	}
 
 	/**
 	 * @see FilterableDataModel#setFilter(String, String)
 	 */
 	@Override
-	public void setFilter(String sFieldId, String sFilter) {
-		if (sFilter != null && !sFilter.isEmpty()) {
-			aFilters.put(sFieldId, sFilter);
+	public void setFilter(String fieldId, String filter) {
+		if (filter != null && !filter.isEmpty()) {
+			filters.put(fieldId, filter);
 		} else {
-			aFilters.remove(sFieldId);
+			filters.remove(fieldId);
 		}
 	}
 
@@ -244,20 +240,20 @@ public class QueryDataModel implements RemoteDataModel<DataModel<String>>,
 	 * @see FilterableDataModel#setFilters(Map)
 	 */
 	@Override
-	public void setFilters(Map<String, String> rFilters) {
-		aFilters.clear();
-		aFilters.putAll(rFilters);
+	public void setFilters(Map<String, String> filters) {
+		filters.clear();
+		filters.putAll(filters);
 	}
 
 	/**
 	 * @see SortableDataModel#setSortDirection(String, SortDirection)
 	 */
 	@Override
-	public void setSortDirection(String sFieldId, SortDirection eDirection) {
-		if (eDirection != null) {
-			aSortFields.put(sFieldId, eDirection);
+	public void setSortDirection(String fieldId, SortDirection direction) {
+		if (direction != null) {
+			sortFields.put(fieldId, direction);
 		} else {
-			aSortFields.remove(sFieldId);
+			sortFields.remove(fieldId);
 		}
 	}
 
@@ -265,99 +261,97 @@ public class QueryDataModel implements RemoteDataModel<DataModel<String>>,
 	 * @see RemoteDataModel#setWindow(int, int, Callback)
 	 */
 	@Override
-	public void setWindow(int nQueryStart, int nQueryLimit,
-		final Callback<RemoteDataModel<DataModel<String>>> rCallback) {
-		if (aCurrentData == null) {
-			aCurrentData = new ArrayList<DataModel<String>>(nQueryLimit);
-		} else if (nQueryLimit != nWindowSize) {
-			aCurrentData.clear();
+	public void setWindow(int queryStart, int queryLimit,
+		final Callback<RemoteDataModel<DataModel<String>>> callback) {
+		if (currentData == null) {
+			currentData = new ArrayList<DataModel<String>>(queryLimit);
+		} else if (queryLimit != windowSize) {
+			currentData.clear();
 		}
 
-		nWindowSize = nQueryLimit;
+		windowSize = queryLimit;
 
-		int nWindowEnd = nWindowStart + aCurrentData.size();
-		int nEnd = nQueryStart + nWindowSize;
+		int windowEnd = windowStart + currentData.size();
+		int end = queryStart + windowSize;
 
-		if (nQueryStart > nWindowStart && nQueryStart < nWindowEnd) {
-			nQueryLimit -= nWindowEnd - nQueryStart;
-			nQueryStart = nWindowEnd;
-		} else if (nEnd >= nWindowStart && nEnd < nWindowEnd) {
-			nQueryLimit -= nEnd - nWindowStart;
+		if (queryStart > windowStart && queryStart < windowEnd) {
+			queryLimit -= windowEnd - queryStart;
+			queryStart = windowEnd;
+		} else if (end >= windowStart && end < windowEnd) {
+			queryLimit -= end - windowStart;
 		}
 
-		StringDataElement aQueryData =
-			createQueryData(nQueryStart, nQueryLimit);
+		StringDataElement queryData = createQueryData(queryStart, queryLimit);
 
-		executeQuery(aQueryData, nQueryStart, nQueryLimit, rCallback);
+		executeQuery(queryData, queryStart, queryLimit, callback);
 	}
 
 	@Override
 	public String toString() {
-		return getClass().getSimpleName() + "[" + sQueryId + "]";
+		return getClass().getSimpleName() + "[" + queryId + "]";
 	}
 
 	/**
 	 * Lets this model use the filters and sorting of another query model
 	 * instance.
 	 *
-	 * @param rOtherModel The other model
+	 * @param otherModel The other model
 	 */
-	public void useConstraints(QueryDataModel rOtherModel) {
-		aFilters = rOtherModel.aFilters;
-		aSortFields = rOtherModel.aSortFields;
+	public void useConstraints(QueryDataModel otherModel) {
+		filters = otherModel.filters;
+		sortFields = otherModel.sortFields;
 	}
 
 	/**
 	 * Create a data element list that contains the query data for this model's
 	 * filter criteria.
 	 *
-	 * @param nQueryStart The index of the first object to query
-	 * @param nQueryLimit The maximum number of objects to query
+	 * @param queryStart The index of the first object to query
+	 * @param queryLimit The maximum number of objects to query
 	 */
-	private StringDataElement createQueryData(int nQueryStart,
-		int nQueryLimit) {
-		StringDataElement aQueryData = new StringDataElement(sQueryId, null);
+	private StringDataElement createQueryData(int queryStart, int queryLimit) {
+		StringDataElement queryData = new StringDataElement(queryId, null);
 
-		aQueryData.setProperty(QUERY_START, nQueryStart);
-		aQueryData.setProperty(QUERY_LIMIT, nQueryLimit);
+		queryData.setProperty(QUERY_START, queryStart);
+		queryData.setProperty(QUERY_LIMIT, queryLimit);
 
-		if (!aSortFields.isEmpty()) {
-			aQueryData.setProperty(QUERY_SORT, aSortFields);
+		if (!sortFields.isEmpty()) {
+			queryData.setProperty(QUERY_SORT, sortFields);
 		}
 
-		if (!aFilters.isEmpty()) {
-			aQueryData.setProperty(QUERY_SEARCH, aFilters);
+		if (!filters.isEmpty()) {
+			queryData.setProperty(QUERY_SEARCH, filters);
 		}
 
-		return aQueryData;
+		return queryData;
 	}
 
 	/**
-	 * Executes a query from {@link #prepareWindow(int, Callback)}.
+	 * Executes a query from {@link #setWindow(int, int, Callback)}.
 	 *
-	 * @param aQueryData The query data
-	 * @param nStart     The start index for the query
-	 * @param nCount     The number of data model elements to query
-	 * @param rCallback  The callback to be invoked when the query is finished
+	 * @param queryData The query data
+	 * @param start     The start index for the query
+	 * @param count     The number of data model elements to query
+	 * @param callback  The callback to be invoked when the query is finished
 	 */
-	private void executeQuery(StringDataElement aQueryData, final int nStart,
-		final int nCount,
-		final Callback<RemoteDataModel<DataModel<String>>> rCallback) {
+	private void executeQuery(StringDataElement queryData, final int start,
+		final int count,
+		final Callback<RemoteDataModel<DataModel<String>>> callback) {
 		ServiceRegistry
 			.getStorageService()
-			.executeCommand(StorageService.QUERY, aQueryData,
+			.executeCommand(StorageService.QUERY, queryData,
 				new AsyncCallback<QueryResultElement<DataModel<String>>>() {
 					@Override
 					public void onFailure(Throwable e) {
-						rCallback.onError(e);
+						callback.onError(e);
 					}
 
 					@Override
 					public void onSuccess(
-						QueryResultElement<DataModel<String>> rResult) {
-						setCurrentData(rResult, nStart, nCount);
+						QueryResultElement<DataModel<String>> result) {
+						setCurrentData(result, start, count);
 
-						rCallback.onSuccess(QueryDataModel.this);
+						callback.onSuccess(QueryDataModel.this);
 					}
 				});
 	}
@@ -366,38 +360,38 @@ public class QueryDataModel implements RemoteDataModel<DataModel<String>>,
 	 * Sets the current data of this model by converting query data elements
 	 * into data models.
 	 *
-	 * @param rQueryResult The data elements to convert
-	 * @param nStart       The starting index of the new elements
+	 * @param queryResult The data elements to convert
+	 * @param start       The starting index of the new elements
 	 */
 	private void setCurrentData(
-		QueryResultElement<DataModel<String>> rQueryResult, int nStart,
-		int nCount) {
-		nQuerySize = rQueryResult.getQuerySize();
+		QueryResultElement<DataModel<String>> queryResult, int start,
+		int count) {
+		querySize = queryResult.getQuerySize();
 
-		if (nCount == nWindowSize || nCount == nQuerySize ||
-			nCount != rQueryResult.getElementCount()) {
-			aCurrentData.clear();
-			nWindowStart = nStart;
+		if (count == windowSize || count == querySize ||
+			count != queryResult.getElementCount()) {
+			currentData.clear();
+			windowStart = start;
 
-			for (DataModel<String> rRow : rQueryResult) {
-				aCurrentData.add(rRow);
+			for (DataModel<String> row : queryResult) {
+				currentData.add(row);
 			}
-		} else if (nStart < nWindowStart) {
-			int nLast = nWindowSize - 1;
-			int nInsert = 0;
+		} else if (start < windowStart) {
+			int last = windowSize - 1;
+			int insert = 0;
 
-			nWindowStart = nStart;
+			windowStart = start;
 
-			for (DataModel<String> rRow : rQueryResult) {
-				aCurrentData.remove(nLast);
-				aCurrentData.add(nInsert++, rRow);
+			for (DataModel<String> row : queryResult) {
+				currentData.remove(last);
+				currentData.add(insert++, row);
 			}
-		} else if (nStart > nWindowStart) {
-			nWindowStart += nCount;
+		} else if (start > windowStart) {
+			windowStart += count;
 
-			for (DataModel<String> rRow : rQueryResult) {
-				aCurrentData.remove(0);
-				aCurrentData.add(rRow);
+			for (DataModel<String> row : queryResult) {
+				currentData.remove(0);
+				currentData.add(row);
 			}
 		}
 	}

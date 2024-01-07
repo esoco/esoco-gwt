@@ -50,43 +50,43 @@ public class PropertyName_CustomFieldSerializer {
 	 * Not used, implemented in {@link #instantiate(SerializationStreamReader)}
 	 * instead.
 	 *
-	 * @param rReader The stream reader to read the object data from
-	 * @param rObject The object to de-serialize
+	 * @param reader The stream reader to read the object data from
+	 * @param object The object to de-serialize
 	 * @throws SerializationException If the stream access fails
 	 */
-	public static void deserialize(SerializationStreamReader rReader,
-		PropertyName<?> rObject) throws SerializationException {
+	public static void deserialize(SerializationStreamReader reader,
+		PropertyName<?> object) throws SerializationException {
 	}
 
 	/**
 	 * Restores the property name from a serialization stream.
 	 *
-	 * @param rReader The stream reader to read the object data from
+	 * @param reader The stream reader to read the object data from
 	 * @return The restored object
 	 * @throws SerializationException If the stream access fails
 	 */
-	public static PropertyName<?> instantiate(SerializationStreamReader rReader)
+	public static PropertyName<?> instantiate(SerializationStreamReader reader)
 		throws SerializationException {
-		String sName = rReader.readString();
-		PropertyName<?> rPropertyName = PropertyName.valueOf(sName);
+		String name = reader.readString();
+		PropertyName<?> propertyName = PropertyName.valueOf(name);
 
-		if (rPropertyName == null) {
+		if (propertyName == null) {
 			throw new IllegalStateException(
-				"No PropertyName instance for " + sName);
+				"No PropertyName instance for " + name);
 		}
 
-		return rPropertyName;
+		return propertyName;
 	}
 
 	/**
 	 * Writes the name string to the stream.
 	 *
-	 * @param rWriter       The stream writer to write the object data to
-	 * @param rPropertyName The object to serialize
+	 * @param writer       The stream writer to write the object data to
+	 * @param propertyName The object to serialize
 	 * @throws SerializationException If the stream access fails
 	 */
-	public static void serialize(SerializationStreamWriter rWriter,
-		PropertyName<?> rPropertyName) throws SerializationException {
-		rWriter.writeString(rPropertyName.getName());
+	public static void serialize(SerializationStreamWriter writer,
+		PropertyName<?> propertyName) throws SerializationException {
+		writer.writeString(propertyName.getName());
 	}
 }

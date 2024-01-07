@@ -16,11 +16,11 @@
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 package de.esoco.gwt.client.app;
 
+import com.google.gwt.event.shared.HandlerRegistration;
 import de.esoco.data.element.DataElement;
 import de.esoco.data.element.DataElementList;
 import de.esoco.data.process.ProcessState;
 import de.esoco.data.process.ProcessState.ProcessExecutionMode;
-
 import de.esoco.ewt.UserInterfaceContext;
 import de.esoco.ewt.build.ContainerBuilder;
 import de.esoco.ewt.component.Button;
@@ -38,7 +38,6 @@ import de.esoco.ewt.layout.FillLayout;
 import de.esoco.ewt.style.AlignedPosition;
 import de.esoco.ewt.style.StyleData;
 import de.esoco.ewt.style.StyleFlag;
-
 import de.esoco.gwt.client.res.EsocoGwtCss;
 import de.esoco.gwt.client.res.EsocoGwtResources;
 import de.esoco.gwt.client.ui.CommandResultHandler;
@@ -51,7 +50,6 @@ import de.esoco.gwt.client.ui.DataElementUI;
 import de.esoco.gwt.client.ui.PanelManager;
 import de.esoco.gwt.shared.GwtApplicationService;
 import de.esoco.gwt.shared.ServiceException;
-
 import de.esoco.lib.property.ContentType;
 import de.esoco.lib.property.InteractionEventType;
 import de.esoco.lib.property.LayoutType;
@@ -63,12 +61,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
-import com.google.gwt.event.shared.HandlerRegistration;
-
 import static de.esoco.ewt.style.StyleData.WEB_ADDITIONAL_STYLES;
-
 import static de.esoco.gwt.shared.StorageService.ERROR_ENTITY_LOCKED;
-
 import static de.esoco.lib.property.ContentProperties.CONTENT_TYPE;
 import static de.esoco.lib.property.ContentProperties.RESOURCE_ID;
 import static de.esoco.lib.property.LayoutProperties.LAYOUT;
@@ -118,95 +112,95 @@ public class ProcessPanelManager extends
 	private static final StyleData SUMMARY_LABEL_STYLE =
 		AlignedPosition.CENTER.set(CONTENT_TYPE, ContentType.HTML);
 
-	private String sProcessName;
+	private final String processName;
 
-	private boolean bShowNavigationBar;
+	private final boolean showNavigationBar;
 
-	private boolean bRenderInline;
+	private final boolean renderInline;
 
-	private DataElementPanelManager aParamPanelManager;
+	private final HandlerRegistration uiInspectorEventHandler = null;
 
-	private Container rParamPanel;
+	private DataElementPanelManager paramPanelManager;
 
-	private Button aPrevButton;
+	private Container paramPanel;
 
-	private Button aNextButton;
+	private Button prevButton;
 
-	private Button aCancelButton;
+	private Button nextButton;
 
-	private Button aReloadButton;
+	private Button cancelButton;
 
-	private Label aTitleLabel;
+	private Button reloadButton;
 
-	private Label aMessageLabel;
+	private Label titleLabel;
 
-	private Image rBusyImage = null;
+	private Label messageLabel;
 
-	private ProcessState rProcessState = null;
+	private Image busyImage = null;
 
-	private String sPreviousStep = null;
+	private ProcessState processState = null;
 
-	private String sPreviousStyle = "";
+	private String previousStep = null;
 
-	private boolean bDisableOnInteraction = true;
+	private String previousStyle = "";
 
-	private boolean bAutoContinue = false;
+	private boolean disableOnInteraction = true;
 
-	private boolean bPauseAutoContinue = false;
+	private boolean autoContinue = false;
 
-	private boolean bCancelProcess = false;
+	private boolean pauseAutoContinue = false;
 
-	private boolean bCancelled = false;
+	private boolean cancelProcess = false;
 
-	private Map<String, DataElementListView> aProcessViews =
+	private boolean cancelled = false;
+
+	private Map<String, DataElementListView> processViews =
 		Collections.emptyMap();
 
-	private HandlerRegistration rUiInspectorEventHandler = null;
-
-	private boolean bLocked = false;
+	private boolean locked = false;
 
 	/**
 	 * Creates a new instance for a certain process.
 	 *
-	 * @param rParent      The parent panel manager
-	 * @param sProcessName The name of the process
+	 * @param parent      The parent panel manager
+	 * @param processName The name of the process
 	 */
-	public ProcessPanelManager(GwtApplicationPanelManager<?, ?> rParent,
-		String sProcessName) {
-		this(rParent, sProcessName, true, false);
+	public ProcessPanelManager(GwtApplicationPanelManager<?, ?> parent,
+		String processName) {
+		this(parent, processName, true, false);
 	}
 
 	/**
 	 * Creates a new instance for a certain process.
 	 *
-	 * @param rParent            The parent panel manager
-	 * @param sProcessName       The name of the process
-	 * @param bShowNavigationBar TRUE to show the process navigation bar at the
-	 *                           top, FALSE to show only the process parameters
-	 * @param bRenderInline      TRUE to render the process UI in the parent
-	 *                           container, FALSE to create a separate panel
-	 *                           (may not be compatible with a navigation bar)
+	 * @param parent            The parent panel manager
+	 * @param processName       The name of the process
+	 * @param showNavigationBar TRUE to show the process navigation bar at the
+	 *                          top, FALSE to show only the process parameters
+	 * @param renderInline      TRUE to render the process UI in the parent
+	 *                          container, FALSE to create a separate panel
+	 *                          (may
+	 *                          not be compatible with a navigation bar)
 	 */
-	public ProcessPanelManager(GwtApplicationPanelManager<?, ?> rParent,
-		String sProcessName, boolean bShowNavigationBar,
-		boolean bRenderInline) {
-		super(rParent, CSS.gaProcessPanel());
+	public ProcessPanelManager(GwtApplicationPanelManager<?, ?> parent,
+		String processName, boolean showNavigationBar, boolean renderInline) {
+		super(parent, CSS.gaProcessPanel());
 
-		this.sProcessName = sProcessName;
-		this.bShowNavigationBar = bShowNavigationBar;
-		this.bRenderInline = bRenderInline;
+		this.processName = processName;
+		this.showNavigationBar = showNavigationBar;
+		this.renderInline = renderInline;
 	}
 
 	/**
 	 * Creates a label for the current state of a process. If the process state
 	 * is NULL or the process is finished an empty string will be returned.
 	 *
-	 * @param rProcessState The process sate to create the label for
+	 * @param processState The process sate to create the label for
 	 * @return The resulting label string
 	 */
-	public static String createProcessLabel(ProcessState rProcessState) {
-		return rProcessState != null && !rProcessState.isFinished() ?
-		       PROCESS_LABEL_PREFIX + rProcessState.getCurrentStep() :
+	public static String createProcessLabel(ProcessState processState) {
+		return processState != null && !processState.isFinished() ?
+		       PROCESS_LABEL_PREFIX + processState.getCurrentStep() :
 		       "";
 	}
 
@@ -216,22 +210,22 @@ public class ProcessPanelManager extends
 	 * @return The panel builder
 	 */
 	public ContainerBuilder<? extends Container> createParameterPanel() {
-		if (aParamPanelManager != null) {
-			aParamPanelManager.dispose();
+		if (paramPanelManager != null) {
+			paramPanelManager.dispose();
 		}
 
 		removeParameterPanel();
 
-		ContainerBuilder<? extends Container> aBuilder = bRenderInline ?
-		                                                 this :
-		                                                 addPanel(
-			                                                 PARAM_PANEL_STYLE,
-			                                                 new FillLayout(
-				                                                 true));
+		ContainerBuilder<? extends Container> builder = renderInline ?
+		                                                this :
+		                                                addPanel(
+			                                                PARAM_PANEL_STYLE,
+			                                                new FillLayout(
+				                                                true));
 
-		rParamPanel = aBuilder.getContainer();
+		paramPanel = builder.getContainer();
 
-		return aBuilder;
+		return builder;
 	}
 
 	/**
@@ -241,43 +235,42 @@ public class ProcessPanelManager extends
 	 * @see GwtApplicationPanelManager#displayMessage(String, int)
 	 */
 	@Override
-	public void displayMessage(String sMessage, int nDisplayTime) {
-		if (aMessageLabel != null) {
-			aMessageLabel.setVisible(true);
-			aMessageLabel.setText(sMessage);
+	public void displayMessage(String message, int displayTime) {
+		if (messageLabel != null) {
+			messageLabel.setVisible(true);
+			messageLabel.setText(message);
 		}
 	}
 
 	@Override
 	public void dispose() {
-		for (DataElementListView rView : aProcessViews.values()) {
-			rView.hide();
+		for (DataElementListView view : processViews.values()) {
+			view.hide();
 		}
 
 		super.dispose();
 	}
 
 	@Override
-	public void handleCommandResult(ProcessState rNewState) {
-		boolean bFinishProcess =
-			rProcessState != null && rProcessState.isFinalStep();
+	public void handleCommandResult(ProcessState newState) {
+		boolean finishProcess =
+			processState != null && processState.isFinalStep();
 
-		bLocked = false;
-		rProcessState = rNewState;
-		bAutoContinue = rProcessState.isAutoContinue();
+		locked = false;
+		processState = newState;
+		autoContinue = processState.isAutoContinue();
 
-		if (bCancelProcess) {
+		if (cancelProcess) {
 			// cancel process if user confirmed the cancellation during an
 			// automatically continued process step
-			bCancelProcess = false;
+			cancelProcess = false;
 			cancelProcess();
-		} else if (!bCancelled) {
-			for (ProcessState rNewProcess :
-				rProcessState.getSpawnProcesses()) {
-				displayProcess(rNewProcess);
+		} else if (!cancelled) {
+			for (ProcessState newProcess : processState.getSpawnProcesses()) {
+				displayProcess(newProcess);
 			}
 
-			update(bFinishProcess);
+			update(finishProcess);
 		}
 	}
 
@@ -288,20 +281,20 @@ public class ProcessPanelManager extends
 	 * previous interaction will be done. The user can then input the data
 	 * again.
 	 *
-	 * @param rCaught The exception that is caught
+	 * @param caught The exception that is caught
 	 */
 	@Override
-	public void handleError(Throwable rCaught) {
-		bLocked = false;
-		bAutoContinue = false;
+	public void handleError(Throwable caught) {
+		locked = false;
+		autoContinue = false;
 
-		if (rCaught instanceof ServiceException &&
-			((ServiceException) rCaught).isRecoverable()) {
-			ServiceException eService = (ServiceException) rCaught;
+		if (caught instanceof ServiceException &&
+			((ServiceException) caught).isRecoverable()) {
+			ServiceException service = (ServiceException) caught;
 
-			handleRecoverableError(eService);
+			handleRecoverableError(service);
 		} else {
-			handleUnrecoverableError(rCaught);
+			handleUnrecoverableError(caught);
 		}
 
 		setUserInterfaceState();
@@ -310,23 +303,23 @@ public class ProcessPanelManager extends
 	/**
 	 * Handles the events of user interface elements in this panel.
 	 *
-	 * @param rEvent The event
+	 * @param event The event
 	 */
 	@Override
-	public void handleEvent(EwtEvent rEvent) {
-		if (rEvent.getSource() instanceof Button) {
-			Button rSource = (Button) rEvent.getSource();
+	public void handleEvent(EwtEvent event) {
+		if (event.getSource() instanceof Button) {
+			Button source = (Button) event.getSource();
 
-			if (rSource.isEnabled()) {
+			if (source.isEnabled()) {
 				lockUserInterface();
 
-				if (rSource == aNextButton) {
+				if (source == nextButton) {
 					handleNextProcessStepEvent();
-				} else if (rSource == aPrevButton) {
+				} else if (source == prevButton) {
 					handlePreviousProcessStepEvent();
-				} else if (rSource == aCancelButton) {
+				} else if (source == cancelButton) {
 					handleCancelProcessEvent();
-				} else if (rSource == aReloadButton) {
+				} else if (source == reloadButton) {
 					reload();
 				}
 			}
@@ -341,16 +334,16 @@ public class ProcessPanelManager extends
 	 * InteractionEventType)
 	 */
 	@Override
-	public void handleInteractiveInput(DataElement<?> rInteractionElement,
-		InteractionEventType eEventType) {
-		if (!bLocked && !rProcessState.isFinished()) {
-			bLocked = true;
+	public void handleInteractiveInput(DataElement<?> interactionElement,
+		InteractionEventType eventType) {
+		if (!locked && !processState.isFinished()) {
+			locked = true;
 			lockUserInterface();
 
-			ProcessState aInteractionState =
-				createInteractionState(rInteractionElement, eEventType);
+			ProcessState interactionState =
+				createInteractionState(interactionElement, eventType);
 
-			executeProcess(aInteractionState, ProcessExecutionMode.EXECUTE);
+			executeProcess(interactionState, ProcessExecutionMode.EXECUTE);
 		}
 	}
 
@@ -360,31 +353,31 @@ public class ProcessPanelManager extends
 	 * @return TRUE if the panel elements are disabled on interactions
 	 */
 	public final boolean isDisableOnInteraction() {
-		return bDisableOnInteraction;
+		return disableOnInteraction;
 	}
 
 	/**
 	 * Reloads the process data by re-executing the process.
 	 */
 	public void reload() {
-		executeProcess(rProcessState, ProcessExecutionMode.RELOAD);
+		executeProcess(processState, ProcessExecutionMode.RELOAD);
 	}
 
 	/**
 	 * Sets the disable on interaction option.
 	 *
-	 * @param bDisableOnInteraction TRUE to disable the panel elements on
-	 *                              interactions
+	 * @param disableOnInteraction TRUE to disable the panel elements on
+	 *                             interactions
 	 */
-	public final void setDisableOnInteraction(boolean bDisableOnInteraction) {
-		this.bDisableOnInteraction = bDisableOnInteraction;
+	public final void setDisableOnInteraction(boolean disableOnInteraction) {
+		this.disableOnInteraction = disableOnInteraction;
 	}
 
 	@Override
 	protected void addComponents() {
-		if (bShowNavigationBar) {
-			if (rBusyImage == null) {
-				rBusyImage = getContext().createImage("$imBusy");
+		if (showNavigationBar) {
+			if (busyImage == null) {
+				busyImage = getContext().createImage("$imBusy");
 			}
 
 			buildTopPanel();
@@ -399,34 +392,34 @@ public class ProcessPanelManager extends
 	@Override
 	@SuppressWarnings("unchecked")
 	protected ContainerBuilder<Container> createContainer(
-		ContainerBuilder<?> rBuilder, StyleData rStyleData) {
-		ContainerBuilder<? extends Container> rPanelBuilder;
+		ContainerBuilder<?> builder, StyleData styleData) {
+		ContainerBuilder<? extends Container> panelBuilder;
 
-		if (bRenderInline) {
-			rPanelBuilder = rBuilder;
+		if (renderInline) {
+			panelBuilder = builder;
 		} else {
-			rPanelBuilder = rBuilder.addPanel(rStyleData, bShowNavigationBar ?
-			                                              new DockLayout(false,
-				                                              false) :
-			                                              new FillLayout());
+			panelBuilder = builder.addPanel(styleData, showNavigationBar ?
+			                                           new DockLayout(false,
+				                                           false) :
+			                                           new FillLayout());
 		}
 
-		return (ContainerBuilder<Container>) rPanelBuilder;
+		return (ContainerBuilder<Container>) panelBuilder;
 	}
 
 	/**
 	 * Executes the process to receive the next process state.
 	 *
-	 * @param rState The process state to transmit to the server
-	 * @param eMode  The execution mode
+	 * @param state The process state to transmit to the server
+	 * @param mode  The execution mode
 	 */
-	protected void executeProcess(ProcessState rState,
-		ProcessExecutionMode eMode) {
-		sPreviousStep = rProcessState.getCurrentStep();
+	protected void executeProcess(ProcessState state,
+		ProcessExecutionMode mode) {
+		previousStep = processState.getCurrentStep();
 
-		rState.setExecutionMode(eMode);
-		setClientSize(rState);
-		executeCommand(GwtApplicationService.EXECUTE_PROCESS, rState, this);
+		state.setExecutionMode(mode);
+		setClientSize(state);
+		executeCommand(GwtApplicationService.EXECUTE_PROCESS, state, this);
 	}
 
 	/**
@@ -434,47 +427,47 @@ public class ProcessPanelManager extends
 	 * displaying
 	 * the error process state.
 	 *
-	 * @param eService The recoverable service exception
+	 * @param service The recoverable service exception
 	 */
-	protected void handleRecoverableError(ServiceException eService) {
-		String sMessage = eService.getMessage();
-		Map<String, String> rErrorParams = eService.getErrorParameters();
+	protected void handleRecoverableError(ServiceException service) {
+		String message = service.getMessage();
+		Map<String, String> errorParams = service.getErrorParameters();
 
-		if (sMessage.equals(ERROR_ENTITY_LOCKED)) {
-			Object[] rMessageArgs = rErrorParams.values().toArray();
+		if (message.equals(ERROR_ENTITY_LOCKED)) {
+			Object[] messageArgs = errorParams.values().toArray();
 
-			sMessage =
-				getContext().getResourceString("msg" + sMessage, rMessageArgs);
+			message =
+				getContext().getResourceString("msg" + message, messageArgs);
 		} else {
-			ProcessState rNewState = eService.getProcessState();
+			ProcessState newState = service.getProcessState();
 
-			if (rNewState != null) {
-				rProcessState = rNewState;
+			if (newState != null) {
+				processState = newState;
 				updateParameterPanel();
 			}
 
-			if (!sMessage.startsWith("$")) {
-				sMessage = "$msg" + sMessage;
+			if (!message.startsWith("$")) {
+				message = "$msg" + message;
 			}
 
-			if (rErrorParams != null) {
-				for (Entry<String, String> rError : rErrorParams.entrySet()) {
-					String sElementName = rError.getKey();
-					DataElementUI<?> rErrorUI =
-						aParamPanelManager.findDataElementUI(sElementName);
+			if (errorParams != null) {
+				for (Entry<String, String> error : errorParams.entrySet()) {
+					String elementName = error.getKey();
+					DataElementUI<?> errorUI =
+						paramPanelManager.findDataElementUI(elementName);
 
-					if (rErrorUI != null) {
-						rErrorUI.setErrorMessage(rError.getValue());
+					if (errorUI != null) {
+						errorUI.setErrorMessage(error.getValue());
 					} else {
-						for (DataElementListView rView :
-							aProcessViews.values()) {
-							rErrorUI = rView
+						for (DataElementListView view :
+							processViews.values()) {
+							errorUI = view
 								.getViewUI()
 								.getPanelManager()
-								.findDataElementUI(sElementName);
+								.findDataElementUI(elementName);
 
-							if (rErrorUI != null) {
-								rErrorUI.setErrorMessage(rError.getValue());
+							if (errorUI != null) {
+								errorUI.setErrorMessage(error.getValue());
 
 								break;
 							}
@@ -484,18 +477,18 @@ public class ProcessPanelManager extends
 			}
 		}
 
-		displayMessage(sMessage, 0);
+		displayMessage(message, 0);
 	}
 
 	/**
 	 * Handles fatal exceptions that cannot be recovered by re-executing the
 	 * current process.
 	 *
-	 * @param rCaught The exception that signaled the non-recoverable error
+	 * @param caught The exception that signaled the non-recoverable error
 	 */
-	protected void handleUnrecoverableError(Throwable rCaught) {
-		bCancelled = true;
-		buildSummaryPanel(rCaught);
+	protected void handleUnrecoverableError(Throwable caught) {
+		cancelled = true;
+		buildSummaryPanel(caught);
 	}
 
 	/**
@@ -505,36 +498,36 @@ public class ProcessPanelManager extends
 	 * ProcessState)
 	 */
 	@Override
-	protected void processFinished(PanelManager<?, ?> rProcessPanelManager,
-		ProcessState rProcessState) {
-		if (rUiInspectorEventHandler != null) {
-			rUiInspectorEventHandler.removeHandler();
+	protected void processFinished(PanelManager<?, ?> processPanelManager,
+		ProcessState processState) {
+		if (uiInspectorEventHandler != null) {
+			uiInspectorEventHandler.removeHandler();
 		}
 
-		super.processFinished(rProcessPanelManager, rProcessState);
+		super.processFinished(processPanelManager, processState);
 	}
 
 	/**
 	 * Updates the UI from the process state after an interaction.
 	 *
-	 * @param bFinishProcess TRUE if the process needs to be finished
+	 * @param finishProcess TRUE if the process needs to be finished
 	 */
-	protected void update(boolean bFinishProcess) {
-		if (rProcessState.isFinished()) {
-			if (bFinishProcess) {
-				processFinished(this, rProcessState);
+	protected void update(boolean finishProcess) {
+		if (processState.isFinished()) {
+			if (finishProcess) {
+				processFinished(this, processState);
 			} else {
 				setTitle(null);
 				buildSummaryPanel(null);
 				setUserInterfaceState();
 			}
 		} else {
-			processUpdated(ProcessPanelManager.this, rProcessState);
-			setTitle(rProcessState.getName());
+			processUpdated(ProcessPanelManager.this, processState);
+			setTitle(processState.getName());
 			updateParameterPanel();
 
-			if (bAutoContinue && !bPauseAutoContinue) {
-				executeProcess(rProcessState, ProcessExecutionMode.EXECUTE);
+			if (autoContinue && !pauseAutoContinue) {
+				executeProcess(processState, ProcessExecutionMode.EXECUTE);
 			}
 
 			setUserInterfaceState();
@@ -545,22 +538,22 @@ public class ProcessPanelManager extends
 	 * Lock the user interface against input events.
 	 */
 	void lockUserInterface() {
-		if (bShowNavigationBar) {
-			aNextButton.setImage(rBusyImage);
-			aMessageLabel.setVisible(false);
+		if (showNavigationBar) {
+			nextButton.setImage(busyImage);
+			messageLabel.setVisible(false);
 
-			aPrevButton.setEnabled(false);
-			aNextButton.setEnabled(false);
-			aCancelButton.setEnabled(false);
-			aReloadButton.setEnabled(false);
+			prevButton.setEnabled(false);
+			nextButton.setEnabled(false);
+			cancelButton.setEnabled(false);
+			reloadButton.setEnabled(false);
 		}
 
-		if (aParamPanelManager != null && bDisableOnInteraction) {
-			aParamPanelManager.enableInteraction(false);
+		if (paramPanelManager != null && disableOnInteraction) {
+			paramPanelManager.enableInteraction(false);
 		}
 
-		for (DataElementListView rView : aProcessViews.values()) {
-			rView.enableInteraction(false);
+		for (DataElementListView view : processViews.values()) {
+			view.enableInteraction(false);
 		}
 	}
 
@@ -568,39 +561,39 @@ public class ProcessPanelManager extends
 	 * Adds a data element panel for a list of process parameter data elements.
 	 */
 	private void addParameterDataElementPanel() {
-		ContainerBuilder<?> rBuilder = createParameterPanel();
-		List<DataElement<?>> rParams = rProcessState.getInteractionParams();
-		String sStep = rProcessState.getCurrentStep();
+		ContainerBuilder<?> builder = createParameterPanel();
+		List<DataElement<?>> params = processState.getInteractionParams();
+		String step = processState.getCurrentStep();
 
-		DataElement<?> rFirstElement = rParams.get(0);
+		DataElement<?> firstElement = params.get(0);
 
-		if (rParams.size() == 1 && rFirstElement instanceof DataElementList &&
-			rFirstElement.getProperty(LAYOUT, LayoutType.TABLE) !=
+		if (params.size() == 1 && firstElement instanceof DataElementList &&
+			firstElement.getProperty(LAYOUT, LayoutType.TABLE) !=
 				LayoutType.TABLE) {
-			aParamPanelManager = DataElementPanelManager.newInstance(this,
-				(DataElementList) rFirstElement);
+			paramPanelManager = DataElementPanelManager.newInstance(this,
+				(DataElementList) firstElement);
 		} else // legacy handling for root-level table layouts
 		{
-			String sName = sProcessName + " " + sStep;
-			String sStyle = rProcessState.getProperty(STYLE, null);
+			String name = processName + " " + step;
+			String style = processState.getProperty(STYLE, null);
 
-			if (sStyle != null && sStyle.length() > 0) {
-				sName += " " + sStyle;
+			if (style != null && style.length() > 0) {
+				name += " " + style;
 			}
 
-			DataElementList aParamsList = new DataElementList(sName, rParams);
+			DataElementList paramsList = new DataElementList(name, params);
 
-			aParamsList.setProperty(RESOURCE_ID, sName);
+			paramsList.setProperty(RESOURCE_ID, name);
 
-			aParamPanelManager =
-				new DataElementTablePanelManager(this, aParamsList);
+			paramPanelManager =
+				new DataElementTablePanelManager(this, paramsList);
 		}
 
-		StyleData aPanelStyle =
+		StyleData panelStyle =
 			StyleData.DEFAULT.setFlags(StyleFlag.VERTICAL_ALIGN_TOP);
 
-		aParamPanelManager.buildIn(rBuilder, aPanelStyle);
-		aParamPanelManager.setInteractiveInputHandler(this);
+		paramPanelManager.buildIn(builder, panelStyle);
+		paramPanelManager.setInteractiveInputHandler(this);
 	}
 
 	/**
@@ -608,18 +601,18 @@ public class ProcessPanelManager extends
 	 * inspector.
 	 */
 	private void addUiInspectorEventHandler() {
-//		rUiInspectorEventHandler =
+//		uiInspectorEventHandler =
 //			Event.addNativePreviewHandler(new NativePreviewHandler()
 //				{
 //					@Override
-//					public void onPreviewNativeEvent(NativePreviewEvent rEvent)
+//					public void onPreviewNativeEvent(NativePreviewEvent event)
 //					{
-//						NativeEvent rNativeEvent = rEvent.getNativeEvent();
+//						NativeEvent nativeEvent = event.getNativeEvent();
 //
-//						if ((rEvent.getTypeInt() & Event.ONKEYDOWN) != 0 &&
-//							rNativeEvent.getKeyCode() == 73 &&
-//							rNativeEvent.getAltKey() &&
-//							rNativeEvent.getCtrlKey())
+//						if ((event.getTypeInt() & Event.ONKEYDOWN) != 0 &&
+//							nativeEvent.getKeyCode() == 73 &&
+//							nativeEvent.getAltKey() &&
+//							nativeEvent.getCtrlKey())
 //						{
 //							toggleUiInspector();
 //						}
@@ -630,27 +623,27 @@ public class ProcessPanelManager extends
 	/**
 	 * Builds the summary panel.
 	 *
-	 * @param eException An error exception that occurred or NULL for success
+	 * @param exception An error exception that occurred or NULL for success
 	 */
 
-	private void buildSummaryPanel(Throwable eException) {
-		String sMessage =
-			(eException != null ? "$msgProcessError" : "$msgProcessSuccess");
+	private void buildSummaryPanel(Throwable exception) {
+		String message =
+			(exception != null ? "$msgProcessError" : "$msgProcessSuccess");
 
 		removeParameterPanel();
 
-		if (bShowNavigationBar) {
-			aTitleLabel.setVisible(false);
+		if (showNavigationBar) {
+			titleLabel.setVisible(false);
 		}
 
-		if (bRenderInline) {
+		if (renderInline) {
 			addLabel(StyleData.DEFAULT.set(CONTENT_TYPE, ContentType.HTML),
-				sMessage, null);
+				message, null);
 		} else {
-			ContainerBuilder<Panel> aBuilder =
+			ContainerBuilder<Panel> builder =
 				addPanel(SUMMARY_PANEL_STYLE, new FillLayout(true));
 
-			aBuilder.addLabel(SUMMARY_LABEL_STYLE, sMessage, null);
+			builder.addLabel(SUMMARY_LABEL_STYLE, message, null);
 		}
 	}
 
@@ -658,36 +651,34 @@ public class ProcessPanelManager extends
 	 * Builds the panel with the process control buttons.
 	 */
 	private void buildTopPanel() {
-		ContainerBuilder<Panel> aToolbar =
+		ContainerBuilder<Panel> toolbar =
 			addToolbar(this, TOP_PANEL_STYLE, TOOLBAR_STYLE, 0);
 
-		aPrevButton =
-			addToolbarButton(aToolbar, "#imNavPrev", "$ttProcessPrevious");
-		aNextButton =
-			addToolbarButton(aToolbar, "#imNavNext", "$ttProcessNext");
+		prevButton =
+			addToolbarButton(toolbar, "#imNavPrev", "$ttProcessPrevious");
+		nextButton = addToolbarButton(toolbar, "#imNavNext", "$ttProcessNext");
 
-		addToolbarSeparator(aToolbar);
+		addToolbarSeparator(toolbar);
 
-		aCancelButton =
-			addToolbarButton(aToolbar, "#imCancel", "$ttProcessCancel");
+		cancelButton =
+			addToolbarButton(toolbar, "#imCancel", "$ttProcessCancel");
 
-		String sTitle = createProcessLabel(rProcessState);
+		String title = createProcessLabel(processState);
 
-		addToolbarSeparator(aToolbar);
-		aTitleLabel = aToolbar.addLabel(TITLE_LABEL_STYLE, sTitle, null);
+		addToolbarSeparator(toolbar);
+		titleLabel = toolbar.addLabel(TITLE_LABEL_STYLE, title, null);
 
-		addToolbarSeparator(aToolbar);
-		aReloadButton = addToolbarButton(aToolbar, "#imReload", "$ttReload");
-		addToolbarSeparator(aToolbar);
-		aMessageLabel =
-			aToolbar.addLabel(MESSAGE_LABEL_STYLE, "", "#imWarning");
+		addToolbarSeparator(toolbar);
+		reloadButton = addToolbarButton(toolbar, "#imReload", "$ttReload");
+		addToolbarSeparator(toolbar);
+		messageLabel = toolbar.addLabel(MESSAGE_LABEL_STYLE, "", "#imWarning");
 
-		aMessageLabel.setVisible(false);
+		messageLabel.setVisible(false);
 
-		aNextButton.addEventListener(EventType.ACTION, this);
-		aPrevButton.addEventListener(EventType.ACTION, this);
-		aCancelButton.addEventListener(EventType.ACTION, this);
-		aReloadButton.addEventListener(EventType.ACTION, this);
+		nextButton.addEventListener(EventType.ACTION, this);
+		prevButton.addEventListener(EventType.ACTION, this);
+		cancelButton.addEventListener(EventType.ACTION, this);
+		reloadButton.addEventListener(EventType.ACTION, this);
 	}
 
 	/**
@@ -698,59 +689,59 @@ public class ProcessPanelManager extends
 		if (isCommandExecuting()) {
 			// if a command is currently executed delay the actual canceling
 			// until handleCommandResult() is invoked
-			bCancelProcess = true;
+			cancelProcess = true;
 		} else {
-			bCancelled = true;
-			executeProcess(rProcessState, ProcessExecutionMode.CANCEL);
-			processFinished(this, rProcessState);
+			cancelled = true;
+			executeProcess(processState, ProcessExecutionMode.CANCEL);
+			processFinished(this, processState);
 		}
 	}
 
 	/**
 	 * Creates a {@link ProcessState} instance for an interaction event.
 	 *
-	 * @param rInteractionElement The data element from which the event
-	 *                            originated
-	 * @param eEventType          The event type
+	 * @param interactionElement The data element from which the event
+	 *                           originated
+	 * @param eventType          The event type
 	 * @return The interaction process state
 	 */
 	private ProcessState createInteractionState(
-		DataElement<?> rInteractionElement, InteractionEventType eEventType) {
-		List<DataElement<?>> aModifiedElements = new ArrayList<>();
+		DataElement<?> interactionElement, InteractionEventType eventType) {
+		List<DataElement<?>> modifiedElements = new ArrayList<>();
 
-		aParamPanelManager.collectInput(aModifiedElements);
+		paramPanelManager.collectInput(modifiedElements);
 
-		for (DataElementListView rView : aProcessViews.values()) {
-			rView.collectInput(aModifiedElements);
+		for (DataElementListView view : processViews.values()) {
+			view.collectInput(modifiedElements);
 		}
 
-		ProcessState aInteractionState =
-			new ProcessState(rProcessState, eEventType, rInteractionElement,
-				aModifiedElements);
+		ProcessState interactionState =
+			new ProcessState(processState, eventType, interactionElement,
+				modifiedElements);
 
 		// reset all modification flags for next interaction loop
-		for (DataElement<?> rElement : aModifiedElements) {
-			rElement.setModified(false);
+		for (DataElement<?> element : modifiedElements) {
+			element.setModified(false);
 		}
 
-		return aInteractionState;
+		return interactionState;
 	}
 
 	/**
 	 * Handles the button selection from the confirmation message box displayed
 	 * by {@link #handleCancelProcessEvent()}.
 	 *
-	 * @param nButton The selected button
+	 * @param button The selected button
 	 */
-	private void handleCancelConfirmation(int nButton) {
-		bPauseAutoContinue = false;
+	private void handleCancelConfirmation(int button) {
+		pauseAutoContinue = false;
 
-		if (nButton == 1) {
+		if (button == 1) {
 			cancelProcess();
-		} else if (bAutoContinue && !isCommandExecuting()) {
+		} else if (autoContinue && !isCommandExecuting()) {
 			// restart an automatically continuing process if it had been
-			// stopped in the meantime with bPauseAutoContinue
-			executeProcess(rProcessState, ProcessExecutionMode.EXECUTE);
+			// stopped in the meantime with pauseAutoContinue
+			executeProcess(processState, ProcessExecutionMode.EXECUTE);
 		}
 
 		setUserInterfaceState();
@@ -760,23 +751,23 @@ public class ProcessPanelManager extends
 	 * Handles the event of canceling the currently running process.
 	 */
 	private void handleCancelProcessEvent() {
-		if (bCancelled) {
-			processFinished(this, rProcessState);
+		if (cancelled) {
+			processFinished(this, processState);
 		} else {
-			if (rProcessState.hasImmedidateInteraction()) {
+			if (processState.hasImmedidateInteraction()) {
 				cancelProcess();
 			} else {
 				if (isCommandExecuting()) {
 					// pause a running process while cancel dialog is displayed
-					bPauseAutoContinue = true;
+					pauseAutoContinue = true;
 				}
 
 				MessageBox.showQuestion(getPanel().getView(),
 					"$tiCancelProcess", "$msgCancelProcess",
 					MessageBox.ICON_QUESTION, new ResultHandler() {
 						@Override
-						public void handleResult(int nButton) {
-							handleCancelConfirmation(nButton);
+						public void handleResult(int button) {
+							handleCancelConfirmation(button);
 						}
 					});
 			}
@@ -788,91 +779,89 @@ public class ProcessPanelManager extends
 	 * interaction.
 	 */
 	private void handleNextProcessStepEvent() {
-		ProcessState aInteractionState = rProcessState;
+		ProcessState interactionState = processState;
 
-		if (rProcessState.isFinished()) {
-			processFinished(this, rProcessState);
-		} else if (aParamPanelManager != null) {
-			aInteractionState = createInteractionState(null, null);
+		if (processState.isFinished()) {
+			processFinished(this, processState);
+		} else if (paramPanelManager != null) {
+			interactionState = createInteractionState(null, null);
 		}
 
-		executeProcess(aInteractionState, ProcessExecutionMode.EXECUTE);
+		executeProcess(interactionState, ProcessExecutionMode.EXECUTE);
 	}
 
 	/**
 	 * Handles a rollback to the previous step event.
 	 */
 	private void handlePreviousProcessStepEvent() {
-		executeProcess(rProcessState, ProcessExecutionMode.ROLLBACK);
+		executeProcess(processState, ProcessExecutionMode.ROLLBACK);
 	}
 
 	/**
 	 * Manages the views that are defined in the process state.
 	 */
 	private void manageProcessViews() {
-		List<DataElementList> rViewParams = rProcessState.getViewParams();
+		List<DataElementList> viewParams = processState.getViewParams();
 
-		Map<String, DataElementListView> aNewViews =
-			new HashMap<>(rViewParams.size());
+		Map<String, DataElementListView> newViews =
+			new HashMap<>(viewParams.size());
 
-		for (DataElementList rViewParam : rViewParams) {
-			String sViewName = rViewParam.getName();
-			DataElementListView aView = aProcessViews.remove(sViewName);
+		for (DataElementList viewParam : viewParams) {
+			String viewName = viewParam.getName();
+			DataElementListView view = processViews.remove(viewName);
 
-			if (aView != null && aView.isVisible()) {
+			if (view != null && view.isVisible()) {
 				// always update full view structure
-				rViewParam.setFlag(STRUCTURE_CHANGED);
-				aView.updateDataElement(rViewParam, true);
+				viewParam.setFlag(STRUCTURE_CHANGED);
+				view.updateDataElement(viewParam, true);
 			} else {
-				aView = new DataElementListView(aParamPanelManager,
-					rViewParam);
-				aView.show();
+				view = new DataElementListView(paramPanelManager, viewParam);
+				view.show();
 			}
 
-			aNewViews.put(sViewName, aView);
+			newViews.put(viewName, view);
 		}
 
 		// close views that are no longer listed
-		for (DataElementListView rOldView : aProcessViews.values()) {
-			rOldView.hide();
+		for (DataElementListView oldView : processViews.values()) {
+			oldView.hide();
 		}
 
-		aProcessViews = aNewViews;
+		processViews = newViews;
 	}
 
 	/**
 	 * Removes the current center panel.
 	 */
 	private void removeParameterPanel() {
-		if (bRenderInline) {
+		if (renderInline) {
 			getContainer().clear();
-			aParamPanelManager = null;
-		} else if (rParamPanel != null) {
-			removeComponent(rParamPanel);
-			rParamPanel = null;
+			paramPanelManager = null;
+		} else if (paramPanel != null) {
+			removeComponent(paramPanel);
+			paramPanel = null;
 		}
 	}
 
 	/**
 	 * Changes the title in the navigation bar if it is visible.
 	 *
-	 * @param sProcessStepName The name of the current process step or NULL to
-	 *                         clear the title
+	 * @param processStepName The name of the current process step or NULL to
+	 *                        clear the title
 	 */
-	private void setTitle(String sProcessStepName) {
-		if (bShowNavigationBar) {
-			String sText = "";
-			Image rImage = null;
+	private void setTitle(String processStepName) {
+		if (showNavigationBar) {
+			String text = "";
+			Image image = null;
 
-			if (sProcessStepName != null) {
-				String sImage = "$im" + sProcessStepName;
+			if (processStepName != null) {
+				String imageRef = "$im" + processStepName;
 
-				rImage = getContext().createImage(sImage);
-				sText = createProcessLabel(rProcessState);
+				image = getContext().createImage(imageRef);
+				text = createProcessLabel(processState);
 			}
-
-			aTitleLabel.setText(sText);
-			aTitleLabel.setImage(rImage);
+			titleLabel.setText(text);
+			titleLabel.setImage(image);
 		}
 	}
 
@@ -881,43 +870,42 @@ public class ProcessPanelManager extends
 	 * state.
 	 */
 	private void setUserInterfaceState() {
-		boolean bHasState =
-			rProcessState != null && !rProcessState.isFinished();
+		boolean hasState = processState != null && !processState.isFinished();
 
-		if (aParamPanelManager != null) {
-			aParamPanelManager.enableInteraction(bHasState);
+		if (paramPanelManager != null) {
+			paramPanelManager.enableInteraction(hasState);
 		}
 
-		for (DataElementListView rView : aProcessViews.values()) {
-			rView.enableInteraction(bHasState);
+		for (DataElementListView view : processViews.values()) {
+			view.enableInteraction(hasState);
 		}
 
-		if (bShowNavigationBar) {
-			UserInterfaceContext rContext = getContext();
+		if (showNavigationBar) {
+			UserInterfaceContext context = getContext();
 
-			String sNextImage;
-			String sNextToolTip;
+			String nextImage;
+			String nextToolTip;
 
-			if (rProcessState != null &&
-				(rProcessState.isFinished() || rProcessState.isFinalStep())) {
-				sNextImage = "$imFinish";
-				sNextToolTip = "$ttProcessFinish";
+			if (processState != null &&
+				(processState.isFinished() || processState.isFinalStep())) {
+				nextImage = "$imFinish";
+				nextToolTip = "$ttProcessFinish";
 			} else {
-				sNextImage = "$imNavNext";
-				sNextToolTip = "$ttProcessNext";
+				nextImage = "$imNavNext";
+				nextToolTip = "$ttProcessNext";
 			}
 
-			aNextButton.setImage(rContext.createImage(sNextImage));
-			aNextButton.setToolTip(sNextToolTip);
+			nextButton.setImage(context.createImage(nextImage));
+			nextButton.setToolTip(nextToolTip);
 
 			// if auto-continue is active only enable cancel to allow the
 			// interruption of the process
-			aCancelButton.setEnabled(bHasState);
-			aReloadButton.setEnabled(!bAutoContinue && bHasState);
-			aPrevButton.setEnabled(!bAutoContinue && !bCancelled && bHasState &&
-				rProcessState.canRollback());
-			aNextButton.setEnabled(!bAutoContinue && !bCancelled &&
-				!(bHasState && rProcessState.hasImmedidateInteraction()));
+			cancelButton.setEnabled(hasState);
+			reloadButton.setEnabled(!autoContinue && hasState);
+			prevButton.setEnabled(!autoContinue && !cancelled && hasState &&
+				processState.canRollback());
+			nextButton.setEnabled(!autoContinue && !cancelled &&
+				!(hasState && processState.hasImmedidateInteraction()));
 		}
 	}
 
@@ -929,18 +917,18 @@ public class ProcessPanelManager extends
 	 * necessary
 	 */
 	private boolean updateInteractionUIs() {
-		List<DataElementListUI> aListUIs = new ArrayList<>();
+		List<DataElementListUI> listUIs = new ArrayList<>();
 
-		for (DataElement<?> rUpdateElement :
-			rProcessState.getInteractionParams()) {
-			DataElementUI<?> rUpdateUI =
-				aParamPanelManager.findDataElementUI(rUpdateElement.getName());
+		for (DataElement<?> updateElement :
+			processState.getInteractionParams()) {
+			DataElementUI<?> updateUI =
+				paramPanelManager.findDataElementUI(updateElement.getName());
 
-			if (rUpdateUI != null) {
-				rUpdateUI.updateDataElement(rUpdateElement, true);
+			if (updateUI != null) {
+				updateUI.updateDataElement(updateElement, true);
 
-				if (rUpdateUI instanceof DataElementListUI) {
-					aListUIs.add((DataElementListUI) rUpdateUI);
+				if (updateUI instanceof DataElementListUI) {
+					listUIs.add((DataElementListUI) updateUI);
 				}
 			} else {
 				return false;
@@ -948,8 +936,8 @@ public class ProcessPanelManager extends
 		}
 
 		// finally update list UIs after all children have been updated
-		for (DataElementListUI rListUI : aListUIs) {
-			rListUI.getPanelManager().updateFromChildChanges();
+		for (DataElementListUI listUI : listUIs) {
+			listUI.getPanelManager().updateFromChildChanges();
 		}
 
 		manageProcessViews();
@@ -962,26 +950,25 @@ public class ProcessPanelManager extends
 	 * process interaction.
 	 */
 	private void updateParameterPanel() {
-		if (rProcessState != null && !rProcessState.isFinished()) {
-			String sCurrentStep = rProcessState.getCurrentStep();
-			String sStepStyle = rProcessState.getProperty(STYLE, "");
+		if (processState != null && !processState.isFinished()) {
+			String currentStep = processState.getCurrentStep();
+			String stepStyle = processState.getProperty(STYLE, "");
 
-			if (aParamPanelManager != null &&
-				sCurrentStep.equals(sPreviousStep) &&
-				sStepStyle.equals(sPreviousStyle)) {
+			if (paramPanelManager != null && currentStep.equals(previousStep) &&
+				stepStyle.equals(previousStyle)) {
 				if (updateInteractionUIs()) {
-					aParamPanelManager.clearErrors();
+					paramPanelManager.clearErrors();
 				} else {
 					// if a UI has not been found the structure has changed,
 					// therefore rebuild the complete panel; addComponents()
 					// will then invoke updateParameterPanel() again which then
 					// falls into the else branch below
-					aParamPanelManager.dispose();
-					aParamPanelManager = null;
+					paramPanelManager.dispose();
+					paramPanelManager = null;
 					rebuild();
 				}
-			} else if (!rProcessState.getInteractionParams().isEmpty()) {
-				sPreviousStyle = sStepStyle;
+			} else if (!processState.getInteractionParams().isEmpty()) {
+				previousStyle = stepStyle;
 				addParameterDataElementPanel();
 				manageProcessViews();
 			}

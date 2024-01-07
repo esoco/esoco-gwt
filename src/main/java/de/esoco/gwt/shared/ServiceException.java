@@ -29,13 +29,13 @@ public class ServiceException extends Exception {
 
 	private static final long serialVersionUID = 1L;
 
-	private String sCauseMessage;
+	private String causeMessage;
 
-	private Map<String, String> rErrorParameters;
+	private Map<String, String> errorParameters;
 
-	private boolean bRecoverable;
+	private boolean recoverable;
 
-	private ProcessState rProcessState = null;
+	private ProcessState processState = null;
 
 	/**
 	 * @see Exception#Exception()
@@ -46,27 +46,27 @@ public class ServiceException extends Exception {
 	/**
 	 * @see Exception#Exception(String)
 	 */
-	public ServiceException(String sMessage) {
-		super(sMessage);
+	public ServiceException(String message) {
+		super(message);
 	}
 
 	/**
 	 * @see Exception#Exception(Throwable)
 	 */
-	public ServiceException(Throwable eCause) {
-		this(null, eCause);
+	public ServiceException(Throwable cause) {
+		this(null, cause);
 	}
 
 	/**
 	 * @see Exception#Exception(String, Throwable)
 	 */
-	public ServiceException(String sMessage, Throwable eCause) {
-		super(sMessage, eCause);
+	public ServiceException(String message, Throwable cause) {
+		super(message, cause);
 
 		do {
-			sCauseMessage = eCause.getMessage();
-			eCause = eCause.getCause();
-		} while (eCause != null);
+			causeMessage = cause.getMessage();
+			cause = cause.getCause();
+		} while (cause != null);
 	}
 
 	/**
@@ -78,18 +78,19 @@ public class ServiceException extends Exception {
 	 * the method {@link #getErrorParameters()} and optionally an updated
 	 * process state from {@link #getProcessState()}.
 	 *
-	 * @param sMessage         The error message
-	 * @param rErrorParameters The list of error
-	 * @param rProcessState    An updated process state that reflects parameter
-	 *                         updates for the signaled error
+	 * @param message         The error message
+	 * @param errorParameters The list of error
+	 * @param processState    An updated process state that reflects parameter
+	 *                        updates for the signaled error
 	 */
-	public ServiceException(String sMessage,
-		Map<String, String> rErrorParameters, ProcessState rProcessState) {
-		super(sMessage);
+	public ServiceException(String message,
+		Map<String, String> errorParameters,
+		ProcessState processState) {
+		super(message);
 
-		this.rErrorParameters = rErrorParameters;
-		this.bRecoverable = true;
-		this.rProcessState = rProcessState;
+		this.errorParameters = errorParameters;
+		this.recoverable = true;
+		this.processState = processState;
 	}
 
 	/**
@@ -97,10 +98,10 @@ public class ServiceException extends Exception {
 	 *
 	 * @see #ServiceException(String)
 	 */
-	protected ServiceException(String sMessage, boolean bRecoverable) {
-		this(sMessage);
+	protected ServiceException(String message, boolean recoverable) {
+		this(message);
 
-		this.bRecoverable = bRecoverable;
+		this.recoverable = recoverable;
 	}
 
 	/**
@@ -112,7 +113,7 @@ public class ServiceException extends Exception {
 	 * @return The causing exception's message or NULL for none
 	 */
 	public final String getCauseMessage() {
-		return sCauseMessage;
+		return causeMessage;
 	}
 
 	/**
@@ -125,7 +126,7 @@ public class ServiceException extends Exception {
 	 * none)
 	 */
 	public Map<String, String> getErrorParameters() {
-		return rErrorParameters;
+		return errorParameters;
 	}
 
 	/**
@@ -135,7 +136,7 @@ public class ServiceException extends Exception {
 	 * @return The process state or NULL for none
 	 */
 	public ProcessState getProcessState() {
-		return rProcessState;
+		return processState;
 	}
 
 	/**
@@ -144,6 +145,6 @@ public class ServiceException extends Exception {
 	 * @return TRUE if this
 	 */
 	public boolean isRecoverable() {
-		return bRecoverable;
+		return recoverable;
 	}
 }

@@ -36,14 +36,14 @@ public class DataElementLayoutPanelManager extends DataElementPanelManager {
 	 * @see DataElementPanelManager#DataElementPanelManager(PanelManager,
 	 * DataElementList)
 	 */
-	public DataElementLayoutPanelManager(PanelManager<?, ?> rParent,
-		DataElementList rDataElementList) {
-		super(rParent, rDataElementList);
+	public DataElementLayoutPanelManager(PanelManager<?, ?> parent,
+		DataElementList dataElementList) {
+		super(parent, dataElementList);
 	}
 
 	@Override
-	protected ContainerBuilder<?> createPanel(ContainerBuilder<?> rBuilder,
-		StyleData rStyleData, LayoutType eLayout) {
-		return rBuilder.addPanel(rStyleData, eLayout);
+	protected ContainerBuilder<?> createPanel(ContainerBuilder<?> builder,
+		StyleData styleData, LayoutType layout) {
+		return builder.addPanel(styleData, layout);
 	}
 }

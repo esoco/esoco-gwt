@@ -40,15 +40,15 @@ public class GridFormatter {
 	 * returns
 	 * the original style object.
 	 *
-	 * @param rColumUI     The data element UI of the column
-	 * @param rColumnStyle The original column style to apply the layout styles
-	 *                     to
+	 * @param columUI     The data element UI of the column
+	 * @param columnStyle The original column style to apply the layout styles
+	 *                    to
 	 * @return The row style data (a new instance if modified as
 	 * {@link StyleData} is immutable)
 	 */
-	public StyleData applyColumnStyle(DataElementUI<?> rColumUI,
-		StyleData rColumnStyle) {
-		return rColumnStyle;
+	public StyleData applyColumnStyle(DataElementUI<?> columUI,
+		StyleData columnStyle) {
+		return columnStyle;
 	}
 
 	/**
@@ -57,14 +57,14 @@ public class GridFormatter {
 	 * returns
 	 * the original style object.
 	 *
-	 * @param rRowUIs   The data element UIs for the data elements in the row
-	 * @param rRowStyle The original row style to apply the layout styles to
+	 * @param rowUIs   The data element UIs for the data elements in the row
+	 * @param rowStyle The original row style to apply the layout styles to
 	 * @return The row style data (a new instance if modified as
 	 * {@link StyleData} is immutable)
 	 */
-	public StyleData applyRowStyle(Collection<DataElementUI<?>> rRowUIs,
-		StyleData rRowStyle) {
-		return rRowStyle;
+	public StyleData applyRowStyle(Collection<DataElementUI<?>> rowUIs,
+		StyleData rowStyle) {
+		return rowStyle;
 	}
 
 	/**
@@ -78,9 +78,9 @@ public class GridFormatter {
 		/**
 		 * Creates a new grid formatter instance.
 		 *
-		 * @param rGridElement The data element to create the formatter for
+		 * @param gridElement The data element to create the formatter for
 		 * @return The new grid formatter
 		 */
-		public GridFormatter createGridFormatter(DataElementList rGridElement);
+		public GridFormatter createGridFormatter(DataElementList gridElement);
 	}
 }

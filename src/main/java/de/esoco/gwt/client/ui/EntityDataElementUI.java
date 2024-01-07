@@ -18,22 +18,19 @@ package de.esoco.gwt.client.ui;
 
 import de.esoco.data.element.DataElementList;
 import de.esoco.data.element.EntityDataElement;
-
 import de.esoco.ewt.UserInterfaceContext;
 import de.esoco.ewt.build.ContainerBuilder;
 import de.esoco.ewt.component.Container;
 import de.esoco.ewt.component.Panel;
 import de.esoco.ewt.component.Tree;
+import de.esoco.ewt.event.EventType;
 import de.esoco.ewt.event.EwtEvent;
 import de.esoco.ewt.event.EwtEventHandler;
-import de.esoco.ewt.event.EventType;
 import de.esoco.ewt.layout.EdgeLayout;
 import de.esoco.ewt.layout.FlowLayout;
 import de.esoco.ewt.style.AlignedPosition;
 import de.esoco.ewt.style.StyleData;
-
 import de.esoco.gwt.client.data.DataElementListModel;
-
 import de.esoco.lib.model.ListDataModel;
 
 /**
@@ -49,39 +46,39 @@ public class EntityDataElementUI extends DataElementListUI {
 	 * @see DataElementUI#getElementLabelText(UserInterfaceContext)
 	 */
 	@Override
-	public String getElementLabelText(UserInterfaceContext rContext) {
+	public String getElementLabelText(UserInterfaceContext context) {
 		return "";
 	}
 
 	/**
 	 * Creates a panel to display the hierarchy of an entity in a tree view.
 	 *
-	 * @param rBuilder The builder to add the panel with
-	 * @param rElement The entity data element to create the tree for
+	 * @param builder The builder to add the panel with
+	 * @param element The entity data element to create the tree for
 	 * @return The new tree component
 	 */
-	Tree createEntityTreePanel(ContainerBuilder<?> rBuilder,
-		final EntityDataElement rElement) {
-		final ContainerBuilder<Panel> aBuilder =
-			rBuilder.addPanel(StyleData.DEFAULT, new EdgeLayout(10));
+	Tree createEntityTreePanel(ContainerBuilder<?> builder,
+		final EntityDataElement element) {
+		final ContainerBuilder<Panel> panelBuilder =
+			builder.addPanel(StyleData.DEFAULT, new EdgeLayout(10));
 
-		final Tree aTree = aBuilder.addTree(AlignedPosition.LEFT);
+		final Tree tree = panelBuilder.addTree(AlignedPosition.LEFT);
 
-		DataElementListModel rEntityModel =
-			new DataElementListModel(rBuilder.getContext(), rElement, null, "",
-				true);
+		DataElementListModel entityModel =
+			new DataElementListModel(panelBuilder.getContext(), element, null,
+				"", true);
 
-		aTree.setData(
-			new ListDataModel<DataElementListModel>("<ROOT>", rEntityModel));
+		tree.setData(new ListDataModel<>("<ROOT>", entityModel));
 
-		ContainerBuilder<Panel> aDetailBuilder =
-			aBuilder.addPanel(AlignedPosition.CENTER, new FlowLayout(false));
+		ContainerBuilder<Panel> detailBuilder =
+			panelBuilder.addPanel(AlignedPosition.CENTER,
+				new FlowLayout(false));
 
-		aTree.addEventListener(EventType.SELECTION,
-			new TreeDetailEventHandler(getParent(), aDetailBuilder,
+		tree.addEventListener(EventType.SELECTION,
+			new TreeDetailEventHandler(getParent(), detailBuilder,
 				StyleData.DEFAULT));
 
-		return aTree;
+		return tree;
 	}
 
 	/**
@@ -94,31 +91,29 @@ public class EntityDataElementUI extends DataElementListUI {
 	static class TreeDetailEventHandler implements EwtEventHandler {
 
 		private final PanelManager<Container, PanelManager<?, ?>>
-			rParentPanelManager;
+			parentPanelManager;
 
-		private final ContainerBuilder<? extends Panel> rPanelBuilder;
+		private final ContainerBuilder<? extends Panel> panelBuilder;
 
-		private final StyleData rDetailStyle;
+		private final StyleData detailStyle;
 
-		private PanelManager<Container, PanelManager<?, ?>> aDetailPanelManager;
+		private PanelManager<Container, PanelManager<?, ?>> detailPanelManager;
 
 		/**
 		 * Creates a new instance.
 		 *
-		 * @param rParentPanelManager The manager of the parent panel
-		 * @param rPanelBuilder       The builder to create the detail view
-		 *                            with
-		 * @param rDetailStyle        A style data that defines the
-		 *                                  placement of
-		 *                            the tree panel
+		 * @param parentPanelManager The manager of the parent panel
+		 * @param panelBuilder       The builder to create the detail view with
+		 * @param detailStyle        A style data that defines the placement of
+		 *                           the tree panel
 		 */
 		public TreeDetailEventHandler(
-			PanelManager<Container, PanelManager<?, ?>> rParentPanelManager,
-			ContainerBuilder<? extends Panel> rPanelBuilder,
-			StyleData rDetailStyle) {
-			this.rParentPanelManager = rParentPanelManager;
-			this.rPanelBuilder = rPanelBuilder;
-			this.rDetailStyle = rDetailStyle;
+			PanelManager<Container, PanelManager<?, ?>> parentPanelManager,
+			ContainerBuilder<? extends Panel> panelBuilder,
+			StyleData detailStyle) {
+			this.parentPanelManager = parentPanelManager;
+			this.panelBuilder = panelBuilder;
+			this.detailStyle = detailStyle;
 		}
 
 		/**
@@ -126,28 +121,28 @@ public class EntityDataElementUI extends DataElementListUI {
 		 * selected sub-entity element will then be displayed in a detail data
 		 * element panel.
 		 *
-		 * @param rEvent rTree The tree component to handle the selection of
+		 * @param event rTree The tree component to handle the selection of
 		 */
 		@Override
-		public void handleEvent(EwtEvent rEvent) {
-			Object[] rSelection = ((Tree) rEvent.getSource()).getSelection();
+		public void handleEvent(EwtEvent event) {
+			Object[] selection = ((Tree) event.getSource()).getSelection();
 
-			if (aDetailPanelManager != null) {
-				rPanelBuilder.removeComponent(aDetailPanelManager.getPanel());
+			if (detailPanelManager != null) {
+				panelBuilder.removeComponent(detailPanelManager.getPanel());
 			}
 
-			if (rSelection.length > 0) {
-				DataElementListModel rModel =
-					(DataElementListModel) rSelection[0];
+			if (selection.length > 0) {
+				DataElementListModel model =
+					(DataElementListModel) selection[0];
 
-				DataElementList rElement = rModel.getModelElement();
+				DataElementList element = model.getModelElement();
 
-				if (rElement instanceof EntityDataElement) {
-					aDetailPanelManager =
-						new DataElementTablePanelManager(rParentPanelManager,
-							rElement);
+				if (element instanceof EntityDataElement) {
+					detailPanelManager =
+						new DataElementTablePanelManager(parentPanelManager,
+							element);
 
-					aDetailPanelManager.buildIn(rPanelBuilder, rDetailStyle);
+					detailPanelManager.buildIn(panelBuilder, detailStyle);
 				}
 			}
 		}

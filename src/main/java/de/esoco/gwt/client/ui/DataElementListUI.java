@@ -41,18 +41,18 @@ import static de.esoco.lib.property.StyleProperties.STYLE;
  */
 public class DataElementListUI extends DataElementUI<DataElementList> {
 
-	private DataElementPanelManager aListPanelManager;
+	private DataElementPanelManager listPanelManager;
 
 	@Override
 	public void clearError() {
 		super.clearError();
 
-		aListPanelManager.clearErrors();
+		listPanelManager.clearErrors();
 	}
 
 	@Override
-	public void collectInput(List<DataElement<?>> rModifiedElements) {
-		aListPanelManager.collectInput(rModifiedElements);
+	public void collectInput(List<DataElement<?>> modifiedElements) {
+		listPanelManager.collectInput(modifiedElements);
 	}
 
 	/**
@@ -62,7 +62,7 @@ public class DataElementListUI extends DataElementUI<DataElementList> {
 	 */
 	@Override
 	public StyleData getBaseStyle() {
-		return aListPanelManager.getBaseStyle();
+		return listPanelManager.getBaseStyle();
 	}
 
 	/**
@@ -72,7 +72,7 @@ public class DataElementListUI extends DataElementUI<DataElementList> {
 	 * @return The panel manager or NULL for none
 	 */
 	public final DataElementPanelManager getPanelManager() {
-		return aListPanelManager;
+		return listPanelManager;
 	}
 
 	/**
@@ -85,36 +85,36 @@ public class DataElementListUI extends DataElementUI<DataElementList> {
 	@Override
 	public void update() {
 		updateStyle();
-		aListPanelManager.updateUI();
+		listPanelManager.updateUI();
 	}
 
 	@Override
-	public void updateDataElement(DataElement<?> rNewElement,
-		boolean bUpdateUI) {
-		if (rNewElement.hasFlag(STRUCTURE_CHANGED)) {
+	public void updateDataElement(DataElement<?> newElement,
+		boolean updateUI) {
+		if (newElement.hasFlag(STRUCTURE_CHANGED)) {
 			// always use FALSE to not update UI before data element is
 			// updated;
 			// UI update will be done in the update() method
-			super.updateDataElement(rNewElement, false);
+			super.updateDataElement(newElement, false);
 
-			if (aListPanelManager != null) {
-				aListPanelManager.update((DataElementList) rNewElement, false);
+			if (listPanelManager != null) {
+				listPanelManager.update((DataElementList) newElement, false);
 			}
 
-			if (bUpdateUI) {
+			if (updateUI) {
 				update();
 			}
 		} else {
-			DataElementList rDataElementList = getDataElement();
-			String sOldStyle = rDataElementList.getProperty(STYLE, null);
+			DataElementList dataElementList = getDataElement();
+			String oldStyle = dataElementList.getProperty(STYLE, null);
 
-			rDataElementList.clearProperties();
-			rDataElementList.setProperties(rNewElement, true);
+			dataElementList.clearProperties();
+			dataElementList.setProperties(newElement, true);
 
-			boolean bStyleChanged = !Objects.equals(sOldStyle,
-				rDataElementList.getProperty(STYLE, null));
+			boolean styleChanged = !Objects.equals(oldStyle,
+				dataElementList.getProperty(STYLE, null));
 
-			aListPanelManager.updateFromProperties(bStyleChanged);
+			listPanelManager.updateFromProperties(styleChanged);
 
 			updateStyle();
 		}
@@ -128,34 +128,34 @@ public class DataElementListUI extends DataElementUI<DataElementList> {
 	 * @see DataElementUI#buildDataElementUI(ContainerBuilder, StyleData)
 	 */
 	@Override
-	protected Component buildDataElementUI(ContainerBuilder<?> rBuilder,
-		StyleData rStyle) {
-		DataElementList rDataElementList = getDataElement();
-		Container rListPanel = null;
+	protected Component buildDataElementUI(ContainerBuilder<?> builder,
+		StyleData style) {
+		DataElementList dataElementList = getDataElement();
+		Container listPanel = null;
 
-		LayoutType eDisplayMode =
-			rDataElementList.getProperty(LAYOUT, LayoutType.TABLE);
+		LayoutType displayMode =
+			dataElementList.getProperty(LAYOUT, LayoutType.TABLE);
 
-		aListPanelManager =
-			DataElementPanelManager.newInstance(getParent(), rDataElementList);
+		listPanelManager =
+			DataElementPanelManager.newInstance(getParent(), dataElementList);
 
-		aListPanelManager.buildIn(rBuilder, rStyle);
-		rListPanel = aListPanelManager.getPanel();
+		listPanelManager.buildIn(builder, style);
+		listPanel = listPanelManager.getPanel();
 
-		if (eDisplayMode == LayoutType.TABLE) {
+		if (displayMode == LayoutType.TABLE) {
 			// DataElementPanelManager performs event handling for other cases
-			setupInteractionHandling(rListPanel, false);
+			setupInteractionHandling(listPanel, false);
 		}
 
-		return rListPanel;
+		return listPanel;
 	}
 
 	/**
 	 * @see DataElementUI#enableInteraction(boolean)
 	 */
 	@Override
-	protected void enableInteraction(boolean bEnable) {
-		aListPanelManager.enableInteraction(bEnable);
+	protected void enableInteraction(boolean enable) {
+		listPanelManager.enableInteraction(enable);
 	}
 
 	/**
@@ -165,7 +165,7 @@ public class DataElementListUI extends DataElementUI<DataElementList> {
 	 */
 	@Override
 	void dispose() {
-		aListPanelManager.dispose();
+		listPanelManager.dispose();
 
 		super.dispose();
 	}
@@ -174,13 +174,13 @@ public class DataElementListUI extends DataElementUI<DataElementList> {
 	 * Updates the style of the panel.
 	 */
 	private void updateStyle() {
-		DataElementList rDataElementList = getDataElement();
-		String sAddStyle = aListPanelManager.getStyleName();
+		DataElementList dataElementList = getDataElement();
+		String addStyle = listPanelManager.getStyleName();
 
-		StyleData rNewStyle = applyElementStyle(rDataElementList,
-			PanelManager.addStyles(getBaseStyle(), sAddStyle));
+		StyleData newStyle = applyElementStyle(dataElementList,
+			PanelManager.addStyles(getBaseStyle(), addStyle));
 
 		applyStyle();
-		aListPanelManager.getPanel().applyStyle(rNewStyle);
+		listPanelManager.getPanel().applyStyle(newStyle);
 	}
 }

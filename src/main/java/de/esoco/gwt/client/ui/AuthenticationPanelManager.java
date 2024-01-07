@@ -53,33 +53,33 @@ public abstract class AuthenticationPanelManager<C extends Container,
 	 */
 	public enum LoginMode {DIALOG, PAGE}
 
-	private static String sCookiePrefix = "";
+	private static String cookiePrefix = "";
 
-	private Command<?, ?> rPrevCommand;
+	private Command<?, ?> prevCommand;
 
-	private DataElement<?> rPrevCommandData;
+	private DataElement<?> prevCommandData;
 
-	private CommandResultHandler<?> rPrevCommandHandler;
+	private CommandResultHandler<?> prevCommandHandler;
 
-	private DialogView aLoginDialog;
+	private DialogView loginDialog;
 
-	private LoginPanelManager aLoginPanel;
+	private LoginPanelManager loginPanel;
 
-	private LoginMode eLoginMode = LoginMode.DIALOG;
+	private LoginMode loginMode = LoginMode.DIALOG;
 
-	private CommandResultHandler<DataElementList> aGetUserDataResultHandler =
+	private CommandResultHandler<DataElementList> getUserDataResultHandler =
 		new DefaultCommandResultHandler<DataElementList>(this) {
 			@Override
-			public void handleCommandResult(DataElementList rUserData) {
-				userAuthenticated(rUserData);
+			public void handleCommandResult(DataElementList userData) {
+				userAuthenticated(userData);
 			}
 		};
 
 	/**
 	 * @see PanelManager#PanelManager(PanelManager, String)
 	 */
-	public AuthenticationPanelManager(P rParent, String sPanelStyle) {
-		super(rParent, sPanelStyle);
+	public AuthenticationPanelManager(P parent, String panelStyle) {
+		super(parent, panelStyle);
 	}
 
 	/**
@@ -88,20 +88,20 @@ public abstract class AuthenticationPanelManager<C extends Container,
 	 * @return The client info string
 	 */
 	protected static String createClientInfo() {
-		StringBuilder aLoginUserInfo = new StringBuilder();
+		StringBuilder loginUserInfo = new StringBuilder();
 
-		aLoginUserInfo.append("UserAgent: ");
-		aLoginUserInfo.append(Window.Navigator.getUserAgent());
-		aLoginUserInfo.append("\nApp: ");
-		aLoginUserInfo.append(Window.Navigator.getAppName());
-		aLoginUserInfo.append(" (");
-		aLoginUserInfo.append(Window.Navigator.getAppCodeName());
-		aLoginUserInfo.append(")\nVersion: ");
-		aLoginUserInfo.append(Window.Navigator.getAppVersion());
-		aLoginUserInfo.append("\nPlatform: ");
-		aLoginUserInfo.append(Window.Navigator.getPlatform());
+		loginUserInfo.append("UserAgent: ");
+		loginUserInfo.append(Window.Navigator.getUserAgent());
+		loginUserInfo.append("\nApp: ");
+		loginUserInfo.append(Window.Navigator.getAppName());
+		loginUserInfo.append(" (");
+		loginUserInfo.append(Window.Navigator.getAppCodeName());
+		loginUserInfo.append(")\nVersion: ");
+		loginUserInfo.append(Window.Navigator.getAppVersion());
+		loginUserInfo.append("\nPlatform: ");
+		loginUserInfo.append(Window.Navigator.getPlatform());
 
-		return aLoginUserInfo.toString();
+		return loginUserInfo.toString();
 	}
 
 	/**
@@ -113,25 +113,24 @@ public abstract class AuthenticationPanelManager<C extends Container,
 	 * (from the session cookie) with the property
 	 * {@link AuthenticatedService#SESSION_ID}.
 	 *
-	 * @param sUserName The login user name
-	 * @param sPassword The login password
+	 * @param userName The login user name
+	 * @param password The login password
 	 * @return The login data object
 	 */
-	protected static StringDataElement createLoginData(String sUserName,
-		String sPassword) {
-		String sSessionId = Cookies.getCookie(getAuthenticationCookiePrefix());
-		StringDataElement aLoginData =
-			new StringDataElement(sUserName, sPassword);
+	protected static StringDataElement createLoginData(String userName,
+		String password) {
+		String sessionId = Cookies.getCookie(getAuthenticationCookiePrefix());
+		StringDataElement loginData = new StringDataElement(userName,
+			password);
 
-		aLoginData.setProperty(AuthenticatedService.LOGIN_USER_INFO,
+		loginData.setProperty(AuthenticatedService.LOGIN_USER_INFO,
 			createClientInfo());
 
-		if (sSessionId != null) {
-			aLoginData.setProperty(AuthenticatedService.SESSION_ID,
-				sSessionId);
+		if (sessionId != null) {
+			loginData.setProperty(AuthenticatedService.SESSION_ID, sessionId);
 		}
 
-		return aLoginData;
+		return loginData;
 	}
 
 	/**
@@ -140,29 +139,28 @@ public abstract class AuthenticationPanelManager<C extends Container,
 	 * @return The cookie prefix
 	 */
 	public static String getAuthenticationCookiePrefix() {
-		return sCookiePrefix;
+		return cookiePrefix;
 	}
 
 	/**
 	 * Sets the authentication cookie prefix for the current application.
 	 *
-	 * @param sPrefix The cookie prefix
+	 * @param prefix The cookie prefix
 	 */
-	public static void setAuthenticationCookiePrefix(String sPrefix) {
-		sCookiePrefix = sPrefix;
+	public static void setAuthenticationCookiePrefix(String prefix) {
+		cookiePrefix = prefix;
 	}
 
 	/**
 	 * @see PanelManager#handleCommandFailure(Command, Throwable)
 	 */
 	@Override
-	public void handleCommandFailure(Command<?, ?> rCommand,
-		Throwable rCaught) {
-		if (rCaught instanceof AuthenticationException) {
-			login(rCommand != AuthenticatedService.GET_USER_DATA &&
-				((AuthenticationException) rCaught).isRecoverable());
+	public void handleCommandFailure(Command<?, ?> command, Throwable caught) {
+		if (caught instanceof AuthenticationException) {
+			login(command != AuthenticatedService.GET_USER_DATA &&
+				((AuthenticationException) caught).isRecoverable());
 		} else {
-			super.handleCommandFailure(rCommand, rCaught);
+			super.handleCommandFailure(command, caught);
 		}
 	}
 
@@ -170,45 +168,45 @@ public abstract class AuthenticationPanelManager<C extends Container,
 	 * @see LoginHandler#loginFailed(Exception)
 	 */
 	@Override
-	public void loginFailed(Exception rError) {
-		handleError(rError);
+	public void loginFailed(Exception error) {
+		handleError(error);
 	}
 
 	/**
 	 * @see LoginHandler#loginSuccessful(DataElementList)
 	 */
 	@Override
-	public void loginSuccessful(DataElementList rUserData) {
-		P rParent = getParent();
+	public void loginSuccessful(DataElementList userData) {
+		P parent = getParent();
 
-		if (rParent != null) {
+		if (parent != null) {
 			// delegate the call to the parent so that the topmost panel
 			// manager
 			// handles the re-execution of the last command
-			rParent.loginSuccessful(rUserData);
+			parent.loginSuccessful(userData);
 		} else {
 			hideLoginPanel();
-			executePreviousCommand(rUserData);
+			executePreviousCommand(userData);
 		}
 	}
 
 	/**
 	 * Creates the login panel in the given container builder.
 	 *
-	 * @param rBuilder        The builder to create the login panel with
-	 * @param bReauthenticate TRUE if the invocation is only for a
-	 *                        re-authentication of the current user
+	 * @param builder        The builder to create the login panel with
+	 * @param reauthenticate TRUE if the invocation is only for a
+	 *                       re-authentication of the current user
 	 * @return The {@link LoginPanelManager} instance
 	 */
-	protected LoginPanelManager buildLoginPanel(ContainerBuilder<?> rBuilder,
-		boolean bReauthenticate) {
-		final LoginPanelManager aLoginPanelManager =
+	protected LoginPanelManager buildLoginPanel(ContainerBuilder<?> builder,
+		boolean reauthenticate) {
+		final LoginPanelManager loginPanelManager =
 			new LoginPanelManager(this, this, getAuthenticationCookiePrefix(),
-				bReauthenticate);
+				reauthenticate);
 
-		aLoginPanelManager.buildIn(rBuilder, AlignedPosition.CENTER);
+		loginPanelManager.buildIn(builder, AlignedPosition.CENTER);
 
-		return aLoginPanelManager;
+		return loginPanelManager;
 	}
 
 	/**
@@ -221,68 +219,65 @@ public abstract class AuthenticationPanelManager<C extends Container,
 	 */
 	protected void checkAuthentication() {
 		executeCommand(AuthenticatedService.GET_USER_DATA, null,
-			aGetUserDataResultHandler);
+			getUserDataResultHandler);
 	}
 
 	/**
 	 * Creates a login panel and displays it in a dialog.
 	 *
-	 * @param rContext        The user interface context to display the dialog
-	 *                        in
-	 * @param bReauthenticate TRUE for a re-authentication of the current user
+	 * @param context        The user interface context to display the dialog
+	 *                       in
+	 * @param reauthenticate TRUE for a re-authentication of the current user
 	 */
-	protected void displayLoginDialog(UserInterfaceContext rContext,
-		boolean bReauthenticate) {
-		aLoginDialog =
-			rContext.createDialog(getContainer().getView(), ViewStyle.MODAL);
+	protected void displayLoginDialog(UserInterfaceContext context,
+		boolean reauthenticate) {
+		loginDialog =
+			context.createDialog(getContainer().getView(), ViewStyle.MODAL);
 
-		ContainerBuilder<View> aDialogBuilder =
-			new ContainerBuilder<View>(aLoginDialog);
+		ContainerBuilder<View> dialogBuilder =
+			new ContainerBuilder<View>(loginDialog);
 
-		aLoginDialog.getWidget().addStyleName(CSS.gfLoginDialog());
-		aLoginDialog.setTitle(bReauthenticate ? "$tiRepeatLogin" : "$tiLogin");
+		loginDialog.getWidget().addStyleName(CSS.gfLoginDialog());
+		loginDialog.setTitle(reauthenticate ? "$tiRepeatLogin" : "$tiLogin");
 
-		aLoginPanel = buildLoginPanel(aDialogBuilder, bReauthenticate);
+		loginPanel = buildLoginPanel(dialogBuilder, reauthenticate);
 
-		aLoginDialog.pack();
+		loginDialog.pack();
 
-		Rectangle rScreen = rContext.getDefaultScreen().getClientArea();
+		Rectangle screen = context.getDefaultScreen().getClientArea();
 
-		rContext.displayView(aLoginDialog,
-			rScreen.getX() + rScreen.getWidth() / 2,
-			rScreen.getY() + rScreen.getHeight() / 3, AlignedPosition.CENTER,
+		context.displayView(loginDialog, screen.getX() + screen.getWidth() / 2,
+			screen.getY() + screen.getHeight() / 3, AlignedPosition.CENTER,
 			true);
 	}
 
 	/**
 	 * Executes a certain command on the server.
 	 *
-	 * @param rCommand       The command to execute
-	 * @param rData          The data to be processed by the command
-	 * @param rResultHandler The result handler to process the command
-	 *                          result in
-	 *                       case of a successful command execution
+	 * @param command       The command to execute
+	 * @param data          The data to be processed by the command
+	 * @param resultHandler The result handler to process the command result in
+	 *                      case of a successful command execution
 	 * @see PanelManager#executeCommand(Command, DataElement,
 	 * CommandResultHandler)
 	 */
 	@Override
 	protected <T extends DataElement<?>, R extends DataElement<?>> void executeCommand(
-		Command<T, R> rCommand, T rData,
-		CommandResultHandler<R> rResultHandler) {
-		P rParent = getParent();
+		Command<T, R> command, T data, CommandResultHandler<R> resultHandler) {
+		P parent = getParent();
 
-		if (rParent != null) {
+		if (parent != null) {
 			// delegate the call to the parent so that the topmost panel
 			// manager
 			// handles the command execution and the storing of the last
 			// command
-			rParent.executeCommand(rCommand, rData, rResultHandler);
+			parent.executeCommand(command, data, resultHandler);
 		} else {
-			this.rPrevCommand = rCommand;
-			this.rPrevCommandData = rData;
-			this.rPrevCommandHandler = rResultHandler;
+			this.prevCommand = command;
+			this.prevCommandData = data;
+			this.prevCommandHandler = resultHandler;
 
-			super.executeCommand(rCommand, rData, rResultHandler);
+			super.executeCommand(command, data, resultHandler);
 		}
 	}
 
@@ -292,13 +287,13 @@ public abstract class AuthenticationPanelManager<C extends Container,
 	 * Subclasses can override this panel to modify the login panel handling.
 	 */
 	protected void hideLoginPanel() {
-		if (aLoginPanel != null) {
-			if (eLoginMode == LoginMode.DIALOG) {
-				aLoginDialog.setVisible(false);
-				aLoginDialog = null;
+		if (loginPanel != null) {
+			if (loginMode == LoginMode.DIALOG) {
+				loginDialog.setVisible(false);
+				loginDialog = null;
 			} else {
-				removeComponent(aLoginPanel.getContainer());
-				aLoginPanel = null;
+				removeComponent(loginPanel.getContainer());
+				loginPanel = null;
 			}
 		}
 	}
@@ -311,16 +306,16 @@ public abstract class AuthenticationPanelManager<C extends Container,
 	 * actual
 	 * login should therefore override the latter method.
 	 *
-	 * @param bReauthenticate TRUE if this is a re-authentication because of an
-	 *                        expired session
+	 * @param reauthenticate TRUE if this is a re-authentication because of an
+	 *                       expired session
 	 */
-	protected final void login(boolean bReauthenticate) {
-		P rParent = getParent();
+	protected final void login(boolean reauthenticate) {
+		P parent = getParent();
 
-		if (rParent != null) {
-			rParent.login(bReauthenticate);
+		if (parent != null) {
+			parent.login(reauthenticate);
 		} else {
-			performLogin(bReauthenticate);
+			performLogin(reauthenticate);
 		}
 	}
 
@@ -329,39 +324,39 @@ public abstract class AuthenticationPanelManager<C extends Container,
 	 * based on {@link LoginPanelManager} which will then execute the
 	 * server-side login.
 	 *
-	 * @param bReauthenticate TRUE if this is a re-authentication because of an
-	 *                        expired session
+	 * @param reauthenticate TRUE if this is a re-authentication because of an
+	 *                       expired session
 	 */
-	protected void performLogin(boolean bReauthenticate) {
-		if (!bReauthenticate) {
+	protected void performLogin(boolean reauthenticate) {
+		if (!reauthenticate) {
 			// if no re-auth possible let the app start over by processing the
 			// initial get user data command
-			rPrevCommand = AuthenticatedService.GET_USER_DATA;
-			rPrevCommandData = null;
-			rPrevCommandHandler = aGetUserDataResultHandler;
+			prevCommand = AuthenticatedService.GET_USER_DATA;
+			prevCommandData = null;
+			prevCommandHandler = getUserDataResultHandler;
 		}
 
-		if (eLoginMode == LoginMode.DIALOG) {
-			UserInterfaceContext rContext = getContext();
+		if (loginMode == LoginMode.DIALOG) {
+			UserInterfaceContext context = getContext();
 
-			displayLoginDialog(rContext, bReauthenticate);
+			displayLoginDialog(context, reauthenticate);
 
-			rContext.runLater(new Runnable() {
+			context.runLater(new Runnable() {
 				@Override
 				public void run() {
-					aLoginPanel.requestFocus();
+					loginPanel.requestFocus();
 				}
 			});
 		} else {
 			removeApplicationPanel();
 
-			aLoginPanel = buildLoginPanel(this, bReauthenticate);
-			aLoginPanel
+			loginPanel = buildLoginPanel(this, reauthenticate);
+			loginPanel
 				.getContainer()
 				.getElement()
 				.getStyle()
 				.setPosition(Position.RELATIVE);
-			aLoginPanel.requestFocus();
+			loginPanel.requestFocus();
 		}
 	}
 
@@ -377,10 +372,10 @@ public abstract class AuthenticationPanelManager<C extends Container,
 	 * progress,
 	 * e.g. after invocation of {@link #hideLoginPanel()}.</p>
 	 *
-	 * @param eMode The login mode
+	 * @param mode The login mode
 	 */
-	protected void setLoginMode(LoginMode eMode) {
-		eLoginMode = eMode;
+	protected void setLoginMode(LoginMode mode) {
+		loginMode = mode;
 	}
 
 	/**
@@ -389,28 +384,28 @@ public abstract class AuthenticationPanelManager<C extends Container,
 	 * method to perform user-specific initializations. The default
 	 * implementation does nothing.
 	 *
-	 * @param rUserData The user data received from the server
+	 * @param userData The user data received from the server
 	 */
-	protected void userAuthenticated(DataElementList rUserData) {
+	protected void userAuthenticated(DataElementList userData) {
 	}
 
 	/**
 	 * Executes the previous command that had failed to execute because of an
 	 * authentication error.
 	 *
-	 * @param rUserData The user data received from the server after
-	 *                  authentication
+	 * @param userData The user data received from the server after
+	 *                 authentication
 	 */
 	@SuppressWarnings("unchecked")
-	private void executePreviousCommand(DataElementList rUserData) {
-		if (rPrevCommand == AuthenticatedService.GET_USER_DATA) {
-			((CommandResultHandler<DataElementList>) rPrevCommandHandler).handleCommandResult(
-				rUserData);
+	private void executePreviousCommand(DataElementList userData) {
+		if (prevCommand == AuthenticatedService.GET_USER_DATA) {
+			((CommandResultHandler<DataElementList>) prevCommandHandler).handleCommandResult(
+				userData);
 		} else {
 			executeCommand(
-				(Command<DataElement<?>, DataElement<?>>) rPrevCommand,
-				rPrevCommandData,
-				(CommandResultHandler<DataElement<?>>) rPrevCommandHandler);
+				(Command<DataElement<?>, DataElement<?>>) prevCommand,
+				prevCommandData,
+				(CommandResultHandler<DataElement<?>>) prevCommandHandler);
 		}
 	}
 }

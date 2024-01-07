@@ -16,6 +16,10 @@
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 package de.esoco.gwt.client.ui;
 
+import com.google.gwt.i18n.client.DateTimeFormat;
+import com.google.gwt.i18n.client.DateTimeFormat.PredefinedFormat;
+import com.google.gwt.i18n.client.NumberFormat;
+import com.google.gwt.user.client.Window;
 import de.esoco.data.element.DataElement;
 import de.esoco.data.element.DataElement.CopyMode;
 import de.esoco.data.element.ListDataElement;
@@ -23,7 +27,6 @@ import de.esoco.data.element.StringDataElement;
 import de.esoco.data.validate.ListValidator;
 import de.esoco.data.validate.StringListValidator;
 import de.esoco.data.validate.Validator;
-
 import de.esoco.ewt.EWT;
 import de.esoco.ewt.UserInterfaceContext;
 import de.esoco.ewt.build.ContainerBuilder;
@@ -49,10 +52,8 @@ import de.esoco.ewt.layout.FlowLayout;
 import de.esoco.ewt.property.ImageAttribute;
 import de.esoco.ewt.style.StyleData;
 import de.esoco.ewt.style.StyleFlag;
-
 import de.esoco.gwt.client.res.EsocoGwtCss;
 import de.esoco.gwt.client.res.EsocoGwtResources;
-
 import de.esoco.lib.property.ButtonStyle;
 import de.esoco.lib.property.ContentProperties;
 import de.esoco.lib.property.ContentType;
@@ -64,7 +65,6 @@ import de.esoco.lib.property.TextAttribute;
 import de.esoco.lib.text.TextConvert;
 
 import java.math.BigDecimal;
-
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -73,18 +73,11 @@ import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
 
-import com.google.gwt.i18n.client.DateTimeFormat;
-import com.google.gwt.i18n.client.DateTimeFormat.PredefinedFormat;
-import com.google.gwt.i18n.client.NumberFormat;
-import com.google.gwt.user.client.Window;
-
 import static de.esoco.data.element.DataElement.ALLOWED_VALUES_CHANGED;
 import static de.esoco.data.element.DataElement.HIDDEN_URL;
 import static de.esoco.data.element.DataElement.INTERACTION_URL;
 import static de.esoco.data.element.DataElement.ITEM_RESOURCE_PREFIX;
-
 import static de.esoco.ewt.style.StyleData.WEB_ADDITIONAL_STYLES;
-
 import static de.esoco.lib.property.ContentProperties.CONTENT_TYPE;
 import static de.esoco.lib.property.ContentProperties.FORMAT;
 import static de.esoco.lib.property.ContentProperties.FORMAT_ARGUMENTS;
@@ -150,38 +143,38 @@ public class DataElementUI<D extends DataElement<?>> {
 		new String[] { "$ttPhoneCountryCode", "$ttPhoneAreaCode",
 			"$ttPhoneNumber", "$ttPhoneExtension" };
 
-	private static LayoutType eButtonPanelDefaultLayout = LayoutType.FLOW;
+	private static LayoutType buttonPanelDefaultLayout = LayoutType.FLOW;
 
 	/**
 	 * The default suffix for label strings.
 	 */
-	private static String sLabelSuffix = ":";
+	private static String labelSuffix = ":";
 
-	private DataElementPanelManager rPanelManager;
+	private DataElementPanelManager panelManager;
 
-	private D rDataElement;
+	private D dataElement;
 
-	private StyleData rBaseStyle;
+	private StyleData baseStyle;
 
-	private Label aElementLabel;
+	private Label elementLabel;
 
-	private Component aElementComponent;
+	private Component elementComponent;
 
-	private CheckBox rOptionalCheckBox = null;
+	private CheckBox optionalCheckBox = null;
 
-	private String sToolTip = null;
+	private String toolTip = null;
 
-	private String sHiddenLabelHint = null;
+	private String hiddenLabelHint = null;
 
-	private String sTextClipboard = null;
+	private String textClipboard = null;
 
-	private boolean bHasError = false;
+	private boolean hasError = false;
 
-	private boolean bInteractionEnabled = true;
+	private boolean interactionEnabled = true;
 
-	private boolean bUIEnabled = true;
+	private boolean uIEnabled = true;
 
-	private DataElementInteractionHandler<D> aInteractionHandler;
+	private DataElementInteractionHandler<D> interactionHandler;
 
 	/**
 	 * Creates a new instance.
@@ -192,44 +185,44 @@ public class DataElementUI<D extends DataElement<?>> {
 	/**
 	 * Applies the style properties of a data element to a style data object.
 	 *
-	 * @param rDataElement The data element
-	 * @param rStyle       The style data to apply the element styles to
+	 * @param dataElement The data element
+	 * @param style       The style data to apply the element styles to
 	 * @return A new style data object
 	 */
-	public static StyleData applyElementStyle(DataElement<?> rDataElement,
-		StyleData rStyle) {
-		String sStyle = rDataElement.getProperty(STYLE, null);
+	public static StyleData applyElementStyle(DataElement<?> dataElement,
+		StyleData style) {
+		String styleName = dataElement.getProperty(STYLE, null);
 
-		if (sStyle != null) {
-			rStyle = rStyle.append(WEB_ADDITIONAL_STYLES, sStyle);
+		if (styleName != null) {
+			style = style.append(WEB_ADDITIONAL_STYLES, styleName);
 		}
 
-		if (rDataElement.hasProperty(WIDTH)) {
-			rStyle = rStyle.w(rDataElement.getIntProperty(WIDTH, 0));
+		if (dataElement.hasProperty(WIDTH)) {
+			style = style.w(dataElement.getIntProperty(WIDTH, 0));
 		}
 
-		if (rDataElement.hasProperty(HEIGHT)) {
-			rStyle = rStyle.h(rDataElement.getIntProperty(HEIGHT, 0));
+		if (dataElement.hasProperty(HEIGHT)) {
+			style = style.h(dataElement.getIntProperty(HEIGHT, 0));
 		}
 
-		if (rDataElement.hasFlag(WRAP)) {
-			rStyle = rStyle.setFlags(StyleFlag.WRAP);
+		if (dataElement.hasFlag(WRAP)) {
+			style = style.setFlags(StyleFlag.WRAP);
 		}
 
-		if (rDataElement.hasFlag(NO_WRAP)) {
-			rStyle = rStyle.setFlags(StyleFlag.NO_WRAP);
+		if (dataElement.hasFlag(NO_WRAP)) {
+			style = style.setFlags(StyleFlag.NO_WRAP);
 		}
 
-		if (rDataElement.hasFlag(RESOURCE)) {
-			rStyle = rStyle.setFlags(StyleFlag.RESOURCE);
+		if (dataElement.hasFlag(RESOURCE)) {
+			style = style.setFlags(StyleFlag.RESOURCE);
 		}
 
-		Collection<PropertyName<?>> aCopyProperties =
-			new HashSet<>(rDataElement.getPropertyNames());
+		Collection<PropertyName<?>> copyProperties =
+			new HashSet<>(dataElement.getPropertyNames());
 
-		aCopyProperties.removeAll(MAPPED_PROPERTIES);
+		copyProperties.removeAll(MAPPED_PROPERTIES);
 
-		return rStyle.withProperties(rDataElement, aCopyProperties);
+		return style.withProperties(dataElement, copyProperties);
 	}
 
 	/**
@@ -238,72 +231,73 @@ public class DataElementUI<D extends DataElement<?>> {
 	 * @return The default layout mode
 	 */
 	public static LayoutType getButtonPanelDefaultLayout() {
-		return eButtonPanelDefaultLayout;
+		return buttonPanelDefaultLayout;
 	}
 
 	/**
 	 * Returns the style name for this a data element.
 	 *
-	 * @param rDataElement The data element
+	 * @param dataElement The data element
 	 * @return The style name for this element (empty if no style should be
 	 * used)
 	 */
-	public static String getElementStyleName(DataElement<?> rDataElement) {
-		return rDataElement.getResourceId();
+	public static String getElementStyleName(DataElement<?> dataElement) {
+		return dataElement.getResourceId();
 	}
 
 	/**
 	 * Returns the UI label text for a certain data element.
 	 *
-	 * @param rContext        The user interface context to expand resources
-	 * @param rDataElement    The data element
-	 * @param sResourcePrefix The prefix for resource IDs (should typically
-	 *                        start with a '$' character)
+	 * @param context        The user interface context to expand resources
+	 * @param dataElement    The data element
+	 * @param resourcePrefix The prefix for resource IDs (should typically
+	 *                          start
+	 *                       with a '$' character)
 	 * @return The expanded label text (can be empty but will never be null)
 	 */
-	static String getLabelText(UserInterfaceContext rContext,
-		DataElement<?> rDataElement, String sResourcePrefix) {
-		String sLabel = rDataElement.getProperty(LABEL, null);
+	static String getLabelText(UserInterfaceContext context,
+		DataElement<?> dataElement, String resourcePrefix) {
+		String label = dataElement.getProperty(LABEL, null);
 
-		if (sLabel == null) {
-			sLabel = getElementStyleName(rDataElement);
+		if (label == null) {
+			label = getElementStyleName(dataElement);
 
-			if (sLabel == null) {
-				sLabel = rDataElement.getResourceId();
+			if (label == null) {
+				label = dataElement.getResourceId();
 			}
 
-			if (sLabel.length() > 0) {
-				sLabel = sResourcePrefix + sLabel;
+			if (label.length() > 0) {
+				label = resourcePrefix + label;
 			}
 		}
 
-		if (sLabel != null && sLabel.length() > 0) {
-			sLabel = rContext.expandResource(sLabel);
+		if (label != null && label.length() > 0) {
+			label = context.expandResource(label);
 		}
 
-		return sLabel;
+		return label;
 	}
 
 	/**
 	 * Returns the resource ID prefix for a value item of a certain data
 	 * element.
 	 *
-	 * @param rDataElement The data element
+	 * @param dataElement The data element
 	 * @return The prefix for a value item
 	 */
-	public static String getValueItemPrefix(DataElement<?> rDataElement) {
-		String sItemPrefix = ITEM_RESOURCE_PREFIX;
+	public static String getValueItemPrefix(DataElement<?> dataElement) {
+		String itemPrefix = ITEM_RESOURCE_PREFIX;
 
-		if (!rDataElement.hasFlag(NO_RESOURCE_PREFIX)) {
-			String sValuePrefix =
-				rDataElement.getProperty(VALUE_RESOURCE_PREFIX, null);
+		if (!dataElement.hasFlag(NO_RESOURCE_PREFIX)) {
+			String valuePrefix =
+				dataElement.getProperty(VALUE_RESOURCE_PREFIX, null);
 
-			sItemPrefix += sValuePrefix != null ?
-			               sValuePrefix :
-			               rDataElement.getResourceId();
+			itemPrefix +=
+				valuePrefix != null ? valuePrefix :
+				dataElement.getResourceId();
 		}
 
-		return sItemPrefix;
+		return itemPrefix;
 	}
 
 	/**
@@ -311,37 +305,37 @@ public class DataElementUI<D extends DataElement<?>> {
 	 * If the value has already been converted to a item resource it will be
 	 * returned unchanged.
 	 *
-	 * @param rDataElement The data element
-	 * @param sValue       The value to convert
+	 * @param dataElement The data element
+	 * @param value       The value to convert
 	 * @return The value item string
 	 */
-	public static String getValueItemString(DataElement<?> rDataElement,
-		String sValue) {
-		if (sValue.length() > 0 && sValue.charAt(0) != '$') {
-			sValue = getValueItemPrefix(rDataElement) +
-				TextConvert.capitalizedIdentifier(sValue);
+	public static String getValueItemString(DataElement<?> dataElement,
+		String value) {
+		if (value.length() > 0 && value.charAt(0) != '$') {
+			value = getValueItemPrefix(dataElement) +
+				TextConvert.capitalizedIdentifier(value);
 		}
 
-		return sValue;
+		return value;
 	}
 
 	/**
 	 * Sets the default layout mode to be used for button panels.
 	 *
-	 * @param eLayoutMode The new button panel default layout mode
+	 * @param layoutMode The new button panel default layout mode
 	 */
-	public static void setButtonPanelDefaultLayout(LayoutType eLayoutMode) {
-		eButtonPanelDefaultLayout = eLayoutMode;
+	public static void setButtonPanelDefaultLayout(LayoutType layoutMode) {
+		buttonPanelDefaultLayout = layoutMode;
 	}
 
 	/**
 	 * Configuration method to sets the suffix to be added to UI labels
 	 * (default: ':').
 	 *
-	 * @param sSuffix The new label suffix (NULL or empty to disable)
+	 * @param suffix The new label suffix (NULL or empty to disable)
 	 */
-	public static final void setLabelSuffix(String sSuffix) {
-		sLabelSuffix = sSuffix;
+	public static final void setLabelSuffix(String suffix) {
+		labelSuffix = suffix;
 	}
 
 	/**
@@ -350,22 +344,22 @@ public class DataElementUI<D extends DataElement<?>> {
 	 * (in the case of button panels). The source of events received from this
 	 * registration will be the element component, not this instance.
 	 *
-	 * @param eEventType The event type to add the handler for
-	 * @param rHandler   The event handler
+	 * @param eventType The event type to add the handler for
+	 * @param handler   The event handler
 	 */
-	public void addEventListener(EventType eEventType,
-		EwtEventHandler rHandler) {
-		Component rComponent = getElementComponent();
+	public void addEventListener(EventType eventType,
+		EwtEventHandler handler) {
+		Component component = getElementComponent();
 
-		if (rComponent instanceof Container) {
-			List<Component> rComponents =
-				((Container) rComponent).getComponents();
+		if (component instanceof Container) {
+			List<Component> components =
+				((Container) component).getComponents();
 
-			for (Component rChild : rComponents) {
-				rChild.addEventListener(eEventType, rHandler);
+			for (Component child : components) {
+				child.addEventListener(eventType, handler);
 			}
 		} else {
-			rComponent.addEventListener(eEventType, rHandler);
+			component.addEventListener(eventType, handler);
 		}
 	}
 
@@ -374,10 +368,10 @@ public class DataElementUI<D extends DataElement<?>> {
 	 * properties.
 	 */
 	public void applyStyle() {
-		aElementComponent.applyStyle(
-			applyElementStyle(rDataElement, getBaseStyle()));
+		elementComponent.applyStyle(
+			applyElementStyle(dataElement, getBaseStyle()));
 		applyElementProperties();
-		enableComponent(bUIEnabled);
+		enableComponent(uIEnabled);
 	}
 
 	/**
@@ -385,23 +379,23 @@ public class DataElementUI<D extends DataElement<?>> {
 	 * {@link #buildDataElementUI(ContainerBuilder, StyleData)} which can be
 	 * overridden by subclasses to modify the default building if necessary.
 	 *
-	 * @param rBuilder The container builder to create the components with
-	 * @param rStyle   The style data for display components
+	 * @param builder The container builder to create the components with
+	 * @param style   The style data for display components
 	 */
-	public final void buildUserInterface(ContainerBuilder<?> rBuilder,
-		StyleData rStyle) {
-		rBaseStyle = rStyle;
-		aElementComponent = buildDataElementUI(rBuilder, rStyle);
+	public final void buildUserInterface(ContainerBuilder<?> builder,
+		StyleData style) {
+		baseStyle = style;
+		elementComponent = buildDataElementUI(builder, style);
 
 		applyElementProperties();
-		rDataElement.setModified(false);
+		dataElement.setModified(false);
 	}
 
 	/**
 	 * Clears an error message if such has been set previously.
 	 */
 	public void clearError() {
-		if (bHasError) {
+		if (hasError) {
 			setErrorMessage(null);
 		}
 	}
@@ -414,20 +408,20 @@ public class DataElementUI<D extends DataElement<?>> {
 	 * Therefore it won't harm to invoke this method on display user interfaces
 	 * too.
 	 *
-	 * @param rModifiedElements A list to add modified data elements to
+	 * @param modifiedElements A list to add modified data elements to
 	 */
-	public void collectInput(List<DataElement<?>> rModifiedElements) {
-		if (!rDataElement.isImmutable()) {
-			if (rOptionalCheckBox != null) {
-				rDataElement.setSelected(rOptionalCheckBox.isSelected());
+	public void collectInput(List<DataElement<?>> modifiedElements) {
+		if (!dataElement.isImmutable()) {
+			if (optionalCheckBox != null) {
+				dataElement.setSelected(optionalCheckBox.isSelected());
 			}
 
-			transferInputToDataElement(aElementComponent, rDataElement);
+			transferInputToDataElement(elementComponent, dataElement);
 
-			if (rDataElement.isModified()) {
-				rModifiedElements.add(rDataElement.copy(CopyMode.FLAT,
+			if (dataElement.isModified()) {
+				modifiedElements.add(dataElement.copy(CopyMode.FLAT,
 					DataElement.SERVER_PROPERTIES));
-				rDataElement.setModified(false);
+				dataElement.setModified(false);
 			}
 		}
 	}
@@ -435,11 +429,11 @@ public class DataElementUI<D extends DataElement<?>> {
 	/**
 	 * Creates the label string for the data element of this instance.
 	 *
-	 * @param rContext The user interface context for resource expansion
+	 * @param context The user interface context for resource expansion
 	 * @return The Label string (may be emtpy but will never be null
 	 */
-	public String createElementLabelString(UserInterfaceContext rContext) {
-		return appendLabelSuffix(getElementLabelText(rContext));
+	public String createElementLabelString(UserInterfaceContext context) {
+		return appendLabelSuffix(getElementLabelText(context));
 	}
 
 	/**
@@ -449,7 +443,7 @@ public class DataElementUI<D extends DataElement<?>> {
 	 * @return The base style data
 	 */
 	public StyleData getBaseStyle() {
-		return rBaseStyle;
+		return baseStyle;
 	}
 
 	/**
@@ -458,7 +452,7 @@ public class DataElementUI<D extends DataElement<?>> {
 	 * @return The data element
 	 */
 	public final D getDataElement() {
-		return rDataElement;
+		return dataElement;
 	}
 
 	/**
@@ -468,17 +462,17 @@ public class DataElementUI<D extends DataElement<?>> {
 	 * @return The user interface component for the data element
 	 */
 	public final Component getElementComponent() {
-		return aElementComponent;
+		return elementComponent;
 	}
 
 	/**
 	 * Returns the text for a label that describes the data element.
 	 *
-	 * @param rContext rBuilder
+	 * @param context rBuilder
 	 * @return The element label (can be empty but will never be null)
 	 */
-	public String getElementLabelText(UserInterfaceContext rContext) {
-		return getLabelText(rContext, rDataElement, LABEL_RESOURCE_PREFIX);
+	public String getElementLabelText(UserInterfaceContext context) {
+		return getLabelText(context, dataElement, LABEL_RESOURCE_PREFIX);
 	}
 
 	/**
@@ -488,7 +482,7 @@ public class DataElementUI<D extends DataElement<?>> {
 	 * used)
 	 */
 	public String getElementStyleName() {
-		return getElementStyleName(rDataElement);
+		return getElementStyleName(dataElement);
 	}
 
 	/**
@@ -497,7 +491,7 @@ public class DataElementUI<D extends DataElement<?>> {
 	 * @return The parent panel manager
 	 */
 	public final DataElementPanelManager getParent() {
-		return rPanelManager;
+		return panelManager;
 	}
 
 	/**
@@ -509,23 +503,23 @@ public class DataElementUI<D extends DataElement<?>> {
 	 * @return TRUE if the input focus could be set
 	 */
 	public boolean requestFocus() {
-		boolean bIsControl = (aElementComponent instanceof Control);
+		boolean isControl = (elementComponent instanceof Control);
 
-		if (bIsControl) {
-			((Control) aElementComponent).requestFocus();
+		if (isControl) {
+			((Control) elementComponent).requestFocus();
 		}
 
-		return bIsControl;
+		return isControl;
 	}
 
 	/**
 	 * Sets the component size as HTML string values.
 	 *
-	 * @param sWidth  The component width
-	 * @param sHeight The component height
+	 * @param width  The component width
+	 * @param height The component height
 	 */
-	public void setComponentSize(String sWidth, String sHeight) {
-		aElementComponent.getWidget().setSize("100%", "100%");
+	public void setComponentSize(String width, String height) {
+		elementComponent.getWidget().setSize("100%", "100%");
 	}
 
 	/**
@@ -533,19 +527,19 @@ public class DataElementUI<D extends DataElement<?>> {
 	 * The default implementation sets the message as the element component's
 	 * tooltip (and on the label too if such exists).
 	 *
-	 * @param sMessage The error message or NULL to clear
+	 * @param message The error message or NULL to clear
 	 */
-	public void setErrorMessage(String sMessage) {
-		bHasError = (sMessage != null);
+	public void setErrorMessage(String message) {
+		hasError = (message != null);
 
-		if (sMessage != null && !sMessage.startsWith("$")) {
-			sMessage = "$msg" + sMessage;
+		if (message != null && !message.startsWith("$")) {
+			message = "$msg" + message;
 		}
 
-		aElementComponent.setError(sMessage);
+		elementComponent.setError(message);
 
-		if (aElementLabel != null) {
-			aElementLabel.setError(sMessage);
+		if (elementLabel != null) {
+			elementLabel.setError(message);
 		}
 	}
 
@@ -556,7 +550,7 @@ public class DataElementUI<D extends DataElement<?>> {
 	public String toString() {
 		return TextConvert.format("%s[%s: %s]",
 			TextConvert.lastElementOf(getClass().getName()),
-			TextConvert.lastElementOf(rDataElement.getName()),
+			TextConvert.lastElementOf(dataElement.getName()),
 			getElementComponent().getClass().getSimpleName());
 	}
 
@@ -565,13 +559,13 @@ public class DataElementUI<D extends DataElement<?>> {
 	 * {@link #updateValue()} to display the new value.
 	 */
 	public void update() {
-		if (aElementComponent != null) {
-			if (rDataElement.hasFlag(VALUE_CHANGED)) {
+		if (elementComponent != null) {
+			if (dataElement.hasFlag(VALUE_CHANGED)) {
 				updateValue();
 			}
 
 			applyStyle();
-			aElementComponent.repaint();
+			elementComponent.repaint();
 			checkRequestFocus();
 		}
 	}
@@ -579,21 +573,21 @@ public class DataElementUI<D extends DataElement<?>> {
 	/**
 	 * Package-internal method to update the data element of this instance.
 	 *
-	 * @param rNewElement The new data element
-	 * @param bUpdateUI   TRUE to also update the UI, FALSE to only update data
-	 *                    element references
+	 * @param newElement The new data element
+	 * @param updateUI   TRUE to also update the UI, FALSE to only update data
+	 *                   element references
 	 */
 	@SuppressWarnings("unchecked")
-	public void updateDataElement(DataElement<?> rNewElement,
-		boolean bUpdateUI) {
-		rDataElement = (D) rNewElement;
-		rPanelManager.getDataElementList().replaceElement(rNewElement);
+	public void updateDataElement(DataElement<?> newElement,
+		boolean updateUI) {
+		dataElement = (D) newElement;
+		panelManager.getDataElementList().replaceElement(newElement);
 
-		if (aInteractionHandler != null) {
-			aInteractionHandler.updateDataElement(rDataElement);
+		if (interactionHandler != null) {
+			interactionHandler.updateDataElement(dataElement);
 		}
 
-		if (bUpdateUI) {
+		if (updateUI) {
 			update();
 		}
 	}
@@ -601,17 +595,17 @@ public class DataElementUI<D extends DataElement<?>> {
 	/**
 	 * Creates a checkbox to select an optional component.
 	 *
-	 * @param rBuilder The builder to add the component with
+	 * @param builder The builder to add the component with
 	 */
-	protected void addOptionSelector(ContainerBuilder<?> rBuilder) {
-		rOptionalCheckBox = rBuilder.addCheckBox(StyleData.DEFAULT, "", null);
+	protected void addOptionSelector(ContainerBuilder<?> builder) {
+		optionalCheckBox = builder.addCheckBox(StyleData.DEFAULT, "", null);
 
-		rOptionalCheckBox.setSelected(false);
-		rOptionalCheckBox.addEventListener(EventType.ACTION,
+		optionalCheckBox.setSelected(false);
+		optionalCheckBox.addEventListener(EventType.ACTION,
 			new EwtEventHandler() {
 				@Override
-				public void handleEvent(EwtEvent rEvent) {
-					setEnabled(rOptionalCheckBox.isSelected());
+				public void handleEvent(EwtEvent event) {
+					setEnabled(optionalCheckBox.isSelected());
 				}
 			});
 	}
@@ -621,41 +615,39 @@ public class DataElementUI<D extends DataElement<?>> {
 	 * reflected in the {@link StyleData} object for the component.
 	 */
 	protected void applyElementProperties() {
-		boolean bVisible = !rDataElement.hasFlag(HIDDEN);
+		boolean visible = !dataElement.hasFlag(HIDDEN);
 
-		if (aElementComponent != null) {
-			sToolTip = rDataElement.getProperty(TOOLTIP, sHiddenLabelHint);
+		if (elementComponent != null) {
+			toolTip = dataElement.getProperty(TOOLTIP, hiddenLabelHint);
 
-			aElementComponent.setVisible(bVisible);
-			rPanelManager.setElementVisibility(this, bVisible);
+			elementComponent.setVisible(visible);
+			panelManager.setElementVisibility(this, visible);
 
-			if (rDataElement.hasProperty(INVISIBLE)) {
-				aElementComponent.setVisibility(
-					!rDataElement.hasFlag(INVISIBLE));
+			if (dataElement.hasProperty(INVISIBLE)) {
+				elementComponent.setVisibility(!dataElement.hasFlag(INVISIBLE));
 			}
 
-			if (!bHasError && sToolTip != null && sToolTip.length() > 0) {
-				aElementComponent.setToolTip(sToolTip);
+			if (!hasError && toolTip != null && toolTip.length() > 0) {
+				elementComponent.setToolTip(toolTip);
 			}
 
-			String sImage = rDataElement.getProperty(IMAGE, null);
+			String image = dataElement.getProperty(IMAGE, null);
 
-			if (sImage != null && aElementComponent instanceof ImageAttribute) {
-				((ImageAttribute) aElementComponent).setImage(
-					aElementComponent.getContext().createImage(sImage));
+			if (image != null && elementComponent instanceof ImageAttribute) {
+				((ImageAttribute) elementComponent).setImage(
+					elementComponent.getContext().createImage(image));
 			}
 		}
 
-		if (aElementLabel != null) {
-			String sLabel = appendLabelSuffix(
-				getElementLabelText(aElementLabel.getContext()));
+		if (elementLabel != null) {
+			String label = appendLabelSuffix(
+				getElementLabelText(elementLabel.getContext()));
 
-			aElementLabel.setProperties(sLabel);
-			aElementLabel.setVisible(bVisible);
+			elementLabel.setProperties(label);
+			elementLabel.setVisible(visible);
 
-			if (rDataElement.hasProperty(INVISIBLE)) {
-				aElementComponent.setVisibility(
-					!rDataElement.hasFlag(INVISIBLE));
+			if (dataElement.hasProperty(INVISIBLE)) {
+				elementComponent.setVisibility(!dataElement.hasFlag(INVISIBLE));
 			}
 		}
 	}
@@ -667,29 +659,28 @@ public class DataElementUI<D extends DataElement<?>> {
 	 * {@link #createInputUI(ContainerBuilder, StyleData, DataElement)} or
 	 * {@link #createDisplayUI(ContainerBuilder, StyleData, DataElement)}.
 	 *
-	 * @param rBuilder The container builder to create the components with
-	 * @param rStyle   The style data for display components
+	 * @param builder The container builder to create the components with
+	 * @param style   The style data for display components
 	 * @return The UI component
 	 */
-	protected Component buildDataElementUI(ContainerBuilder<?> rBuilder,
-		StyleData rStyle) {
-		rStyle = applyElementStyle(rDataElement, rStyle);
+	protected Component buildDataElementUI(ContainerBuilder<?> builder,
+		StyleData style) {
+		style = applyElementStyle(dataElement, style);
 
-		if (rDataElement.isImmutable()) {
-			aElementComponent = createDisplayUI(rBuilder, rStyle,
-				rDataElement);
+		if (dataElement.isImmutable()) {
+			elementComponent = createDisplayUI(builder, style, dataElement);
 		} else {
-			aElementComponent = createInputUI(rBuilder, rStyle, rDataElement);
+			elementComponent = createInputUI(builder, style, dataElement);
 
-			if (aElementComponent != null) {
-				setupInteractionHandling(aElementComponent, true);
+			if (elementComponent != null) {
+				setupInteractionHandling(elementComponent, true);
 			}
 
-			setEnabled(rOptionalCheckBox == null);
+			setEnabled(optionalCheckBox == null);
 			checkRequestFocus();
 		}
 
-		return aElementComponent;
+		return elementComponent;
 	}
 
 	/**
@@ -705,28 +696,27 @@ public class DataElementUI<D extends DataElement<?>> {
 	 * placeholders occur in the text string any surplus values will be
 	 * ignored.
 	 *
-	 * @param rDataElement The data element to check for format arguments
-	 * @param rContext     The user interface context for resource expansion
-	 * @param sText        The text string to format
+	 * @param dataElement The data element to check for format arguments
+	 * @param context     The user interface context for resource expansion
+	 * @param text        The text string to format
 	 * @return The formatted string
 	 */
-	protected String checkApplyFormatting(D rDataElement,
-		UserInterfaceContext rContext, String sText) {
-		if (rDataElement.hasProperty(FORMAT_ARGUMENTS)) {
-			List<String> rFormatArgs =
-				rDataElement.getProperty(FORMAT_ARGUMENTS,
-					Collections.emptyList());
+	protected String checkApplyFormatting(D dataElement,
+		UserInterfaceContext context, String text) {
+		if (dataElement.hasProperty(FORMAT_ARGUMENTS)) {
+			List<String> formatArgs = dataElement.getProperty(FORMAT_ARGUMENTS,
+				Collections.emptyList());
 
-			Object[] aArgs = new String[rFormatArgs.size()];
+			Object[] args = new String[formatArgs.size()];
 
-			for (int i = aArgs.length - 1; i >= 0; i--) {
-				aArgs[i] = rContext.expandResource(rFormatArgs.get(i));
+			for (int i = args.length - 1; i >= 0; i--) {
+				args[i] = context.expandResource(formatArgs.get(i));
 			}
 
-			sText = TextConvert.format(rContext.expandResource(sText), aArgs);
+			text = TextConvert.format(context.expandResource(text), args);
 		}
 
-		return sText;
+		return text;
 	}
 
 	/**
@@ -734,9 +724,9 @@ public class DataElementUI<D extends DataElement<?>> {
 	 * flag and if so sets the input focus on the element component.
 	 */
 	protected void checkRequestFocus() {
-		if (rDataElement.hasFlag(FOCUSED)) {
+		if (dataElement.hasFlag(FOCUSED)) {
 			requestFocus();
-			rDataElement.clearFlag(FOCUSED);
+			dataElement.clearFlag(FOCUSED);
 		}
 	}
 
@@ -744,12 +734,12 @@ public class DataElementUI<D extends DataElement<?>> {
 	 * A helper method that checks whether a certain validator contains a list
 	 * of resource IDs.
 	 *
-	 * @param rValidator The validator to check
+	 * @param validator The validator to check
 	 * @return TRUE if the validator contains resource IDs
 	 */
-	protected boolean containsResourceIds(Validator<?> rValidator) {
-		return rValidator instanceof StringListValidator &&
-			((StringListValidator) rValidator).isResourceIds();
+	protected boolean containsResourceIds(Validator<?> validator) {
+		return validator instanceof StringListValidator &&
+			((StringListValidator) validator).isResourceIds();
 	}
 
 	/**
@@ -763,70 +753,68 @@ public class DataElementUI<D extends DataElement<?>> {
 	 * <p>The default implementation returns the toString() result for the
 	 * value or an empty string if the value is NULL.</p>
 	 *
-	 * @param rDataElement The data element to convert the value for
-	 * @param rValue       The value to convert
+	 * @param dataElement The data element to convert the value for
+	 * @param value       The value to convert
 	 * @return The element display string
 	 */
-	protected String convertValueToString(DataElement<?> rDataElement,
-		Object rValue) {
-		String sValue = "";
-		boolean bImageValue = false;
+	protected String convertValueToString(DataElement<?> dataElement,
+		Object value) {
+		String text = "";
+		boolean imageValue = false;
 
-		if (rValue instanceof Date) {
-			sValue = formatDate(rDataElement, (Date) rValue);
-		} else if (rValue instanceof BigDecimal) {
-			String sFormat = rDataElement.getProperty(FORMAT,
+		if (value instanceof Date) {
+			text = formatDate(dataElement, (Date) value);
+		} else if (value instanceof BigDecimal) {
+			String format = dataElement.getProperty(FORMAT,
 				BigDecimalDataElementUI.DEFAULT_FORMAT);
 
-			sValue =
-				NumberFormat.getFormat(sFormat).format((BigDecimal) rValue);
-		} else if (rValue instanceof ListDataElement) {
-			sValue = ((ListDataElement<?>) rValue).getElements().toString();
-		} else if (rValue instanceof DataElement) {
-			sValue = convertValueToString(rDataElement,
-				((DataElement<?>) rValue).getValue());
-		} else if (rValue instanceof Enum) {
-			sValue = ((Enum<?>) rValue).name();
-			sValue = getValueItemString(rDataElement, sValue);
-			bImageValue = rDataElement.hasFlag(HAS_IMAGES);
-		} else if (rValue != null) {
-			sValue = rValue.toString();
-			bImageValue = rDataElement.hasFlag(HAS_IMAGES);
+			text = NumberFormat.getFormat(format).format((BigDecimal) value);
+		} else if (value instanceof ListDataElement) {
+			text = ((ListDataElement<?>) value).getElements().toString();
+		} else if (value instanceof DataElement) {
+			text = convertValueToString(dataElement,
+				((DataElement<?>) value).getValue());
+		} else if (value instanceof Enum) {
+			text = ((Enum<?>) value).name();
+			text = getValueItemString(dataElement, text);
+			imageValue = dataElement.hasFlag(HAS_IMAGES);
+		} else if (value != null) {
+			text = value.toString();
+			imageValue = dataElement.hasFlag(HAS_IMAGES);
 		}
 
-		if (containsResourceIds(rDataElement.getElementValidator())) {
-			sValue = getValueItemString(rDataElement, sValue);
+		if (containsResourceIds(dataElement.getElementValidator())) {
+			text = getValueItemString(dataElement, text);
 		}
 
-		if (sValue.length() > 0 && bImageValue) {
-			if (sValue.charAt(1) == Image.IMAGE_PREFIX_SEPARATOR &&
-				sValue.charAt(0) == Image.IMAGE_DATA_PREFIX) {
-				sValue = "#" + sValue;
+		if (!text.isEmpty() && imageValue) {
+			if (text.charAt(1) == Image.IMAGE_PREFIX_SEPARATOR &&
+				text.charAt(0) == Image.IMAGE_DATA_PREFIX) {
+				text = "#" + text;
 			} else if (
-				Component.COMPOUND_PROPERTY_CHARS.indexOf(sValue.charAt(0)) <
-					0) {
-				sValue = "%" + sValue;
+				Component.COMPOUND_PROPERTY_CHARS.indexOf(text.charAt(0)) < 0) {
+				text = "%" + text;
 			}
 		}
 
-		return sValue;
+		return text;
 	}
 
 	/**
 	 * Creates a label component.
 	 *
-	 * @param rBuilder     The builder
-	 * @param rStyle       The style
-	 * @param rDataElement The data element to create the label for
+	 * @param builder     The builder
+	 * @param style       The style
+	 * @param dataElement The data element to create the label for
 	 * @return The new component
 	 */
-	protected Component createButton(ContainerBuilder<?> rBuilder,
-		StyleData rStyle, D rDataElement) {
-		ButtonStyle eButtonStyle =
-			rDataElement.getProperty(BUTTON_STYLE, ButtonStyle.DEFAULT);
+	protected Component createButton(ContainerBuilder<?> builder,
+		StyleData style, D dataElement) {
+		ButtonStyle buttonStyle =
+			dataElement.getProperty(BUTTON_STYLE, ButtonStyle.DEFAULT);
 
-		return rBuilder.addButton(rStyle.set(BUTTON_STYLE, eButtonStyle),
-			convertValueToString(rDataElement, rDataElement), null);
+		return builder.addButton(style.set(BUTTON_STYLE, buttonStyle),
+			convertValueToString(dataElement, dataElement), null);
 	}
 
 	/**
@@ -837,83 +825,81 @@ public class DataElementUI<D extends DataElement<?>> {
 	 * the data element as returned by
 	 * {@link #convertValueToString(DataElement, Object)}.
 	 *
-	 * @param rBuilder     The container builder to create the components with
-	 * @param rStyle       The default style data for the display components
-	 * @param rDataElement The data element to create the UI for
+	 * @param builder     The container builder to create the components with
+	 * @param style       The default style data for the display components
+	 * @param dataElement The data element to create the UI for
 	 * @return The display user interface component
 	 */
-	protected Component createDisplayUI(ContainerBuilder<?> rBuilder,
-		StyleData rStyle, D rDataElement) {
-		int nRows = rDataElement.getIntProperty(ROWS, 1);
-		ContentType eContentType = rDataElement.getProperty(CONTENT_TYPE,
-			null);
-		Object rValue = rDataElement.getValue();
-		Component aComponent;
+	protected Component createDisplayUI(ContainerBuilder<?> builder,
+		StyleData style, D dataElement) {
+		int rows = dataElement.getIntProperty(ROWS, 1);
+		ContentType contentType = dataElement.getProperty(CONTENT_TYPE, null);
+		Object value = dataElement.getValue();
+		Component component;
 
-		if (rDataElement instanceof ListDataElement<?>) {
-			de.esoco.ewt.component.List aList = rBuilder.addList(rStyle);
+		if (dataElement instanceof ListDataElement<?>) {
+			de.esoco.ewt.component.List list = builder.addList(style);
 
-			for (Object rItem : (ListDataElement<?>) rDataElement) {
-				aList.add(convertValueToString(rDataElement, rItem));
+			for (Object item : (ListDataElement<?>) dataElement) {
+				list.add(convertValueToString(dataElement, item));
 			}
 
-			aComponent = aList;
-		} else if (eContentType == ContentType.WEBSITE) {
-			aComponent = rBuilder.addWebsite(rStyle, rValue.toString());
-		} else if (eContentType == ContentType.HYPERLINK) {
-			aComponent =
-				createHyperlinkDisplayComponent(rBuilder, rStyle,
-					rDataElement);
-		} else if (eContentType == ContentType.ABSOLUTE_URL ||
-			eContentType == ContentType.RELATIVE_URL) {
-			aComponent = createUrlComponent(rBuilder, rStyle, eContentType);
-		} else if (nRows != 1) {
-			aComponent = createTextArea(rBuilder, rStyle, rDataElement, nRows);
+			component = list;
+		} else if (contentType == ContentType.WEBSITE) {
+			component = builder.addWebsite(style, value.toString());
+		} else if (contentType == ContentType.HYPERLINK) {
+			component =
+				createHyperlinkDisplayComponent(builder, style, dataElement);
+		} else if (contentType == ContentType.ABSOLUTE_URL ||
+			contentType == ContentType.RELATIVE_URL) {
+			component = createUrlComponent(builder, style, contentType);
+		} else if (rows != 1) {
+			component = createTextArea(builder, style, dataElement, rows);
 		} else {
-			aComponent = createLabel(rBuilder, rStyle, rDataElement);
+			component = createLabel(builder, style, dataElement);
 		}
 
-		return aComponent;
+		return component;
 	}
 
 	/**
 	 * Creates a label with the given container builder.
 	 *
-	 * @param rBuilder The container builder to add the label with
-	 * @param rStyle   The default label style
-	 * @param sLabel   The label string
+	 * @param builder The container builder to add the label with
+	 * @param style   The default label style
+	 * @param label   The label string
 	 */
-	protected void createElementLabel(ContainerBuilder<?> rBuilder,
-		StyleData rStyle, String sLabel) {
-		aElementLabel = rBuilder.addLabel(rStyle, sLabel, null);
+	protected void createElementLabel(ContainerBuilder<?> builder,
+		StyleData style, String label) {
+		elementLabel = builder.addLabel(style, label, null);
 	}
 
 	/**
 	 * Creates a display component to render hyperlinks.
 	 *
-	 * @param rBuilder     The container builder
-	 * @param rStyle       The style data
-	 * @param rDataElement The data element
+	 * @param builder     The container builder
+	 * @param style       The style data
+	 * @param dataElement The data element
 	 * @return The new hyperlink component
 	 */
 	protected Component createHyperlinkDisplayComponent(
-		ContainerBuilder<?> rBuilder, StyleData rStyle, D rDataElement) {
-		final String sURL = rDataElement.getValue().toString();
-		final String sTitle =
-			rBuilder.getContext().expandResource(rDataElement.getResourceId());
+		ContainerBuilder<?> builder, StyleData style, D dataElement) {
+		final String uRL = dataElement.getValue().toString();
+		final String title =
+			builder.getContext().expandResource(dataElement.getResourceId());
 
-		rStyle = rStyle.setFlags(StyleFlag.HYPERLINK);
+		style = style.setFlags(StyleFlag.HYPERLINK);
 
-		Component aComponent = rBuilder.addLabel(rStyle, sURL, null);
+		Component component = builder.addLabel(style, uRL, null);
 
-		aComponent.addEventListener(EventType.ACTION, new EwtEventHandler() {
+		component.addEventListener(EventType.ACTION, new EwtEventHandler() {
 			@Override
-			public void handleEvent(EwtEvent rEvent) {
-				Window.open(sURL, sTitle, "");
+			public void handleEvent(EwtEvent event) {
+				Window.open(uRL, title, "");
 			}
 		});
 
-		return aComponent;
+		return component;
 	}
 
 	/**
@@ -926,47 +912,42 @@ public class DataElementUI<D extends DataElement<?>> {
 	 * above
 	 * method, and finally expanded as resources.}.
 	 *
-	 * @param rBuilder     The container builder to create the components with
-	 * @param rStyle       The default style data for the input components
-	 * @param rDataElement The data element to create the UI for
+	 * @param builder     The container builder to create the components with
+	 * @param style       The default style data for the input components
+	 * @param dataElement The data element to create the UI for
 	 * @return The input user interface component or NULL if it shall not be
 	 * handled by this instance
 	 */
-	protected Component createInputUI(ContainerBuilder<?> rBuilder,
-		StyleData rStyle, D rDataElement) {
-		String sValue = convertValueToString(rDataElement, rDataElement);
+	protected Component createInputUI(ContainerBuilder<?> builder,
+		StyleData style, D dataElement) {
+		String value = convertValueToString(dataElement, dataElement);
 
-		ContentType eContentType = rDataElement.getProperty(CONTENT_TYPE,
-			null);
-		Component aComponent;
+		ContentType contentType = dataElement.getProperty(CONTENT_TYPE, null);
+		Component component;
 
-		if (eContentType == ContentType.PHONE_NUMBER) {
-			aComponent =
-				createPhoneNumberInputComponent(rBuilder, rStyle, sValue);
-		} else if (eContentType == ContentType.FILE_UPLOAD) {
-			aComponent = rBuilder.addFileChooser(rStyle,
-				rDataElement.getProperty(URL, null),
-				"$btn" + rDataElement.getResourceId());
-		} else if (eContentType == ContentType.WEBSITE) {
-			aComponent =
-				rBuilder.addWebsite(rStyle,
-					rDataElement.getValue().toString());
-		} else if (eContentType == ContentType.HYPERLINK) {
-			aComponent =
-				rBuilder.addLabel(rStyle.setFlags(StyleFlag.HYPERLINK),
-				rDataElement.getValue().toString(), null);
-		} else if (rDataElement.getProperty(LABEL_STYLE, null) != null) {
-			aComponent = createLabel(rBuilder, rStyle, rDataElement);
-		} else if (rDataElement.getProperty(BUTTON_STYLE, null) != null) {
-			aComponent = createButton(rBuilder, rStyle, rDataElement);
+		if (contentType == ContentType.PHONE_NUMBER) {
+			component = createPhoneNumberInputComponent(builder, style, value);
+		} else if (contentType == ContentType.FILE_UPLOAD) {
+			component = builder.addFileChooser(style,
+				dataElement.getProperty(URL, null),
+				"$btn" + dataElement.getResourceId());
+		} else if (contentType == ContentType.WEBSITE) {
+			component =
+				builder.addWebsite(style, dataElement.getValue().toString());
+		} else if (contentType == ContentType.HYPERLINK) {
+			component = builder.addLabel(style.setFlags(StyleFlag.HYPERLINK),
+				dataElement.getValue().toString(), null);
+		} else if (dataElement.getProperty(LABEL_STYLE, null) != null) {
+			component = createLabel(builder, style, dataElement);
+		} else if (dataElement.getProperty(BUTTON_STYLE, null) != null) {
+			component = createButton(builder, style, dataElement);
 		} else {
-			aComponent =
-				createTextInputComponent(rBuilder, rStyle, rDataElement,
-					sValue,
-					eContentType);
+			component =
+				createTextInputComponent(builder, style, dataElement, value,
+					contentType);
 		}
 
-		return aComponent;
+		return component;
 	}
 
 	/**
@@ -976,180 +957,175 @@ public class DataElementUI<D extends DataElement<?>> {
 	 * @return The data element interaction handler
 	 */
 	protected DataElementInteractionHandler<D> createInteractionHandler(
-		DataElementPanelManager rPanelManager, D rDataElement) {
-		return new DataElementInteractionHandler<D>(rPanelManager,
-			rDataElement);
+		DataElementPanelManager panelManager, D dataElement) {
+		return new DataElementInteractionHandler<D>(panelManager, dataElement);
 	}
 
 	/**
 	 * Creates a label component.
 	 *
-	 * @param rBuilder     The builder
-	 * @param rStyle       The style
-	 * @param rDataElement The data element to create the label for
+	 * @param builder     The builder
+	 * @param style       The style
+	 * @param dataElement The data element to create the label for
 	 * @return The new component
 	 */
-	protected Component createLabel(ContainerBuilder<?> rBuilder,
-		StyleData rStyle, D rDataElement) {
-		LabelStyle eLabelStyle = rDataElement.getProperty(LABEL_STYLE, null);
+	protected Component createLabel(ContainerBuilder<?> builder,
+		StyleData style, D dataElement) {
+		LabelStyle labelStyle = dataElement.getProperty(LABEL_STYLE, null);
 
-		if (eLabelStyle != null) {
-			rStyle = rStyle.set(LABEL_STYLE, eLabelStyle);
+		if (labelStyle != null) {
+			style = style.set(LABEL_STYLE, labelStyle);
 		}
 
-		String sLabel =
-			checkApplyFormatting(rDataElement, rBuilder.getContext(),
-				convertValueToString(rDataElement, rDataElement));
+		String label = checkApplyFormatting(dataElement, builder.getContext(),
+			convertValueToString(dataElement, dataElement));
 
-		return rBuilder.addLabel(rStyle, sLabel, null);
+		return builder.addLabel(style, label, null);
 	}
 
 	/**
 	 * Creates a component for the input of a phone number.
 	 *
-	 * @param rBuilder The builder to add the input component with
-	 * @param rStyle   The style data for the component
-	 * @param sValue   The initial value
+	 * @param builder The builder to add the input component with
+	 * @param style   The style data for the component
+	 * @param value   The initial value
 	 * @return The new component
 	 */
 	protected Component createPhoneNumberInputComponent(
-		ContainerBuilder<?> rBuilder, StyleData rStyle, String sValue) {
-		final List<TextField> aNumberFields = new ArrayList<TextField>(4);
-		String sPartSeparator = "+";
+		ContainerBuilder<?> builder, StyleData style, String value) {
+		final List<TextField> numberFields = new ArrayList<TextField>(4);
+		String partSeparator = "+";
 
-		EwtEventHandler rEventHandler = new EwtEventHandler() {
+		EwtEventHandler eventHandler = new EwtEventHandler() {
 			@Override
-			public void handleEvent(EwtEvent rEvent) {
-				handlePhoneNumberEvent(rEvent, aNumberFields);
+			public void handleEvent(EwtEvent event) {
+				handlePhoneNumberEvent(event, numberFields);
 			}
 		};
 
-		rBuilder = rBuilder.addPanel(
-			rStyle.setFlags(StyleFlag.HORIZONTAL_ALIGN_CENTER),
-			new FlowLayout(true));
+		builder =
+			builder.addPanel(style.setFlags(StyleFlag.HORIZONTAL_ALIGN_CENTER),
+				new FlowLayout(true));
 
 		for (int i = 0; i < 4; i++) {
 			if (i == 1) {
-				sPartSeparator += " 0";
+				partSeparator += " 0";
 			}
 
-			rBuilder.addLabel(StyleData.DEFAULT, sPartSeparator, null);
+			builder.addLabel(StyleData.DEFAULT, partSeparator, null);
 
-			TextField aField = rBuilder.addTextField(StyleData.DEFAULT, "");
+			TextField field = builder.addTextField(StyleData.DEFAULT, "");
 
-			aField.addEventListener(EventType.KEY_PRESSED, rEventHandler);
-			aField.addEventListener(EventType.KEY_TYPED, rEventHandler);
-			aField.addEventListener(EventType.KEY_RELEASED, rEventHandler);
-			aField.setColumns(PHONE_NUMBER_FIELD_SIZES[i]);
-			aField.setToolTip(PHONE_NUMBER_FIELD_TOOLTIPS[i]);
+			field.addEventListener(EventType.KEY_PRESSED, eventHandler);
+			field.addEventListener(EventType.KEY_TYPED, eventHandler);
+			field.addEventListener(EventType.KEY_RELEASED, eventHandler);
+			field.setColumns(PHONE_NUMBER_FIELD_SIZES[i]);
+			field.setToolTip(PHONE_NUMBER_FIELD_TOOLTIPS[i]);
 
-			aNumberFields.add(aField);
-			sPartSeparator = "-";
+			numberFields.add(field);
+			partSeparator = "-";
 		}
 
-		setPhoneNumber(aNumberFields, sValue);
+		setPhoneNumber(numberFields, value);
 
-		return rBuilder.getContainer();
+		return builder.getContainer();
 	}
 
 	/**
 	 * Creates a text area component.
 	 *
-	 * @param rBuilder     The builder
-	 * @param rStyle       The style
-	 * @param rDataElement The data element to create the text area for
-	 * @param nRows        The number of text rows to display
+	 * @param builder     The builder
+	 * @param style       The style
+	 * @param dataElement The data element to create the text area for
+	 * @param rows        The number of text rows to display
 	 * @return The new component
 	 */
-	protected Component createTextArea(ContainerBuilder<?> rBuilder,
-		StyleData rStyle, D rDataElement, int nRows) {
-		Component aComponent;
-		int nCols = rDataElement.getIntProperty(COLUMNS, -1);
+	protected Component createTextArea(ContainerBuilder<?> builder,
+		StyleData style, D dataElement, int rows) {
+		Component component;
+		int cols = dataElement.getIntProperty(COLUMNS, -1);
 
-		String sText = checkApplyFormatting(rDataElement,
-			rBuilder.getContext(),
-			convertValueToString(rDataElement, rDataElement));
+		String text = checkApplyFormatting(dataElement, builder.getContext(),
+			convertValueToString(dataElement, dataElement));
 
-		TextArea aTextArea = rBuilder.addTextArea(rStyle, sText);
+		TextArea textArea = builder.addTextArea(style, text);
 
-		aComponent = aTextArea;
+		component = textArea;
 
-		aTextArea.setEditable(false);
+		textArea.setEditable(false);
 
-		if (nRows > 0) {
-			aTextArea.setRows(nRows);
+		if (rows > 0) {
+			textArea.setRows(rows);
 		}
 
-		if (nCols != -1) {
-			aTextArea.setColumns(nCols);
+		if (cols != -1) {
+			textArea.setColumns(cols);
 		}
 
-		return aComponent;
+		return component;
 	}
 
 	/**
 	 * Creates a component for the input of a string value.
 	 *
-	 * @param rBuilder     The builder to add the input component with
-	 * @param rStyle       The style data for the component
-	 * @param rDataElement The data element to create the component for
-	 * @param sText        The initial value
+	 * @param builder     The builder to add the input component with
+	 * @param style       The style data for the component
+	 * @param dataElement The data element to create the component for
+	 * @param text        The initial value
 	 * @return The new component
 	 */
-	protected TextControl createTextInputComponent(ContainerBuilder<?> rBuilder,
-		StyleData rStyle, D rDataElement, String sText,
-		ContentType eContentType) {
-		int nRows = rDataElement.getIntProperty(ROWS, 1);
+	protected TextControl createTextInputComponent(ContainerBuilder<?> builder,
+		StyleData style, D dataElement, String text, ContentType contentType) {
+		int rows = dataElement.getIntProperty(ROWS, 1);
 
-		TextControl aTextComponent;
+		TextControl textComponent;
 
-		sText =
-			checkApplyFormatting(rDataElement, rBuilder.getContext(), sText);
+		text = checkApplyFormatting(dataElement, builder.getContext(), text);
 
-		if (nRows > 1 || nRows == -1) {
-			aTextComponent = rBuilder.addTextArea(rStyle, sText);
+		if (rows > 1 || rows == -1) {
+			textComponent = builder.addTextArea(style, text);
 
-			if (nRows > 1) {
-				((TextArea) aTextComponent).setRows(nRows);
+			if (rows > 1) {
+				((TextArea) textComponent).setRows(rows);
 			}
 		} else {
-			aTextComponent = rBuilder.addTextField(rStyle, sText);
+			textComponent = builder.addTextField(style, text);
 		}
 
-		updateTextComponent(aTextComponent);
+		updateTextComponent(textComponent);
 
-		return aTextComponent;
+		return textComponent;
 	}
 
 	/**
 	 * Adds the component for the display of data elements with a URL content
 	 * type.
 	 *
-	 * @param rBuilder      The container builder to create the components with
-	 * @param rDisplayStyle The default style data for the display components
-	 * @param eContentType  TRUE for a relative and FALSE for an absolute URL
+	 * @param builder      The container builder to create the components with
+	 * @param displayStyle The default style data for the display components
+	 * @param contentType  TRUE for a relative and FALSE for an absolute URL
 	 * @return The URL component
 	 */
-	protected Component createUrlComponent(ContainerBuilder<?> rBuilder,
-		StyleData rDisplayStyle, ContentType eContentType) {
-		String sText = "$btn" + rDataElement.getResourceId();
+	protected Component createUrlComponent(ContainerBuilder<?> builder,
+		StyleData displayStyle, ContentType contentType) {
+		String text = "$btn" + dataElement.getResourceId();
 
-		if (rDataElement.hasFlag(HAS_IMAGES)) {
-			sText = "+" + sText;
+		if (dataElement.hasFlag(HAS_IMAGES)) {
+			text = "+" + text;
 		}
 
-		Button aButton = rBuilder.addButton(rDisplayStyle, sText, null);
+		Button button = builder.addButton(displayStyle, text, null);
 
-		aButton.addEventListener(EventType.ACTION, new EwtEventHandler() {
+		button.addEventListener(EventType.ACTION, new EwtEventHandler() {
 			@Override
-			public void handleEvent(EwtEvent rEvent) {
-				openUrl(rDataElement.getValue().toString(),
-					rDataElement.getProperty(CONTENT_TYPE, null) ==
+			public void handleEvent(EwtEvent event) {
+				openUrl(dataElement.getValue().toString(),
+					dataElement.getProperty(CONTENT_TYPE, null) ==
 						ContentType.RELATIVE_URL);
 			}
 		});
 
-		return aButton;
+		return button;
 	}
 
 	/**
@@ -1157,11 +1133,11 @@ public class DataElementUI<D extends DataElement<?>> {
 	 * the component is an instance of {@link Container} the enabled state of
 	 * it's child elements will be changed instead.
 	 *
-	 * @param bEnable TRUE to enable the user interface
+	 * @param enable TRUE to enable the user interface
 	 */
-	protected void enableComponent(boolean bEnable) {
-		enableComponent(aElementComponent,
-			bEnable && !rDataElement.hasFlag(DISABLED));
+	protected void enableComponent(boolean enable) {
+		enableComponent(elementComponent,
+			enable && !dataElement.hasFlag(DISABLED));
 	}
 
 	/**
@@ -1169,25 +1145,24 @@ public class DataElementUI<D extends DataElement<?>> {
 	 * of {@link Container} the enabled state of it's child elements will be
 	 * changed instead.
 	 *
-	 * @param rComponent The component to enable or disable
-	 * @param bEnabled   TRUE to enable the user interface
+	 * @param component The component to enable or disable
+	 * @param enabled   TRUE to enable the user interface
 	 */
-	protected void enableComponent(Component rComponent, boolean bEnabled) {
-		if (rComponent instanceof Container) {
-			String sElements =
-				rDataElement.getProperty(DISABLED_ELEMENTS, null);
-			int nIndex = 0;
+	protected void enableComponent(Component component, boolean enabled) {
+		if (component instanceof Container) {
+			String elements = dataElement.getProperty(DISABLED_ELEMENTS, null);
+			int index = 0;
 
-			for (Component rChild : ((Container) rComponent).getComponents()) {
-				if (sElements != null) {
-					rChild.setEnabled(
-						bEnabled && !sElements.contains("(" + nIndex++ + ")"));
+			for (Component child : ((Container) component).getComponents()) {
+				if (elements != null) {
+					child.setEnabled(
+						enabled && !elements.contains("(" + index++ + ")"));
 				} else {
-					rChild.setEnabled(bEnabled);
+					child.setEnabled(enabled);
 				}
 			}
-		} else if (rComponent != null) {
-			rComponent.setEnabled(bEnabled);
+		} else if (component != null) {
+			component.setEnabled(enabled);
 		}
 	}
 
@@ -1197,18 +1172,18 @@ public class DataElementUI<D extends DataElement<?>> {
 	 * and then disables or restores the enabled state of the element component
 	 * through the method {@link #enableComponent(boolean)}.
 	 *
-	 * @param bEnabled TRUE to enable interaction, FALSE to disable
+	 * @param enabled TRUE to enable interaction, FALSE to disable
 	 */
-	protected void enableInteraction(boolean bEnabled) {
-		bEnabled = bEnabled || rDataElement.hasFlag(NO_INTERACTION_LOCK);
+	protected void enableInteraction(boolean enabled) {
+		enabled = enabled || dataElement.hasFlag(NO_INTERACTION_LOCK);
 
-		bInteractionEnabled = bEnabled;
+		interactionEnabled = enabled;
 
-		if (bEnabled) {
-			bEnabled = bUIEnabled;
+		if (enabled) {
+			enabled = uIEnabled;
 		}
 
-		enableComponent(bEnabled);
+		enableComponent(enabled);
 	}
 
 	/**
@@ -1219,27 +1194,27 @@ public class DataElementUI<D extends DataElement<?>> {
 	 * {@link ContentProperties#CONTENT_TYPE} is queried for the date and/or
 	 * time content type.
 	 *
-	 * @param rDataElement The data element the value has been read from
-	 * @param rDate        The date value of the data element
+	 * @param dataElement The data element the value has been read from
+	 * @param date        The date value of the data element
 	 * @return A string containing the formatted date value
 	 */
-	protected String formatDate(DataElement<?> rDataElement, Date rDate) {
-		String sFormat = rDataElement.getProperty(FORMAT, null);
-		DateTimeFormat rFormat;
+	protected String formatDate(DataElement<?> dataElement, Date date) {
+		String formatString = dataElement.getProperty(FORMAT, null);
+		DateTimeFormat dateFormat;
 
-		if (sFormat != null) {
-			rFormat = DateTimeFormat.getFormat(sFormat);
+		if (formatString != null) {
+			dateFormat = DateTimeFormat.getFormat(formatString);
 		} else {
-			ContentType eContentType =
-				rDataElement.getProperty(CONTENT_TYPE, null);
+			ContentType contentType =
+				dataElement.getProperty(CONTENT_TYPE, null);
 
-			rFormat = DateTimeFormat.getFormat(
-				eContentType == ContentType.DATE_TIME ?
+			dateFormat = DateTimeFormat.getFormat(
+				contentType == ContentType.DATE_TIME ?
 				PredefinedFormat.DATE_TIME_MEDIUM :
 				PredefinedFormat.DATE_MEDIUM);
 		}
 
-		return rFormat.format(rDate);
+		return dateFormat.format(date);
 	}
 
 	/**
@@ -1248,34 +1223,35 @@ public class DataElementUI<D extends DataElement<?>> {
 	 * @return The current enabled state
 	 */
 	protected boolean isEnabled() {
-		boolean bEnabled = false;
+		boolean enabled = false;
 
-		if (aElementComponent instanceof Container) {
-			List<Component> rComponents =
-				((Container) aElementComponent).getComponents();
+		if (elementComponent instanceof Container) {
+			List<Component> components =
+				((Container) elementComponent).getComponents();
 
-			if (rComponents.size() > 0) {
-				bEnabled = rComponents.get(0).isEnabled();
+			if (components.size() > 0) {
+				enabled = components.get(0).isEnabled();
 			}
-		} else if (aElementComponent != null) {
-			bEnabled = aElementComponent.isEnabled();
+		} else if (elementComponent != null) {
+			enabled = elementComponent.isEnabled();
 		}
 
-		return bEnabled;
+		return enabled;
 	}
 
 	/**
 	 * Opens a URL in a page or a hidden frame.
 	 *
-	 * @param sUrl    The URL to open
-	 * @param bHidden TRUE to open the URL in a hidden frame, FALSE to open it
-	 *                in a new browser page
+	 * @param url    The URL to open
+	 * @param hidden TRUE to open the URL in a hidden frame, FALSE to open
+	 *                  it in
+	 *               a new browser page
 	 */
-	protected void openUrl(String sUrl, boolean bHidden) {
-		if (bHidden) {
-			EWT.openHiddenUrl(sUrl);
+	protected void openUrl(String url, boolean hidden) {
+		if (hidden) {
+			EWT.openHiddenUrl(url);
 		} else {
-			EWT.openUrl(sUrl, null, null);
+			EWT.openUrl(url, null, null);
 		}
 	}
 
@@ -1283,13 +1259,13 @@ public class DataElementUI<D extends DataElement<?>> {
 	 * Sets the enabled state of this UI's component(s) and stores the enabled
 	 * state internally.
 	 *
-	 * @param bEnabled The new enabled state
+	 * @param enabled The new enabled state
 	 */
-	protected void setEnabled(boolean bEnabled) {
-		bUIEnabled = bEnabled;
+	protected void setEnabled(boolean enabled) {
+		uIEnabled = enabled;
 
-		if (bInteractionEnabled) {
-			enableComponent(bEnabled);
+		if (interactionEnabled) {
+			enableComponent(enabled);
 		}
 	}
 
@@ -1298,14 +1274,14 @@ public class DataElementUI<D extends DataElement<?>> {
 	 * default implementation sets the label text as the component tooltip but
 	 * subclasses can override this method.
 	 *
-	 * @param rContext The builder the element UI has been built with
+	 * @param context The builder the element UI has been built with
 	 */
-	protected void setHiddenLabelHint(UserInterfaceContext rContext) {
-		sHiddenLabelHint = getElementLabelText(rContext);
+	protected void setHiddenLabelHint(UserInterfaceContext context) {
+		hiddenLabelHint = getElementLabelText(context);
 
-		if (sToolTip == null && sHiddenLabelHint != null &&
-			sHiddenLabelHint.length() > 0) {
-			aElementComponent.setToolTip(sHiddenLabelHint);
+		if (toolTip == null && hiddenLabelHint != null &&
+			hiddenLabelHint.length() > 0) {
+			elementComponent.setToolTip(hiddenLabelHint);
 		}
 	}
 
@@ -1314,19 +1290,17 @@ public class DataElementUI<D extends DataElement<?>> {
 	 * component if
 	 * necessary.
 	 *
-	 * @param rComponent           The component to setup the input handling
-	 *                             for
-	 * @param bOnContainerChildren TRUE to setup the input handling for the
-	 *                             children if the component is a container
+	 * @param component           The component to setup the input handling for
+	 * @param onContainerChildren TRUE to setup the input handling for the
+	 *                            children if the component is a container
 	 */
-	protected void setupInteractionHandling(Component rComponent,
-		boolean bOnContainerChildren) {
-		DataElementInteractionHandler<D> aEventHandler =
-			createInteractionHandler(rPanelManager, rDataElement);
+	protected void setupInteractionHandling(Component component,
+		boolean onContainerChildren) {
+		DataElementInteractionHandler<D> eventHandler =
+			createInteractionHandler(panelManager, dataElement);
 
-		if (aEventHandler.setupEventHandling(rComponent,
-			bOnContainerChildren)) {
-			aInteractionHandler = aEventHandler;
+		if (eventHandler.setupEventHandling(component, onContainerChildren)) {
+			interactionHandler = eventHandler;
 		}
 	}
 
@@ -1340,38 +1314,37 @@ public class DataElementUI<D extends DataElement<?>> {
 	 * the UI needs to be updated from the model data (i.e. from the data
 	 * element).</p>
 	 *
-	 * @param rDataElement The data element to transfer the value of
-	 * @param rComponent   The component to set the value of
+	 * @param dataElement The data element to transfer the value of
+	 * @param component   The component to set the value of
 	 */
-	protected void transferDataElementValueToComponent(D rDataElement,
-		Component rComponent) {
-		ContentType eContentType = rDataElement.getProperty(CONTENT_TYPE,
-			null);
+	protected void transferDataElementValueToComponent(D dataElement,
+		Component component) {
+		ContentType contentType = dataElement.getProperty(CONTENT_TYPE, null);
 
-		if (rComponent instanceof TextAttribute) {
-			if (eContentType != ContentType.ABSOLUTE_URL &&
-				eContentType != ContentType.RELATIVE_URL &&
-				eContentType != ContentType.FILE_UPLOAD &&
-				!(rComponent instanceof SelectableButton ||
-					rDataElement instanceof ListDataElement)) {
-				String sValue =
-					checkApplyFormatting(rDataElement, rComponent.getContext(),
-						convertValueToString(rDataElement, rDataElement));
+		if (component instanceof TextAttribute) {
+			if (contentType != ContentType.ABSOLUTE_URL &&
+				contentType != ContentType.RELATIVE_URL &&
+				contentType != ContentType.FILE_UPLOAD &&
+				!(component instanceof SelectableButton ||
+					dataElement instanceof ListDataElement)) {
+				String value =
+					checkApplyFormatting(dataElement, component.getContext(),
+						convertValueToString(dataElement, dataElement));
 
-				rComponent.setProperties(sValue);
+				component.setProperties(value);
 			}
-		} else if (eContentType == ContentType.PHONE_NUMBER) {
-			Object rValue = rDataElement.getValue();
-			String sPhoneNumber = rValue != null ? rValue.toString() : null;
+		} else if (contentType == ContentType.PHONE_NUMBER) {
+			Object value = dataElement.getValue();
+			String phoneNumber = value != null ? value.toString() : null;
 
-			List<Component> rComponents = ((Panel) rComponent).getComponents();
-			List<TextField> aNumberFields = new ArrayList<TextField>(4);
+			List<Component> components = ((Panel) component).getComponents();
+			List<TextField> numberFields = new ArrayList<TextField>(4);
 
 			for (int i = 1; i < 8; i += 2) {
-				aNumberFields.add((TextField) rComponents.get(i));
+				numberFields.add((TextField) components.get(i));
 			}
 
-			setPhoneNumber(aNumberFields, sPhoneNumber);
+			setPhoneNumber(numberFields, phoneNumber);
 		}
 	}
 
@@ -1388,27 +1361,25 @@ public class DataElementUI<D extends DataElement<?>> {
 	 * method with the field value. For a list the selected value will be read
 	 * from the element's list validator.</p>
 	 *
-	 * @param rComponent   The component to read the input from
-	 * @param rDataElement The data element to set the value of
+	 * @param component   The component to read the input from
+	 * @param dataElement The data element to set the value of
 	 */
-	protected void transferInputToDataElement(Component rComponent,
-		D rDataElement) {
-		if (rComponent instanceof FileChooser) {
-			rDataElement.setStringValue(
-				((FileChooser) rComponent).getFilename());
-		} else if (rComponent instanceof TextAttribute) {
-			if (!rDataElement.isImmutable() &&
-				!(rComponent instanceof Button)) {
-				transferTextInput((TextAttribute) rComponent, rDataElement);
+	protected void transferInputToDataElement(Component component,
+		D dataElement) {
+		if (component instanceof FileChooser) {
+			dataElement.setStringValue(((FileChooser) component).getFilename());
+		} else if (component instanceof TextAttribute) {
+			if (!dataElement.isImmutable() && !(component instanceof Button)) {
+				transferTextInput((TextAttribute) component, dataElement);
 			}
-		} else if (rComponent instanceof Panel) {
-			if (rDataElement.getProperty(CONTENT_TYPE, null) ==
+		} else if (component instanceof Panel) {
+			if (dataElement.getProperty(CONTENT_TYPE, null) ==
 				ContentType.PHONE_NUMBER) {
-				rDataElement.setStringValue(getPhoneNumber(rComponent));
+				dataElement.setStringValue(getPhoneNumber(component));
 			}
 		} else {
 			throw new UnsupportedOperationException(
-				"Cannot transfer input to " + rDataElement);
+				"Cannot transfer input to " + dataElement);
 		}
 	}
 
@@ -1416,23 +1387,22 @@ public class DataElementUI<D extends DataElement<?>> {
 	 * Transfers the input from a component with a text attribute to a data
 	 * element.
 	 *
-	 * @param rComponent   The source text attribute component
-	 * @param rDataElement The target data element
+	 * @param component   The source text attribute component
+	 * @param dataElement The target data element
 	 */
-	protected void transferTextInput(TextAttribute rComponent,
-		D rDataElement) {
-		String sText = rComponent.getText();
+	protected void transferTextInput(TextAttribute component, D dataElement) {
+		String text = component.getText();
 
 		try {
-			rDataElement.setStringValue(sText);
+			dataElement.setStringValue(text);
 		} catch (Exception e) {
 			// ignore parsing errors TODO: check if obsolete
 		}
 
-		if (rComponent instanceof TextControl &&
-			rDataElement.hasProperty(CARET_POSITION)) {
-			rDataElement.setProperty(CARET_POSITION,
-				((TextControl) rComponent).getCaretPosition());
+		if (component instanceof TextControl &&
+			dataElement.hasProperty(CARET_POSITION)) {
+			dataElement.setProperty(CARET_POSITION,
+				((TextControl) component).getCaretPosition());
 		}
 	}
 
@@ -1440,32 +1410,32 @@ public class DataElementUI<D extends DataElement<?>> {
 	 * Updates the state of a text component from the properties of the data
 	 * element.
 	 *
-	 * @param rTextComponent The component to update
+	 * @param textComponent The component to update
 	 */
-	protected void updateTextComponent(TextControl rTextComponent) {
-		String sConstraint = rDataElement.getProperty(INPUT_CONSTRAINT, null);
-		String sPlaceholder = rDataElement.getProperty(PLACEHOLDER, null);
-		int nColumns = rDataElement.getIntProperty(COLUMNS, -1);
-		int nCaretPos = rDataElement.getIntProperty(CARET_POSITION, -1);
+	protected void updateTextComponent(TextControl textComponent) {
+		String constraint = dataElement.getProperty(INPUT_CONSTRAINT, null);
+		String placeholder = dataElement.getProperty(PLACEHOLDER, null);
+		int columns = dataElement.getIntProperty(COLUMNS, -1);
+		int caretPos = dataElement.getIntProperty(CARET_POSITION, -1);
 
-		if (nColumns > 0) {
-			rTextComponent.setColumns(nColumns);
+		if (columns > 0) {
+			textComponent.setColumns(columns);
 		}
 
-		if (nCaretPos >= 0) {
-			rTextComponent.setCaretPosition(nCaretPos);
+		if (caretPos >= 0) {
+			textComponent.setCaretPosition(caretPos);
 		}
 
-		if (sConstraint != null) {
-			rTextComponent.setInputConstraint(sConstraint);
+		if (constraint != null) {
+			textComponent.setInputConstraint(constraint);
 		}
 
-		if (sPlaceholder != null) {
-			rTextComponent.setPlaceholder(sPlaceholder);
+		if (placeholder != null) {
+			textComponent.setPlaceholder(placeholder);
 		}
 
-		if (rDataElement.hasProperty(EDITABLE)) {
-			rTextComponent.setEditable(rDataElement.hasFlag(EDITABLE));
+		if (dataElement.hasProperty(EDITABLE)) {
+			textComponent.setEditable(dataElement.hasFlag(EDITABLE));
 		}
 	}
 
@@ -1474,26 +1444,25 @@ public class DataElementUI<D extends DataElement<?>> {
 	 * changed.
 	 */
 	protected void updateValue() {
-		if (aElementComponent instanceof TextControl) {
-			updateTextComponent((TextControl) aElementComponent);
+		if (elementComponent instanceof TextControl) {
+			updateTextComponent((TextControl) elementComponent);
 		}
 
-		transferDataElementValueToComponent(rDataElement, aElementComponent);
+		transferDataElementValueToComponent(dataElement, elementComponent);
 
-		rDataElement.clearFlag(VALUE_CHANGED);
-		rDataElement.clearFlag(ALLOWED_VALUES_CHANGED);
+		dataElement.clearFlag(VALUE_CHANGED);
+		dataElement.clearFlag(ALLOWED_VALUES_CHANGED);
 
-		String sInteractionUrl =
-			rDataElement.getProperty(INTERACTION_URL, null);
+		String interactionUrl = dataElement.getProperty(INTERACTION_URL, null);
 
-		if (sInteractionUrl != null) {
-			rDataElement.removeProperty(INTERACTION_URL);
-			openUrl(sInteractionUrl, rDataElement.hasFlag(HIDDEN_URL));
+		if (interactionUrl != null) {
+			dataElement.removeProperty(INTERACTION_URL);
+			openUrl(interactionUrl, dataElement.hasFlag(HIDDEN_URL));
 		}
 
 		// reset any modifications so that only changes from subsequent user
 		// interactions are recorded as modifications
-		rDataElement.setModified(false);
+		dataElement.setModified(false);
 	}
 
 	/**
@@ -1505,76 +1474,74 @@ public class DataElementUI<D extends DataElement<?>> {
 	/**
 	 * Handles an event in an input f4ield of a composite phone number UI.
 	 *
-	 * @param rEvent        The event that occurred
-	 * @param rNumberFields The list of the input fields for the phone number
-	 *                      parts
+	 * @param event        The event that occurred
+	 * @param numberFields The list of the input fields for the phone number
+	 *                     parts
 	 */
-	void handlePhoneNumberEvent(EwtEvent rEvent,
-		List<TextField> rNumberFields) {
-		TextField rField = (TextField) rEvent.getSource();
-		String sText = rField.getText();
-		String sSelectedText = rField.getSelectedText();
-		KeyCode eKeyCode = rEvent.getKeyCode();
-		ModifierKeys rModifiers = rEvent.getModifiers();
+	void handlePhoneNumberEvent(EwtEvent event, List<TextField> numberFields) {
+		TextField field = (TextField) event.getSource();
+		String text = field.getText();
+		String selectedText = field.getSelectedText();
+		KeyCode keyCode = event.getKeyCode();
+		ModifierKeys modifiers = event.getModifiers();
 
-		boolean bNoSelection =
-			(sSelectedText == null || sSelectedText.length() == 0);
+		boolean noSelection =
+			(selectedText == null || selectedText.length() == 0);
 
-		if (rEvent.getType() == EventType.KEY_PRESSED) {
-			sTextClipboard = null;
+		if (event.getType() == EventType.KEY_PRESSED) {
+			textClipboard = null;
 
-			if (rModifiers == ModifierKeys.CTRL) {
-				if (eKeyCode == KeyCode.C || eKeyCode == KeyCode.X) {
-					if (bNoSelection) {
+			if (modifiers == ModifierKeys.CTRL) {
+				if (keyCode == KeyCode.C || keyCode == KeyCode.X) {
+					if (noSelection) {
 						// set field content to full text for cur or copy on
 						// release
-						String sPhoneNumber =
-							getPhoneNumber(rField.getParent());
+						String phoneNumber = getPhoneNumber(field.getParent());
 
-						sTextClipboard = sText;
-						rField.setText(sPhoneNumber);
-						rField.setSelection(0, sPhoneNumber.length());
+						textClipboard = text;
+						field.setText(phoneNumber);
+						field.setSelection(0, phoneNumber.length());
 					}
 				}
 			}
-		} else if (rEvent.getType() == EventType.KEY_RELEASED) {
-			if (rModifiers == ModifierKeys.CTRL) {
-				switch (eKeyCode) {
+		} else if (event.getType() == EventType.KEY_RELEASED) {
+			if (modifiers == ModifierKeys.CTRL) {
+				switch (keyCode) {
 					case X:
-						if (sTextClipboard != null) {
-							setPhoneNumber(rNumberFields, "");
+						if (textClipboard != null) {
+							setPhoneNumber(numberFields, "");
 						}
 
 						break;
 
 					case C:
-						if (sTextClipboard != null) {
+						if (textClipboard != null) {
 							// restore original text after copy
-							rField.setText(sTextClipboard);
+							field.setText(textClipboard);
 						}
 
 						break;
 
 					case V:
-						setPhoneNumber(rNumberFields, sText);
+						setPhoneNumber(numberFields, text);
 						break;
 
 					default:
 						// ignore other
 				}
 			}
-		} else if (rEvent.getType() == EventType.KEY_TYPED) {
-			char nChar = rEvent.getKeyChar();
+		} else if (event.getType() == EventType.KEY_TYPED) {
+			char c = event.getKeyChar();
 
-			if (nChar != 0) {
-				if (Character.isDigit(nChar)) {
-					if (bNoSelection && rNumberFields.indexOf(rField) == 0 &&
-						sText.length() == 3) {
-						rEvent.cancel();
+			if (c != 0) {
+				if (Character.isDigit(c)) {
+					if (noSelection && numberFields.indexOf(field) == 0 &&
+						text.length() == 3) {
+						event.cancel();
 					}
-				} else if (rModifiers == ModifierKeys.NONE ||
-					rModifiers == ModifierKeys.SHIFT) {
-					rEvent.cancel();
+				} else if (modifiers == ModifierKeys.NONE ||
+					modifiers == ModifierKeys.SHIFT) {
+					event.cancel();
 				}
 			}
 		}
@@ -1583,12 +1550,12 @@ public class DataElementUI<D extends DataElement<?>> {
 	/**
 	 * Initializes this instance for a certain parent and data element.
 	 *
-	 * @param rParent  The parent panel manager
-	 * @param rElement The data element to be displayed
+	 * @param parent  The parent panel manager
+	 * @param element The data element to be displayed
 	 */
-	void init(DataElementPanelManager rParent, D rElement) {
-		this.rPanelManager = rParent;
-		this.rDataElement = rElement;
+	void init(DataElementPanelManager parent, D element) {
+		this.panelManager = parent;
+		this.dataElement = element;
 	}
 
 	/**
@@ -1596,75 +1563,76 @@ public class DataElementUI<D extends DataElement<?>> {
 	 * add
 	 * implementation-specific styles.
 	 *
-	 * @param rBaseStyle The new base style
+	 * @param baseStyle The new base style
 	 */
-	final void setBaseStyle(StyleData rBaseStyle) {
-		this.rBaseStyle = rBaseStyle;
+	final void setBaseStyle(StyleData baseStyle) {
+		this.baseStyle = baseStyle;
 	}
 
 	/**
-	 * Checks whether the {@link #sLabelSuffix} needs to be appended to the
-	 * given label.
+	 * Checks whether the {@link #labelSuffix} needs to be appended to the
+	 * given
+	 * label.
 	 *
-	 * @param sLabel The label text
+	 * @param label The label text
 	 * @return The label with the appended suffix if necessary
 	 */
-	private String appendLabelSuffix(String sLabel) {
-		if (sLabel != null && sLabelSuffix != null && sLabel.length() > 0 &&
-			"#%+".indexOf(sLabel.charAt(0)) == -1) {
-			sLabel += sLabelSuffix;
+	private String appendLabelSuffix(String label) {
+		if (label != null && labelSuffix != null && label.length() > 0 &&
+			"#%+".indexOf(label.charAt(0)) == -1) {
+			label += labelSuffix;
 		}
 
-		return sLabel;
+		return label;
 	}
 
 	/**
 	 * Collects the phone number string from a composite phone number field.
 	 *
-	 * @param rComponent The parent component of the phone number input fields
+	 * @param component The parent component of the phone number input fields
 	 * @return The phone number string
 	 */
-	private String getPhoneNumber(Component rComponent) {
-		StringBuilder aPhoneNumber = new StringBuilder();
-		List<Component> rComponents = ((Panel) rComponent).getComponents();
-		char cSeparator = '+';
+	private String getPhoneNumber(Component component) {
+		StringBuilder numberBuilder = new StringBuilder();
+		List<Component> components = ((Panel) component).getComponents();
+		char separator = '+';
 
 		for (int i = 1; i < 8; i += 2) {
-			TextField rNumberField = (TextField) rComponents.get(i);
-			String sPart = rNumberField.getText();
+			TextField numberField = (TextField) components.get(i);
+			String part = numberField.getText();
 
-			if (i < 7 || sPart.length() > 0) {
-				aPhoneNumber.append(cSeparator);
+			if (i < 7 || part.length() > 0) {
+				numberBuilder.append(separator);
 			}
 
-			aPhoneNumber.append(sPart);
+			numberBuilder.append(part);
 
-			cSeparator = i == 1 ? '.' : '-';
+			separator = i == 1 ? '.' : '-';
 		}
 
-		String sPhoneNumber = aPhoneNumber.toString();
+		String phoneNumber = numberBuilder.toString();
 
-		if (sPhoneNumber.equals("+.-")) {
-			sPhoneNumber = "";
+		if (phoneNumber.equals("+.-")) {
+			phoneNumber = "";
 		}
 
-		return sPhoneNumber;
+		return phoneNumber;
 	}
 
 	/**
 	 * Parses a phone number value and sets it into a set of input fields for
 	 * the distinct number parts.
 	 *
-	 * @param aNumberFields The input fields for the number parts
-	 * @param sNumber       The phone number value
+	 * @param numberFields The input fields for the number parts
+	 * @param number       The phone number value
 	 */
-	private void setPhoneNumber(final List<TextField> aNumberFields,
-		String sNumber) {
-		List<String> rNumberParts =
-			StringDataElement.getPhoneNumberParts(sNumber);
+	private void setPhoneNumber(final List<TextField> numberFields,
+		String number) {
+		List<String> numberParts =
+			StringDataElement.getPhoneNumberParts(number);
 
 		for (int i = 0; i < 4; i++) {
-			aNumberFields.get(i).setText(rNumberParts.get(i));
+			numberFields.get(i).setText(numberParts.get(i));
 		}
 	}
 }

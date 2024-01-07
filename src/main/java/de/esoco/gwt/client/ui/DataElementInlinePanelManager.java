@@ -36,16 +36,15 @@ public class DataElementInlinePanelManager extends DataElementPanelManager {
 	 * @see DataElementPanelManager#DataElementPanelManager(PanelManager,
 	 * DataElementList)
 	 */
-	public DataElementInlinePanelManager(PanelManager<?, ?> rParent,
-		DataElementList rDataElementList) {
-		super(rParent, rDataElementList);
+	public DataElementInlinePanelManager(PanelManager<?, ?> parent,
+		DataElementList dataElementList) {
+		super(parent, dataElementList);
 	}
 
 	@Override
 	@SuppressWarnings("unchecked")
 	protected ContainerBuilder<? extends Panel> createPanel(
-		ContainerBuilder<?> rBuilder, StyleData rStyleData,
-		LayoutType eLayout) {
-		return (ContainerBuilder<? extends Panel>) rBuilder;
+		ContainerBuilder<?> builder, StyleData styleData, LayoutType layout) {
+		return (ContainerBuilder<? extends Panel>) builder;
 	}
 }

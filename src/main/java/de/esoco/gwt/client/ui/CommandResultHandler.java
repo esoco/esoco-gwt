@@ -30,17 +30,16 @@ public interface CommandResultHandler<T extends DataElement<?>> {
 	/**
 	 * handles a command failure.
 	 *
-	 * @param rCommand The failed command
-	 * @param rCaught  The exception that occurred
+	 * @param command The failed command
+	 * @param caught  The exception that occurred
 	 */
-	public void handleCommandFailure(Command<?, ?> rCommand,
-		Throwable rCaught);
+	public void handleCommandFailure(Command<?, ?> command, Throwable caught);
 
 	/**
 	 * Handles the result of a successful command execution.
 	 *
-	 * @param rResult The data element that has been returned by the command
+	 * @param result The data element that has been returned by the command
 	 */
-	public void handleCommandResult(T rResult);
+	public void handleCommandResult(T result);
 
 }

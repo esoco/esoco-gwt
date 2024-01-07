@@ -49,11 +49,11 @@ import org.obrel.core.RelatedObject;
 public abstract class ServiceContext extends RelatedObject
 	implements ServletContextListener, HttpSessionListener {
 
-	private static ServiceContext rServiceContextInstance = null;
+	private static ServiceContext serviceContextInstance = null;
 
-	private AuthenticatedServiceImpl<?> rService;
+	private AuthenticatedServiceImpl<?> service;
 
-	private ServletContext rServletContext;
+	private ServletContext servletContext;
 
 	/**
 	 * Returns the instance.
@@ -61,30 +61,30 @@ public abstract class ServiceContext extends RelatedObject
 	 * @return The instance
 	 */
 	public static ServiceContext getInstance() {
-		return rServiceContextInstance;
+		return serviceContextInstance;
 	}
 
 	@Override
-	public void contextDestroyed(ServletContextEvent rEvent) {
-		destroy(rServletContext);
+	public void contextDestroyed(ServletContextEvent event) {
+		destroy(servletContext);
 
-		rServletContext = null;
-		rServiceContextInstance = null;
+		servletContext = null;
+		serviceContextInstance = null;
 
 		Log.info("Service context shutdown complete");
 	}
 
 	@Override
-	public void contextInitialized(ServletContextEvent rEvent) {
-		if (rServiceContextInstance != null) {
+	public void contextInitialized(ServletContextEvent event) {
+		if (serviceContextInstance != null) {
 			throw new IllegalStateException("Multiple service contexts");
 		}
 
-		rServletContext = rEvent.getServletContext();
+		servletContext = event.getServletContext();
 
-		init(rServletContext);
+		init(servletContext);
 
-		rServiceContextInstance = this;
+		serviceContextInstance = this;
 	}
 
 	/**
@@ -93,7 +93,7 @@ public abstract class ServiceContext extends RelatedObject
 	 * @return The service or NULL if not set
 	 */
 	public final AuthenticatedServiceImpl<?> getService() {
-		return rService;
+		return service;
 	}
 
 	/**
@@ -102,36 +102,36 @@ public abstract class ServiceContext extends RelatedObject
 	 * @return The servlet context
 	 */
 	public final ServletContext getServletContext() {
-		return rServletContext;
+		return servletContext;
 	}
 
 	@Override
-	public void sessionCreated(HttpSessionEvent rEvent) {
+	public void sessionCreated(HttpSessionEvent event) {
 	}
 
 	@Override
-	public void sessionDestroyed(HttpSessionEvent rEvent) {
-		if (rService != null) {
-			rService.removeSession(rEvent.getSession());
+	public void sessionDestroyed(HttpSessionEvent event) {
+		if (service != null) {
+			service.removeSession(event.getSession());
 		}
 	}
 
 	/**
 	 * Sets the service of this context.
 	 *
-	 * @param rService The service
+	 * @param service The service
 	 */
-	public final void setService(AuthenticatedServiceImpl<?> rService) {
-		this.rService = rService;
+	public final void setService(AuthenticatedServiceImpl<?> service) {
+		this.service = service;
 	}
 
 	/**
 	 * This method can be overridden by subclasses to cleanup internal data
 	 * structures. The default implementation does nothing.
 	 *
-	 * @param rServletContext The servlet context
+	 * @param servletContext The servlet context
 	 */
-	protected void destroy(ServletContext rServletContext) {
+	protected void destroy(ServletContext servletContext) {
 	}
 
 	/**
@@ -140,29 +140,29 @@ public abstract class ServiceContext extends RelatedObject
 	 * @return The application name
 	 */
 	protected String getApplicationName() {
-		String sName;
+		String name;
 
-		if (rService != null) {
-			sName = rService.getApplicationName();
+		if (service != null) {
+			name = service.getApplicationName();
 		} else {
-			sName = getClass().getSimpleName();
+			name = getClass().getSimpleName();
 
-			int nIndex = sName.indexOf(ServiceContext.class.getSimpleName());
+			int index = name.indexOf(ServiceContext.class.getSimpleName());
 
-			if (nIndex > 0) {
-				sName = sName.substring(0, nIndex);
+			if (index > 0) {
+				name = name.substring(0, index);
 			}
 		}
 
-		return sName;
+		return name;
 	}
 
 	/**
 	 * This method can be overridden by subclasses to initialize internal data
 	 * structures. The default implementation does nothing.
 	 *
-	 * @param rServletContext The servlet context
+	 * @param servletContext The servlet context
 	 */
-	protected void init(ServletContext rServletContext) {
+	protected void init(ServletContext servletContext) {
 	}
 }

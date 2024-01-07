@@ -17,9 +17,7 @@
 package de.esoco.gwt.client.ui;
 
 import de.esoco.data.element.DataElement;
-
 import de.esoco.ewt.style.StyleData;
-
 import de.esoco.lib.property.RelativeSize;
 
 import java.util.Collection;
@@ -37,107 +35,107 @@ import static de.esoco.lib.property.LayoutProperties.SMALL_COLUMN_SPAN;
  */
 public class ColumnCountGridFormatter extends GridFormatter {
 
-	private int nGridColumns;
+	private final int gridColumns;
 
-	private String sSmallPrefix;
+	private final String smallPrefix;
 
-	private String sMediumPrefix;
+	private final String mediumPrefix;
 
-	private String sLargePrefix;
+	private final String largePrefix;
 
-	private int nCurrentColumn;
+	private int currentColumn;
 
-	private int[] aColumnWidths;
+	private int[] columnWidths;
 
 	/**
 	 * Creates a new instance.
 	 *
-	 * @param nGridColumns  The number of grid columns
-	 * @param sSmallPrefix  The prefix for small display column styles
-	 * @param sMediumPrefix The prefix for medium display column styles
-	 * @param sLargePrefix  The prefix for large display column styles
+	 * @param gridColumns  The number of grid columns
+	 * @param smallPrefix  The prefix for small display column styles
+	 * @param mediumPrefix The prefix for medium display column styles
+	 * @param largePrefix  The prefix for large display column styles
 	 */
-	public ColumnCountGridFormatter(int nGridColumns, String sSmallPrefix,
-		String sMediumPrefix, String sLargePrefix) {
-		this.nGridColumns = nGridColumns;
-		this.sSmallPrefix = sSmallPrefix;
-		this.sMediumPrefix = sMediumPrefix;
-		this.sLargePrefix = sLargePrefix;
+	public ColumnCountGridFormatter(int gridColumns, String smallPrefix,
+		String mediumPrefix, String largePrefix) {
+		this.gridColumns = gridColumns;
+		this.smallPrefix = smallPrefix;
+		this.mediumPrefix = mediumPrefix;
+		this.largePrefix = largePrefix;
 	}
 
 	@Override
-	public StyleData applyColumnStyle(DataElementUI<?> rColumUI,
-		StyleData rColumnStyle) {
-		DataElement<?> rDataElement = rColumUI.getDataElement();
-		StringBuilder aColumnStyle = new StringBuilder();
-		int nColumnWidth = aColumnWidths[nCurrentColumn++];
+	public StyleData applyColumnStyle(DataElementUI<?> columUI,
+		StyleData columnStyle) {
+		DataElement<?> dataElement = columUI.getDataElement();
+		StringBuilder style = new StringBuilder();
+		int columnWidth = columnWidths[currentColumn++];
 
-		int nSmallWidth = rDataElement.getIntProperty(SMALL_COLUMN_SPAN,
-			Math.min(nColumnWidth * 4, nGridColumns));
-		int nMediumWidth = rDataElement.getIntProperty(MEDIUM_COLUMN_SPAN,
-			Math.min(nColumnWidth * 2, nGridColumns));
+		int smallWidth = dataElement.getIntProperty(SMALL_COLUMN_SPAN,
+			Math.min(columnWidth * 4, gridColumns));
+		int mediumWidth = dataElement.getIntProperty(MEDIUM_COLUMN_SPAN,
+			Math.min(columnWidth * 2, gridColumns));
 
-		aColumnStyle.append(sSmallPrefix).append(nSmallWidth).append(' ');
-		aColumnStyle.append(sMediumPrefix).append(nMediumWidth).append(' ');
-		aColumnStyle.append(sLargePrefix).append(nColumnWidth);
+		style.append(smallPrefix).append(smallWidth).append(' ');
+		style.append(mediumPrefix).append(mediumWidth).append(' ');
+		style.append(largePrefix).append(columnWidth);
 
-		return DataElementGridPanelManager.addStyles(rColumnStyle,
-			aColumnStyle.toString());
+		return DataElementGridPanelManager.addStyles(columnStyle,
+			style.toString());
 	}
 
 	@Override
-	public StyleData applyRowStyle(Collection<DataElementUI<?>> rRowUIs,
-		StyleData rRowStyle) {
-		nCurrentColumn = 0;
-		aColumnWidths = new int[rRowUIs.size()];
+	public StyleData applyRowStyle(Collection<DataElementUI<?>> rowUIs,
+		StyleData rowStyle) {
+		currentColumn = 0;
+		columnWidths = new int[rowUIs.size()];
 
-		int nRemainingWidth = nGridColumns;
-		int nUnsetColumns = 0;
-		int nColumn = 0;
+		int remainingWidth = gridColumns;
+		int unsetColumns = 0;
+		int column = 0;
 
-		for (DataElementUI<?> rColumnUI : rRowUIs) {
-			DataElement<?> rDataElement = rColumnUI.getDataElement();
+		for (DataElementUI<?> columnUI : rowUIs) {
+			DataElement<?> dataElement = columnUI.getDataElement();
 
 			@SuppressWarnings("boxing")
-			int nElementWidth = rDataElement.getProperty(COLUMN_SPAN, -1);
+			int elementWidth = dataElement.getProperty(COLUMN_SPAN, -1);
 
-			if (nElementWidth == -1) {
-				RelativeSize eRelativeWidth =
-					rDataElement.getProperty(RELATIVE_WIDTH, null);
+			if (elementWidth == -1) {
+				RelativeSize relativeWidth =
+					dataElement.getProperty(RELATIVE_WIDTH, null);
 
-				if (eRelativeWidth != null) {
-					nElementWidth = eRelativeWidth.calcSize(nGridColumns);
+				if (relativeWidth != null) {
+					elementWidth = relativeWidth.calcSize(gridColumns);
 				} else {
-					nUnsetColumns++;
+					unsetColumns++;
 				}
 			}
 
-			aColumnWidths[nColumn++] = nElementWidth;
+			columnWidths[column++] = elementWidth;
 
-			if (nElementWidth > 0) {
-				nRemainingWidth -= nElementWidth;
+			if (elementWidth > 0) {
+				remainingWidth -= elementWidth;
 			}
 		}
 
-		for (nColumn = 0; nColumn < aColumnWidths.length; nColumn++) {
-			int nUnsetWidth =
-				nRemainingWidth / (nUnsetColumns > 0 ? nUnsetColumns : 1);
+		for (column = 0; column < columnWidths.length; column++) {
+			int unsetWidth =
+				remainingWidth / (unsetColumns > 0 ? unsetColumns : 1);
 
-			int nWidth = aColumnWidths[nColumn];
+			int width = columnWidths[column];
 
-			if (nWidth < 0) {
-				if (--nUnsetColumns == 0) {
-					nWidth = nRemainingWidth;
+			if (width < 0) {
+				if (--unsetColumns == 0) {
+					width = remainingWidth;
 				} else {
-					nWidth = nUnsetWidth;
+					width = unsetWidth;
 				}
 
-				nRemainingWidth -= nUnsetWidth;
+				remainingWidth -= unsetWidth;
 			}
 
-			aColumnWidths[nColumn] = nWidth;
+			columnWidths[column] = width;
 		}
 
-		return super.applyRowStyle(rRowUIs, rRowStyle);
+		return super.applyRowStyle(rowUIs, rowStyle);
 	}
 }

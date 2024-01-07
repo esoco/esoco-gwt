@@ -45,28 +45,27 @@ public class BooleanDataElementUI extends DataElementUI<BooleanDataElement> {
 	 * @see DataElementUI#getElementLabelText(UserInterfaceContext)
 	 */
 	@Override
-	public String getElementLabelText(UserInterfaceContext rContext) {
+	public String getElementLabelText(UserInterfaceContext context) {
 		return getDataElement().getProperty(LABEL, "");
 	}
 
 	@Override
-	protected Component createDisplayUI(ContainerBuilder<?> rBuilder,
-		StyleData rDisplayStyle, BooleanDataElement rDataElement) {
-		CheckBox rCheckBox =
-			createCheckBox(rBuilder, rDisplayStyle, rDataElement);
+	protected Component createDisplayUI(ContainerBuilder<?> builder,
+		StyleData displayStyle, BooleanDataElement dataElement) {
+		CheckBox checkBox = createCheckBox(builder, displayStyle, dataElement);
 
 		// both methods must be invoked because DataElementUI.setEnabled()
 		// doesn't know the check box component yet
-		rCheckBox.setEnabled(false);
+		checkBox.setEnabled(false);
 		setEnabled(false);
 
-		return rCheckBox;
+		return checkBox;
 	}
 
 	@Override
-	protected Component createInputUI(ContainerBuilder<?> rBuilder,
-		StyleData rInputStyle, BooleanDataElement rDataElement) {
-		return createCheckBox(rBuilder, rInputStyle, rDataElement);
+	protected Component createInputUI(ContainerBuilder<?> builder,
+		StyleData inputStyle, BooleanDataElement dataElement) {
+		return createCheckBox(builder, inputStyle, dataElement);
 	}
 
 	/**
@@ -76,43 +75,42 @@ public class BooleanDataElementUI extends DataElementUI<BooleanDataElement> {
 	 * @see DataElementUI#setHiddenLabelHint(UserInterfaceContext)
 	 */
 	@Override
-	protected void setHiddenLabelHint(UserInterfaceContext rContext) {
+	protected void setHiddenLabelHint(UserInterfaceContext context) {
 	}
 
 	@Override
 	protected void transferDataElementValueToComponent(
-		BooleanDataElement rDataElement, Component rComponent) {
-		((CheckBox) rComponent).setSelected(
-			Boolean.TRUE.equals(rDataElement.getValue()));
+		BooleanDataElement dataElement, Component component) {
+		((CheckBox) component).setSelected(
+			Boolean.TRUE.equals(dataElement.getValue()));
 	}
 
 	@Override
-	protected void transferInputToDataElement(Component rComponent,
-		BooleanDataElement rElement) {
-		rElement.setValue(
-			Boolean.valueOf(((CheckBox) rComponent).isSelected()));
+	protected void transferInputToDataElement(Component component,
+		BooleanDataElement element) {
+		element.setValue(Boolean.valueOf(((CheckBox) component).isSelected()));
 	}
 
 	/**
 	 * Creates check box to represent the data element's state.
 	 *
-	 * @param rBuilder     The builder to create the check box with
-	 * @param rStyle       The style data
-	 * @param rDataElement The data element
+	 * @param builder     The builder to create the check box with
+	 * @param style       The style data
+	 * @param dataElement The data element
 	 * @return The new check box
 	 */
-	private CheckBox createCheckBox(ContainerBuilder<?> rBuilder,
-		StyleData rStyle, BooleanDataElement rDataElement) {
-		String sLabel = getLabelText(rBuilder.getContext(), rDataElement,
+	private CheckBox createCheckBox(ContainerBuilder<?> builder,
+		StyleData style, BooleanDataElement dataElement) {
+		String label = getLabelText(builder.getContext(), dataElement,
 			LABEL_RESOURCE_PREFIX);
 
-		CheckBox aCheckBox = rBuilder.addCheckBox(rStyle, sLabel, null);
-		Boolean rValue = rDataElement.getValue();
+		CheckBox checkBox = builder.addCheckBox(style, label, null);
+		Boolean value = dataElement.getValue();
 
-		if (rValue != null) {
-			aCheckBox.setSelected(rValue.booleanValue());
+		if (value != null) {
+			checkBox.setSelected(value.booleanValue());
 		}
 
-		return aCheckBox;
+		return checkBox;
 	}
 }

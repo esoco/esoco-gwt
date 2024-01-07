@@ -16,8 +16,8 @@
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 package de.esoco.gwt.client.ui;
 
+import com.google.gwt.user.client.rpc.AsyncCallback;
 import de.esoco.data.element.DataElement;
-
 import de.esoco.ewt.build.ContainerBuilder;
 import de.esoco.ewt.build.ContainerManager;
 import de.esoco.ewt.component.Button;
@@ -29,14 +29,11 @@ import de.esoco.ewt.layout.GenericLayout;
 import de.esoco.ewt.layout.TableGridLayout;
 import de.esoco.ewt.style.AlignedPosition;
 import de.esoco.ewt.style.StyleData;
-
 import de.esoco.gwt.client.ServiceRegistry;
 import de.esoco.gwt.client.res.EsocoGwtCss;
 import de.esoco.gwt.client.res.EsocoGwtResources;
 import de.esoco.gwt.shared.Command;
 import de.esoco.gwt.shared.CommandService;
-
-import com.google.gwt.user.client.rpc.AsyncCallback;
 
 import static de.esoco.ewt.style.StyleData.WEB_ADDITIONAL_STYLES;
 
@@ -99,29 +96,29 @@ public abstract class PanelManager<C extends Container,
 
 	// ~ Instance fields
 	// --------------------------------------------------------
-	private final P rParent;
+	private final P parent;
 
-	private final String sStyleName;
+	private final String styleName;
 
-	private int nToolbarColumns;
+	private int toolbarColumns;
 
-	private int nNextToolbarColumn = 0;
+	private int nextToolbarColumn = 0;
 
-	private boolean bIsToolbarSeparator = true;
+	private boolean isToolbarSeparator = true;
 
-	private boolean bCommandExecuting = false;
+	private boolean commandExecuting = false;
 	// ~ Constructors
 	// -----------------------------------------------------------
 
 	/**
 	 * Creates a child panel manager with a certain parent panel manager.
 	 *
-	 * @param rParent     The parent panel manager or NULL for a root panel
-	 * @param sPanelStyle The panel's style name
+	 * @param parent     The parent panel manager or NULL for a root panel
+	 * @param panelStyle The panel's style name
 	 */
-	public PanelManager(P rParent, String sPanelStyle) {
-		this.rParent = rParent;
-		this.sStyleName = sPanelStyle;
+	public PanelManager(P parent, String panelStyle) {
+		this.parent = parent;
+		this.styleName = panelStyle;
 	}
 	// ~ Static methods
 	// ---------------------------------------------------------
@@ -130,20 +127,18 @@ public abstract class PanelManager<C extends Container,
 	 * Helper method to add another additional style name to a style data. NULL
 	 * values and empty strings will be ignored.
 	 *
-	 * @param rStyleData The style data to add the style to
-	 * @param sStyles    The style to add (may be NULL or empty)
+	 * @param styleData The style data to add the style to
+	 * @param styles    The style to add (may be NULL or empty)
 	 * @return The new style data
 	 */
-	public static StyleData addStyles(StyleData rStyleData,
-		String... sStyles) {
-		for (String sAddStyle : sStyles) {
-			if (sAddStyle != null && sAddStyle.length() > 0) {
-				rStyleData =
-					rStyleData.append(WEB_ADDITIONAL_STYLES, sAddStyle);
+	public static StyleData addStyles(StyleData styleData, String... styles) {
+		for (String addStyle : styles) {
+			if (addStyle != null && !addStyle.isEmpty()) {
+				styleData = styleData.append(WEB_ADDITIONAL_STYLES, addStyle);
 			}
 		}
 
-		return rStyleData;
+		return styleData;
 	}
 	// ~ Methods
 	// ----------------------------------------------------------------
@@ -151,12 +146,12 @@ public abstract class PanelManager<C extends Container,
 	/**
 	 * Builds a new panel in the container of the given container builder.
 	 *
-	 * @param rBuilder   The container builder to build the panel with
-	 * @param rStyleData The style data for the new panel
+	 * @param builder   The container builder to build the panel with
+	 * @param styleData The style data for the new panel
 	 */
 	@Override
-	public void buildIn(ContainerBuilder<?> rBuilder, StyleData rStyleData) {
-		super.buildIn(rBuilder, addStyles(rStyleData, sStyleName));
+	public void buildIn(ContainerBuilder<?> builder, StyleData styleData) {
+		super.buildIn(builder, addStyles(styleData, styleName));
 	}
 
 	/**
@@ -183,7 +178,7 @@ public abstract class PanelManager<C extends Container,
 	 */
 	@Override
 	public P getParent() {
-		return rParent;
+		return parent;
 	}
 
 	/**
@@ -194,7 +189,7 @@ public abstract class PanelManager<C extends Container,
 	 * @return The root panel manager
 	 */
 	public PanelManager<?, ?> getRootManager() {
-		return rParent != null ? rParent.getRootManager() : this;
+		return parent != null ? parent.getRootManager() : this;
 	}
 
 	/**
@@ -203,7 +198,7 @@ public abstract class PanelManager<C extends Container,
 	 * @return The style name
 	 */
 	public final String getStyleName() {
-		return sStyleName;
+		return styleName;
 	}
 
 	/**
@@ -212,7 +207,7 @@ public abstract class PanelManager<C extends Container,
 	 * @return TRUE if a command execution is in progress
 	 */
 	public final boolean isCommandExecuting() {
-		return bCommandExecuting;
+		return commandExecuting;
 	}
 
 	/**
@@ -234,41 +229,40 @@ public abstract class PanelManager<C extends Container,
 	 * style {@link EsocoGwtCss#gfToolbar()} and the enclosing (background)
 	 * panel will have the argument style.
 	 *
-	 * @param rBuilder         The builder to build the toolbar with
-	 * @param rBackgroundStyle The style of the background or NULL for the
-	 *                         default
-	 * @param rToolbarStyle    The style of the toolbar or NULL for the default
-	 * @param nColumns         The number of columns for a vertical toolbar or
-	 *                         zero for a horizontal toolbar
+	 * @param builder         The builder to build the toolbar with
+	 * @param backgroundStyle The style of the background or NULL for the
+	 *                        default
+	 * @param toolbarStyle    The style of the toolbar or NULL for the default
+	 * @param columns         The number of columns for a vertical toolbar or
+	 *                        zero for a horizontal toolbar
 	 * @return The container builder for the toolbar panel
 	 */
-	protected ContainerBuilder<Panel> addToolbar(ContainerBuilder<?> rBuilder,
-		StyleData rBackgroundStyle, StyleData rToolbarStyle, int nColumns) {
-		boolean bHorizontal = (nColumns == 0);
+	protected ContainerBuilder<Panel> addToolbar(ContainerBuilder<?> builder,
+		StyleData backgroundStyle, StyleData toolbarStyle, int columns) {
+		boolean horizontal = (columns == 0);
 
-		nToolbarColumns = nColumns;
+		toolbarColumns = columns;
 
-		if (rBackgroundStyle == null) {
-			if (bHorizontal) {
-				rBackgroundStyle = TOOLBAR_HORIZONTAL_BACKGROUND_STYLE;
+		if (backgroundStyle == null) {
+			if (horizontal) {
+				backgroundStyle = TOOLBAR_HORIZONTAL_BACKGROUND_STYLE;
 			} else {
-				rBackgroundStyle = TOOLBAR_VERTICAL_BACKGROUND_STYLE;
+				backgroundStyle = TOOLBAR_VERTICAL_BACKGROUND_STYLE;
 			}
 		}
 
-		if (rToolbarStyle == null) {
-			if (bHorizontal) {
-				rToolbarStyle = HORIZONTAL_TOOLBAR_STYLE;
+		if (toolbarStyle == null) {
+			if (horizontal) {
+				toolbarStyle = HORIZONTAL_TOOLBAR_STYLE;
 			} else {
-				rToolbarStyle = VERTICAL_TOOLBAR_STYLE;
+				toolbarStyle = VERTICAL_TOOLBAR_STYLE;
 			}
 		}
 
-		rBuilder = rBuilder.addPanel(rBackgroundStyle, new FlowLayout(true));
+		builder = builder.addPanel(backgroundStyle, new FlowLayout(true));
 
-		return rBuilder.addPanel(rToolbarStyle,
-			bHorizontal ? new FlowLayout(true) :
-			new TableGridLayout(nColumns));
+		return builder.addPanel(toolbarStyle,
+			horizontal ? new FlowLayout(true) : new TableGridLayout(columns));
 	}
 
 	/**
@@ -278,26 +272,26 @@ public abstract class PanelManager<C extends Container,
 	 * {@link #addToolbar(ContainerBuilder, StyleData, StyleData, int)}. The
 	 * button will have the style {@link EsocoGwtCss#gfToolButton()}.
 	 *
-	 * @param rToolbarBuilder The toolbar panel builder to create the button
-	 *                        with
-	 * @param rImage          The button image
-	 * @param sToolTip        The optional tooltip text or NULL for none
+	 * @param toolbarBuilder The toolbar panel builder to create the button
+	 *                       with
+	 * @param image          The button image
+	 * @param toolTip        The optional tooltip text or NULL for none
 	 * @return The container builder for the toolbar panel
 	 */
-	protected Button addToolbarButton(ContainerBuilder<Panel> rToolbarBuilder,
-		Object rImage, String sToolTip) {
-		Button aButton =
-			rToolbarBuilder.addButton(TOOLBAR_BUTTON_STYLE, null, rImage);
+	protected Button addToolbarButton(ContainerBuilder<Panel> toolbarBuilder,
+		Object image, String toolTip) {
+		Button button =
+			toolbarBuilder.addButton(TOOLBAR_BUTTON_STYLE, null, image);
 
-		aButton.setToolTip(sToolTip);
-		bIsToolbarSeparator = false;
-		nNextToolbarColumn++;
+		button.setToolTip(toolTip);
+		isToolbarSeparator = false;
+		nextToolbarColumn++;
 
-		if (nNextToolbarColumn >= nToolbarColumns) {
-			nNextToolbarColumn = 0;
+		if (nextToolbarColumn >= toolbarColumns) {
+			nextToolbarColumn = 0;
 		}
 
-		return aButton;
+		return button;
 	}
 
 	/**
@@ -306,32 +300,32 @@ public abstract class PanelManager<C extends Container,
 	 * {@link #addToolbar(ContainerBuilder, StyleData, StyleData, int)}. The
 	 * button will have the style {@link EsocoGwtCss#gfToolSeparator()}.
 	 *
-	 * @param rBuilder The toolbar panel builder
+	 * @param builder The toolbar panel builder
 	 */
-	protected void addToolbarSeparator(ContainerBuilder<Panel> rBuilder) {
-		if (!bIsToolbarSeparator || nToolbarColumns == 0) {
-			Panel rContainer = rBuilder.getContainer();
-			GenericLayout rLayout = rContainer.getLayout();
-			int nSeparatorLimit = nToolbarColumns;
+	protected void addToolbarSeparator(ContainerBuilder<Panel> builder) {
+		if (!isToolbarSeparator || toolbarColumns == 0) {
+			Panel container = builder.getContainer();
+			GenericLayout layout = container.getLayout();
+			int separatorLimit = toolbarColumns;
 
-			if (nToolbarColumns == 0) {
-				nNextToolbarColumn = -1;
-			} else if (nNextToolbarColumn > 0) {
+			if (toolbarColumns == 0) {
+				nextToolbarColumn = -1;
+			} else if (nextToolbarColumn > 0) {
 				// add a completely empty row
-				nSeparatorLimit += nToolbarColumns;
+				separatorLimit += toolbarColumns;
 			}
 
-			while (nNextToolbarColumn++ < nSeparatorLimit) {
-				rBuilder.addLabel(TOOLBAR_SEPARATOR_STYLE, "", null);
+			while (nextToolbarColumn++ < separatorLimit) {
+				builder.addLabel(TOOLBAR_SEPARATOR_STYLE, "", null);
 
-				if (rLayout instanceof TableGridLayout) {
-					((TableGridLayout) rLayout).addCellStyle(rContainer,
+				if (layout instanceof TableGridLayout) {
+					((TableGridLayout) layout).addCellStyle(container,
 						CSS.gfToolSeparator());
 				}
 			}
 
-			nNextToolbarColumn = 0;
-			bIsToolbarSeparator = true;
+			nextToolbarColumn = 0;
+			isToolbarSeparator = true;
 		}
 	}
 
@@ -344,13 +338,13 @@ public abstract class PanelManager<C extends Container,
 	 * subclass or by a parent panel manager which then handles the message
 	 * display.
 	 *
-	 * @param sMessage     The message to display or NULL to clear the message
-	 * @param nDisplayTime The time in milliseconds to display the message or
-	 *                     zero for no timeout
+	 * @param message     The message to display or NULL to clear the message
+	 * @param displayTime The time in milliseconds to display the message or
+	 *                    zero for no timeout
 	 */
-	protected void displayMessage(String sMessage, int nDisplayTime) {
-		if (rParent != null) {
-			rParent.displayMessage(sMessage, nDisplayTime);
+	protected void displayMessage(String message, int displayTime) {
+		if (parent != null) {
+			parent.displayMessage(message, displayTime);
 		}
 	}
 
@@ -358,29 +352,28 @@ public abstract class PanelManager<C extends Container,
 	 * Executes a command on a {@link CommandService}. The service is queried
 	 * through the {@link ServiceRegistry}.
 	 *
-	 * @param rCommand       The command to execute
-	 * @param rData          The data to be processed by the command
-	 * @param rResultHandler The result handler to process the command
-	 *                          result in
-	 *                       case of a successful command execution
+	 * @param command       The command to execute
+	 * @param data          The data to be processed by the command
+	 * @param resultHandler The result handler to process the command result in
+	 *                      case of a successful command execution
 	 */
 	protected <T extends DataElement<?>, R extends DataElement<?>> void executeCommand(
-		final Command<T, R> rCommand, T rData,
-		final CommandResultHandler<R> rResultHandler) {
-		bCommandExecuting = true;
+		final Command<T, R> command, T data,
+		final CommandResultHandler<R> resultHandler) {
+		commandExecuting = true;
 		ServiceRegistry
 			.getCommandService()
-			.executeCommand(rCommand, rData, new AsyncCallback<R>() {
+			.executeCommand(command, data, new AsyncCallback<R>() {
 				@Override
-				public void onFailure(Throwable rCaught) {
-					bCommandExecuting = false;
-					rResultHandler.handleCommandFailure(rCommand, rCaught);
+				public void onFailure(Throwable caught) {
+					commandExecuting = false;
+					resultHandler.handleCommandFailure(command, caught);
 				}
 
 				@Override
-				public void onSuccess(R rResult) {
-					bCommandExecuting = false;
-					rResultHandler.handleCommandResult(rResult);
+				public void onSuccess(R result) {
+					commandExecuting = false;
+					resultHandler.handleCommandResult(result);
 				}
 			});
 	}
@@ -400,30 +393,30 @@ public abstract class PanelManager<C extends Container,
 	 * warning
 	 */
 	protected String getCloseWarning() {
-		return rParent != null ? rParent.getCloseWarning() : null;
+		return parent != null ? parent.getCloseWarning() : null;
 	}
 
 	/**
 	 * handles a command failure. Can be overridden by subclasses for more
 	 * specific failure handling.
 	 *
-	 * @param rCommand The failed command
-	 * @param rCaught  The exception that occurred
+	 * @param command The failed command
+	 * @param caught  The exception that occurred
 	 */
-	protected void handleCommandFailure(Command<?, ?> rCommand,
-		Throwable rCaught) {
-		handleError(rCaught);
+	protected void handleCommandFailure(Command<?, ?> command,
+		Throwable caught) {
+		handleError(caught);
 	}
 
 	/**
 	 * Performs the error handling for this manager. The default implementation
 	 * forwards this call to the parent panel manager if such exists.
 	 *
-	 * @param rCaught The exception that caused the error
+	 * @param caught The exception that caused the error
 	 */
-	protected void handleError(Throwable rCaught) {
-		if (rParent != null) {
-			rParent.handleError(rCaught);
+	protected void handleError(Throwable caught) {
+		if (parent != null) {
+			parent.handleError(caught);
 		}
 	}
 
@@ -437,8 +430,8 @@ public abstract class PanelManager<C extends Container,
 	 * be done in the root panel manager of the application.</p>
 	 */
 	protected void removeApplicationPanel() {
-		if (rParent != null) {
-			rParent.removeApplicationPanel();
+		if (parent != null) {
+			parent.removeApplicationPanel();
 		}
 	}
 }

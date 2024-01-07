@@ -56,26 +56,26 @@ public class DataElementInteractionHandler<D extends DataElement<?>>
 
 	private static final int DEFAULT_EVENT_HANDLING_DELAY = 750;
 
-	private DataElementPanelManager rPanelManager;
+	private DataElementPanelManager panelManager;
 
-	private D rDataElement;
+	private D dataElement;
 
-	private int nEventHandlingDelay = 0;
+	private int eventHandlingDelay = 0;
 
-	private Timer aInputEventTimer;
+	private Timer inputEventTimer;
 
-	private Set<InteractionEventType> rEventTypes;
+	private Set<InteractionEventType> eventTypes;
 
 	/**
 	 * Creates a new instance.
 	 *
-	 * @param rPanelManager The panel manager the data element belongs to
-	 * @param rDataElement  The data element to handle events for
+	 * @param panelManager The panel manager the data element belongs to
+	 * @param dataElement  The data element to handle events for
 	 */
-	public DataElementInteractionHandler(DataElementPanelManager rPanelManager,
-		D rDataElement) {
-		this.rPanelManager = rPanelManager;
-		this.rDataElement = rDataElement;
+	public DataElementInteractionHandler(DataElementPanelManager panelManager,
+		D dataElement) {
+		this.panelManager = panelManager;
+		this.dataElement = dataElement;
 	}
 
 	/**
@@ -84,7 +84,7 @@ public class DataElementInteractionHandler<D extends DataElement<?>>
 	 * @return The data element
 	 */
 	public final D getDataElement() {
-		return rDataElement;
+		return dataElement;
 	}
 
 	/**
@@ -93,32 +93,32 @@ public class DataElementInteractionHandler<D extends DataElement<?>>
 	 * @return The panel manager
 	 */
 	public final DataElementPanelManager getPanelManager() {
-		return rPanelManager;
+		return panelManager;
 	}
 
 	@Override
-	public void handleEvent(final EwtEvent rEvent) {
-		boolean bDeferredEventHandling = nEventHandlingDelay > 0 ||
-			(rEventTypes.contains(InteractionEventType.UPDATE) &&
-				rEvent.getType() == EventType.KEY_RELEASED);
+	public void handleEvent(final EwtEvent event) {
+		boolean deferredEventHandling = eventHandlingDelay > 0 ||
+			(eventTypes.contains(InteractionEventType.UPDATE) &&
+				event.getType() == EventType.KEY_RELEASED);
 
 		cancelInputEventTimer();
 
-		if (bDeferredEventHandling) {
-			aInputEventTimer = new Timer() {
+		if (deferredEventHandling) {
+			inputEventTimer = new Timer() {
 				@Override
 				public void run() {
-					processEvent(rEvent);
+					processEvent(event);
 				}
 			};
-			aInputEventTimer.schedule(nEventHandlingDelay > 0 ?
-			                          nEventHandlingDelay :
-			                          DEFAULT_EVENT_HANDLING_DELAY);
+			inputEventTimer.schedule(eventHandlingDelay > 0 ?
+			                         eventHandlingDelay :
+			                         DEFAULT_EVENT_HANDLING_DELAY);
 		} else {
 			Scheduler.get().scheduleDeferred(new ScheduledCommand() {
 				@Override
 				public void execute() {
-					processEvent(rEvent);
+					processEvent(event);
 				}
 			});
 		}
@@ -128,82 +128,81 @@ public class DataElementInteractionHandler<D extends DataElement<?>>
 	 * Initializes the handling of interactive input events for a certain
 	 * component if necessary.
 	 *
-	 * @param rComponent           The component to setup the input handling
-	 *                             for
-	 * @param bOnContainerChildren TRUE to setup the input handling for the
-	 *                             children if the component is a container
+	 * @param component           The component to setup the input handling for
+	 * @param onContainerChildren TRUE to setup the input handling for the
+	 *                            children if the component is a container
 	 * @return TRUE if the event handling has been initialized, FALSE if no
 	 * event types have been registered and no event handling is necessary
 	 */
-	public boolean setupEventHandling(Component rComponent,
-		boolean bOnContainerChildren) {
-		rEventTypes = rDataElement.getProperty(INTERACTION_EVENT_TYPES,
+	public boolean setupEventHandling(Component component,
+		boolean onContainerChildren) {
+		eventTypes = dataElement.getProperty(INTERACTION_EVENT_TYPES,
 			Collections.<InteractionEventType>emptySet());
 
-		boolean bHasEventHandling = !rEventTypes.isEmpty();
-		Widget rWidget = rComponent.getWidget();
+		boolean hasEventHandling = !eventTypes.isEmpty();
+		Widget widget = component.getWidget();
 
-		if (rWidget instanceof HasEventHandlingDelay) {
-			nEventHandlingDelay =
-				((HasEventHandlingDelay) rWidget).getEventHandlingDelay();
+		if (widget instanceof HasEventHandlingDelay) {
+			eventHandlingDelay =
+				((HasEventHandlingDelay) widget).getEventHandlingDelay();
 		}
 
-		nEventHandlingDelay = rDataElement.getIntProperty(EVENT_HANDLING_DELAY,
-			nEventHandlingDelay);
+		eventHandlingDelay = dataElement.getIntProperty(EVENT_HANDLING_DELAY,
+			eventHandlingDelay);
 
-		if (bHasEventHandling) {
-			if (bOnContainerChildren && rComponent instanceof Container) {
-				List<Component> rComponents =
-					((Container) rComponent).getComponents();
+		if (hasEventHandling) {
+			if (onContainerChildren && component instanceof Container) {
+				List<Component> components =
+					((Container) component).getComponents();
 
-				for (Component rChild : rComponents) {
-					registerEventHandler(rChild, rEventTypes);
+				for (Component child : components) {
+					registerEventHandler(child, eventTypes);
 				}
 			} else {
-				registerEventHandler(rComponent, rEventTypes);
+				registerEventHandler(component, eventTypes);
 			}
 		}
 
-		return bHasEventHandling;
+		return hasEventHandling;
 	}
 
 	/**
 	 * Maps the interaction event types to the corresponding GEWT event types
 	 * for a certain component.
 	 *
-	 * @param rComponent             The component
-	 * @param rInteractionEventTypes The interaction event types to map
+	 * @param component             The component
+	 * @param interactionEventTypes The interaction event types to map
 	 * @return The mapped GEWT event types
 	 */
-	protected Set<EventType> getInteractionEventTypes(Component rComponent,
-		Set<InteractionEventType> rInteractionEventTypes) {
-		Set<EventType> rEventTypes = EnumSet.noneOf(EventType.class);
+	protected Set<EventType> getInteractionEventTypes(Component component,
+		Set<InteractionEventType> interactionEventTypes) {
+		Set<EventType> eventTypes = EnumSet.noneOf(EventType.class);
 
-		if (rComponent instanceof TextControl) {
-			if (rInteractionEventTypes.contains(InteractionEventType.UPDATE)) {
-				rEventTypes.add(EventType.KEY_RELEASED);
-				rEventTypes.add(EventType.VALUE_CHANGED);
+		if (component instanceof TextControl) {
+			if (interactionEventTypes.contains(InteractionEventType.UPDATE)) {
+				eventTypes.add(EventType.KEY_RELEASED);
+				eventTypes.add(EventType.VALUE_CHANGED);
 			}
 
-			if (rInteractionEventTypes.contains(InteractionEventType.ACTION)) {
-				rEventTypes.add(EventType.ACTION);
+			if (interactionEventTypes.contains(InteractionEventType.ACTION)) {
+				eventTypes.add(EventType.ACTION);
 			}
 
-			if (rInteractionEventTypes.contains(
+			if (interactionEventTypes.contains(
 				InteractionEventType.FOCUS_LOST)) {
-				rEventTypes.add(EventType.FOCUS_LOST);
+				eventTypes.add(EventType.FOCUS_LOST);
 			}
 		} else {
-			if (rInteractionEventTypes.contains(InteractionEventType.UPDATE)) {
-				rEventTypes.add(EventType.SELECTION);
+			if (interactionEventTypes.contains(InteractionEventType.UPDATE)) {
+				eventTypes.add(EventType.SELECTION);
 			}
 
-			if (rInteractionEventTypes.contains(InteractionEventType.ACTION)) {
-				rEventTypes.add(EventType.ACTION);
+			if (interactionEventTypes.contains(InteractionEventType.ACTION)) {
+				eventTypes.add(EventType.ACTION);
 			}
 		}
 
-		return rEventTypes;
+		return eventTypes;
 	}
 
 	/**
@@ -212,80 +211,79 @@ public class DataElementInteractionHandler<D extends DataElement<?>>
 	 * components to prevent unnecessary events on cursor navigation and
 	 * similar, where the actual content doesn't change.
 	 *
-	 * @param rEventSource The event source to check
+	 * @param eventSource The event source to check
 	 * @return TRUE if the value has changed
 	 */
-	protected boolean hasValueChanged(Object rEventSource) {
-		return !(rEventSource instanceof TextControl) ||
-			rEventSource instanceof ComboBox || !((TextControl) rEventSource)
+	protected boolean hasValueChanged(Object eventSource) {
+		return !(eventSource instanceof TextControl) ||
+			eventSource instanceof ComboBox || !((TextControl) eventSource)
 			.getText()
-			.equals(rDataElement.getValue());
+			.equals(dataElement.getValue());
 	}
 
 	/**
 	 * Maps a GWT event type to the corresponding interaction event type.
 	 *
-	 * @param eEventType The event type to map
+	 * @param eventType The event type to map
 	 * @return The matching interaction event type
 	 */
 	protected InteractionEventType mapToInteractionEventType(
-		EventType eEventType) {
-		InteractionEventType eInteractionEventType;
+		EventType eventType) {
+		InteractionEventType interactionEventType;
 
-		if (eEventType == EventType.ACTION) {
-			eInteractionEventType = InteractionEventType.ACTION;
-		} else if (eEventType == EventType.FOCUS_LOST) {
-			eInteractionEventType = InteractionEventType.FOCUS_LOST;
+		if (eventType == EventType.ACTION) {
+			interactionEventType = InteractionEventType.ACTION;
+		} else if (eventType == EventType.FOCUS_LOST) {
+			interactionEventType = InteractionEventType.FOCUS_LOST;
 		} else {
-			eInteractionEventType = InteractionEventType.UPDATE;
+			interactionEventType = InteractionEventType.UPDATE;
 		}
 
-		return eInteractionEventType;
+		return interactionEventType;
 	}
 
 	/**
 	 * Processes a certain event and forwards it to the panel manager for
 	 * interaction handling.
 	 *
-	 * @param rEvent The GEWT event that occurred
+	 * @param event The GEWT event that occurred
 	 */
-	protected void processEvent(EwtEvent rEvent) {
+	protected void processEvent(EwtEvent event) {
 		cancelInputEventTimer();
 
-		EventType eEventType = rEvent.getType();
-		Object rEventData = rEvent.getElement();
-		Object rSource = rEvent.getSource();
+		EventType eventType = event.getType();
+		Object eventData = event.getElement();
+		Object source = event.getSource();
 
-		InteractionEventType eInteractionEventType =
-			mapToInteractionEventType(eEventType);
+		InteractionEventType interactionEventType =
+			mapToInteractionEventType(eventType);
 
-		if (rEventData != null) {
-			rDataElement.setProperty(INTERACTION_EVENT_DATA,
-				rEventData.toString());
+		if (eventData != null) {
+			dataElement.setProperty(INTERACTION_EVENT_DATA,
+				eventData.toString());
 		}
 
 		// VALUE_CHANGED can occur if a text field looses focus
-		if ((eEventType != EventType.VALUE_CHANGED &&
-			eEventType != EventType.FOCUS_LOST) ||
-			!(rSource instanceof TextControl)) {
+		if ((eventType != EventType.VALUE_CHANGED &&
+			eventType != EventType.FOCUS_LOST) ||
+			!(source instanceof TextControl)) {
 			// this is needed to re-establish the input focus in certain
 			// browsers (Webkit, IE)
-			rDataElement.setFlag(FOCUSED);
+			dataElement.setFlag(FOCUSED);
 		}
 
-		if ((eEventType != EventType.KEY_RELEASED &&
-			eEventType != EventType.VALUE_CHANGED) ||
-			hasValueChanged(rSource)) {
-			if (rPanelManager
+		if ((eventType != EventType.KEY_RELEASED &&
+			eventType != EventType.VALUE_CHANGED) || hasValueChanged(source)) {
+			if (panelManager
 				.getDataElementList()
 				.hasFlag(DISABLE_ON_INTERACTION)) {
-				rPanelManager.getContainer().setChildrenEnabled(false);
-			} else if (rDataElement.hasFlag(DISABLE_ON_INTERACTION)) {
-				((Component) rSource).setEnabled(false);
+				panelManager.getContainer().setChildrenEnabled(false);
+			} else if (dataElement.hasFlag(DISABLE_ON_INTERACTION)) {
+				((Component) source).setEnabled(false);
 			}
 
-			rPanelManager.handleInteractiveInput(rDataElement,
-				eInteractionEventType);
+			panelManager.handleInteractiveInput(dataElement,
+				interactionEventType);
 		}
 	}
 
@@ -293,33 +291,33 @@ public class DataElementInteractionHandler<D extends DataElement<?>>
 	 * Registers an event listener for the handling of interactive input events
 	 * with the given component.
 	 *
-	 * @param aComponent  The component
-	 * @param rEventTypes The event types to register the event handlers for
+	 * @param component  The component
+	 * @param eventTypes The event types to register the event handlers for
 	 */
-	protected void registerEventHandler(Component aComponent,
-		Set<InteractionEventType> rEventTypes) {
-		for (EventType eEventType : getInteractionEventTypes(aComponent,
-			rEventTypes)) {
-			aComponent.addEventListener(eEventType, this);
+	protected void registerEventHandler(Component component,
+		Set<InteractionEventType> eventTypes) {
+		for (EventType eventType : getInteractionEventTypes(component,
+			eventTypes)) {
+			component.addEventListener(eventType, this);
 		}
 	}
 
 	/**
 	 * Updates the data element to a new instance.
 	 *
-	 * @param rNewDataElement The new data element
+	 * @param newDataElement The new data element
 	 */
-	void updateDataElement(D rNewDataElement) {
-		rDataElement = rNewDataElement;
+	void updateDataElement(D newDataElement) {
+		dataElement = newDataElement;
 	}
 
 	/**
 	 * Cancels the input event timer if it is currently running.
 	 */
 	private void cancelInputEventTimer() {
-		if (aInputEventTimer != null) {
-			aInputEventTimer.cancel();
-			aInputEventTimer = null;
+		if (inputEventTimer != null) {
+			inputEventTimer.cancel();
+			inputEventTimer = null;
 		}
 	}
 }

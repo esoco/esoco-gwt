@@ -18,7 +18,6 @@ package de.esoco.gwt.client.ui;
 
 import de.esoco.data.element.DataElement;
 import de.esoco.data.element.DataElementList;
-
 import de.esoco.ewt.UserInterfaceContext;
 import de.esoco.ewt.build.ContainerBuilder;
 import de.esoco.ewt.component.Container;
@@ -26,7 +25,6 @@ import de.esoco.ewt.component.Label;
 import de.esoco.ewt.component.Panel;
 import de.esoco.ewt.layout.TableGridLayout;
 import de.esoco.ewt.style.StyleData;
-
 import de.esoco.lib.property.LayoutType;
 import de.esoco.lib.property.UserInterfaceProperties;
 
@@ -50,22 +48,23 @@ import static de.esoco.lib.property.StyleProperties.STYLE;
  */
 public class DataElementTablePanelManager extends DataElementPanelManager {
 
-	private boolean bHasOptions;
+	private boolean hasOptions;
 
-	private boolean bHasLabels;
+	private boolean hasLabels;
 
-	private int nElementColumns;
+	private int elementColumns;
 
 	/**
 	 * Creates a new instance from the elements in a {@link DataElementList}.
 	 *
-	 * @param rParent          The parent panel manager
-	 * @param rDataElementList sName A name for this instance that will be set
-	 *                         as an additional GWT style name
+	 * @param parent          The parent panel manager
+	 * @param dataElementList sName A name for this instance that will be
+	 *                           set as
+	 *                        an additional GWT style name
 	 */
-	public DataElementTablePanelManager(PanelManager<?, ?> rParent,
-		DataElementList rDataElementList) {
-		super(rParent, rDataElementList);
+	public DataElementTablePanelManager(PanelManager<?, ?> parent,
+		DataElementList dataElementList) {
+		super(parent, dataElementList);
 	}
 
 	@Override
@@ -76,10 +75,10 @@ public class DataElementTablePanelManager extends DataElementPanelManager {
 	}
 
 	@Override
-	public void setElementVisibility(DataElementUI<?> rElementUI,
-		boolean bVisible) {
+	public void setElementVisibility(DataElementUI<?> elementUI,
+		boolean visible) {
 		getDataElementsLayout().changeCellStyle(getContainer(),
-			rElementUI.getElementComponent(), CSS.gfEmptyCell(), !bVisible);
+			elementUI.getElementComponent(), CSS.gfEmptyCell(), !visible);
 	}
 
 	/**
@@ -87,117 +86,116 @@ public class DataElementTablePanelManager extends DataElementPanelManager {
 	 */
 	@Override
 	protected void buildElementUIs() {
-		List<DataElement<?>> rDataElements =
-			getDataElementList().getElements();
-		UserInterfaceContext rContext = getContext();
-		List<Label> aHeaders = null;
+		List<DataElement<?>> dataElements = getDataElementList().getElements();
+		UserInterfaceContext context = getContext();
+		List<Label> headers = null;
 
-		int nColumn = nElementColumns;
-		int nHeaderColumn = 0;
-		int nElementCount = rDataElements.size();
-		boolean bFocusSet = false;
+		int column = elementColumns;
+		int headerColumn = 0;
+		int elementCount = dataElements.size();
+		boolean focusSet = false;
 
-		for (int nElement = 0; nElement < nElementCount; nElement++) {
-			DataElement<?> rDataElement = rDataElements.get(nElement);
+		for (int elementIndex = 0;
+		     elementIndex < elementCount; elementIndex++) {
+			DataElement<?> dataElement = dataElements.get(elementIndex);
 
-			String sWidth = rDataElement.getProperty(HTML_WIDTH, null);
-			String sHeight = rDataElement.getProperty(HTML_HEIGHT, null);
+			String width = dataElement.getProperty(HTML_WIDTH, null);
+			String height = dataElement.getProperty(HTML_HEIGHT, null);
 
-			boolean bNewRow = !rDataElement.hasFlag(SAME_ROW);
-			boolean bImmutable = rDataElement.isImmutable();
-			boolean bHideLabel = rDataElement.hasFlag(HIDE_LABEL) ||
-				rDataElement.hasFlag(HEADER_LABEL);
+			boolean newRow = !dataElement.hasFlag(SAME_ROW);
+			boolean immutable = dataElement.isImmutable();
+			boolean hideLabel = dataElement.hasFlag(HIDE_LABEL) ||
+				dataElement.hasFlag(HEADER_LABEL);
 
-			boolean isChildViewElement = rDataElement.hasProperty(
+			boolean isChildViewElement = dataElement.hasProperty(
 				UserInterfaceProperties.VIEW_DISPLAY_TYPE);
 
-			int nExtraColumns = bNewRow && bHideLabel && bHasLabels ? 1 : 0;
+			int extraColumns = newRow && hideLabel && hasLabels ? 1 : 0;
 
-			DataElementUI<?> aElementUI =
-				DataElementUIFactory.create(this, rDataElement);
+			DataElementUI<?> elementUI =
+				DataElementUIFactory.create(this, dataElement);
 
-			String sStyle = aElementUI.getElementStyleName();
+			String style = elementUI.getElementStyleName();
 
-			if (bNewRow && !isChildViewElement) {
-				int nRowElement = nElement;
-				int nCol = 0;
+			if (newRow && !isChildViewElement) {
+				int rowElement = elementIndex;
+				int col = 0;
 
-				aHeaders = null;
-				nHeaderColumn = 0;
+				headers = null;
+				headerColumn = 0;
 
-				while (nCol < nElementColumns && nRowElement < nElementCount) {
-					DataElement<?> rElement = rDataElements.get(nRowElement++);
+				while (col < elementColumns && rowElement < elementCount) {
+					DataElement<?> element = dataElements.get(rowElement++);
 
-					if (aHeaders == null && rElement.hasFlag(HEADER_LABEL)) {
-						aHeaders = new ArrayList<>();
+					if (headers == null && element.hasFlag(HEADER_LABEL)) {
+						headers = new ArrayList<>();
 					}
 
-					nCol += rElement.getIntProperty(COLUMN_SPAN, 1);
+					col += element.getIntProperty(COLUMN_SPAN, 1);
 				}
 
-				if (aHeaders != null) {
-					addElementRow(aElementUI, "", nColumn);
-					nColumn = 0;
+				if (headers != null) {
+					addElementRow(elementUI, "", column);
+					column = 0;
 
-					for (int i = nElement; i < nRowElement; i++) {
-						DataElement<?> rElement = rDataElements.get(i);
+					for (int i = elementIndex; i < rowElement; i++) {
+						DataElement<?> element = dataElements.get(i);
 
-						String sHeaderStyle = rElement.getResourceId();
+						String headerStyle = element.getResourceId();
 
-						Label aHeader = addLabel(
-							addStyles(HEADER_LABEL_STYLE, sHeaderStyle), "",
-							null);
+						Label header =
+							addLabel(addStyles(HEADER_LABEL_STYLE,
+									headerStyle),
+								"", null);
 
-						aHeaders.add(aHeader);
+						headers.add(header);
 						addCellStyles(CSS.gfDataElementHeader(),
-							sHeaderStyle + "Header");
-						nColumn++;
+							headerStyle + "Header");
+						column++;
 					}
 				}
 
-				addElementRow(aElementUI, sStyle + "Label", nColumn);
-				nColumn = 0;
+				addElementRow(elementUI, style + "Label", column);
+				column = 0;
 			}
 
-			if (bImmutable) {
-				sStyle = CSS.readonly() + " " + sStyle;
+			if (immutable) {
+				style = CSS.readonly() + " " + style;
 			}
 
-			StyleData aElementStyle = addStyles(ELEMENT_STYLE, sStyle);
+			StyleData elementStyle = addStyles(ELEMENT_STYLE, style);
 
 			// element UI must be registered before building to allow
 			// cross-panel references of selection dependencies
-			getDataElementUIs().put(rDataElement.getName(), aElementUI);
-			aElementUI.buildUserInterface(this, aElementStyle);
+			getDataElementUIs().put(dataElement.getName(), elementUI);
+			elementUI.buildUserInterface(this, elementStyle);
 
-			if ("100%".equals(sWidth) && "100%".equals(sHeight)) {
-				aElementUI
+			if ("100%".equals(width) && "100%".equals(height)) {
+				elementUI
 					.getElementComponent()
 					.getWidget()
 					.setSize("100%", "100%");
 			}
 
-			if (!bNewRow || bHideLabel) {
-				if (aHeaders != null && rDataElement.hasFlag(HEADER_LABEL)) {
-					Label rHeaderLabel = aHeaders.get(nHeaderColumn);
+			if (!newRow || hideLabel) {
+				if (headers != null && dataElement.hasFlag(HEADER_LABEL)) {
+					Label headerLabel = headers.get(headerColumn);
 
-					rHeaderLabel.setText(
-						aElementUI.getElementLabelText(rContext));
+					headerLabel.setText(elementUI.getElementLabelText(context));
 				} else {
-					aElementUI.setHiddenLabelHint(rContext);
+					elementUI.setHiddenLabelHint(context);
 				}
 			}
 
 			if (!isChildViewElement) {
-				nHeaderColumn++;
-				nColumn +=
-					checkLayoutProperties(rDataElement, sStyle, sWidth,
-						sHeight,
-						nExtraColumns);
+				headerColumn++;
+				column +=
+					checkLayoutProperties(dataElement, style, width, height,
+						extraColumns);
 			}
 
-			if (getParent() == null && !(bFocusSet || bImmutable)) {
-				bFocusSet = aElementUI.requestFocus();
+			if (getParent() == null && !(focusSet || immutable)) {
+				focusSet = elementUI.requestFocus();
 			}
 		}
 	}
@@ -206,74 +204,70 @@ public class DataElementTablePanelManager extends DataElementPanelManager {
 	 * Calculates the total number of columns for a panel layout containing the
 	 * given data elements.
 	 *
-	 * @param rDataElements The data elements to analyze
+	 * @param dataElements The data elements to analyze
 	 * @return The new layout
 	 */
-	protected int calcLayoutColumns(Collection<DataElement<?>> rDataElements) {
-		int nExtraColumns = 0;
-		int nRowElementColumns = 0;
+	protected int calcLayoutColumns(Collection<DataElement<?>> dataElements) {
+		int extraColumns = 0;
+		int rowElementColumns = 0;
 
-		nElementColumns = 0;
-		bHasOptions = false;
-		bHasLabels = false;
+		elementColumns = 0;
+		hasOptions = false;
+		hasLabels = false;
 
-		for (DataElement<?> rDataElement : rDataElements) {
-			boolean bNewRow = !rDataElement.hasFlag(SAME_ROW);
+		for (DataElement<?> dataElement : dataElements) {
+			boolean newRow = !dataElement.hasFlag(SAME_ROW);
 
-			if (!bHasOptions && rDataElement.isOptional()) {
-				bHasOptions = true;
-				nExtraColumns++;
+			if (!hasOptions && dataElement.isOptional()) {
+				hasOptions = true;
+				extraColumns++;
 			}
 
-			if (!bHasLabels && bNewRow && !(rDataElement.hasFlag(HIDE_LABEL) ||
-				rDataElement.hasFlag(HEADER_LABEL))) {
-				bHasLabels = true;
-				nExtraColumns++;
+			if (!hasLabels && newRow && !(dataElement.hasFlag(HIDE_LABEL) ||
+				dataElement.hasFlag(HEADER_LABEL))) {
+				hasLabels = true;
+				extraColumns++;
 			}
 
-			if (bNewRow) {
-				nElementColumns = Math.max(nElementColumns,
-					nRowElementColumns);
+			if (newRow) {
+				elementColumns = Math.max(elementColumns, rowElementColumns);
 
-				nRowElementColumns = 0;
+				rowElementColumns = 0;
 			}
 
-			nRowElementColumns += rDataElement.getIntProperty(COLUMN_SPAN, 1);
+			rowElementColumns += dataElement.getIntProperty(COLUMN_SPAN, 1);
 		}
 
 		// repeat comparison for the last row
-		nElementColumns = Math.max(nElementColumns, nRowElementColumns);
+		elementColumns = Math.max(elementColumns, rowElementColumns);
 
 		// always return at least 1 column in the case of no data elements
-		return Math.max(nElementColumns + nExtraColumns, 1);
+		return Math.max(elementColumns + extraColumns, 1);
 	}
 
 	@Override
 	protected ContainerBuilder<? extends Panel> createPanel(
-		ContainerBuilder<?> rBuilder, StyleData rStyleData,
-		LayoutType eLayout) {
-		List<DataElement<?>> rDataElements =
-			getDataElementList().getElements();
+		ContainerBuilder<?> builder, StyleData styleData, LayoutType layout) {
+		List<DataElement<?>> dataElements = getDataElementList().getElements();
 
-		ContainerBuilder<Panel> aContainerBuilder =
-			rBuilder.addPanel(rStyleData,
-				new TableGridLayout(calcLayoutColumns(rDataElements), true));
+		ContainerBuilder<Panel> containerBuilder = builder.addPanel(styleData,
+			new TableGridLayout(calcLayoutColumns(dataElements), true));
 
-		return aContainerBuilder;
+		return containerBuilder;
 	}
 
 	/**
 	 * Adds certain style names to a cell in the grid layout of this instance.
 	 *
-	 * @param rStyles sLabelCellStyle
+	 * @param styles sLabelCellStyle
 	 */
-	private void addCellStyles(String... rStyles) {
-		TableGridLayout rLayout = getDataElementsLayout();
-		Container rContainer = getContainer();
+	private void addCellStyles(String... styles) {
+		TableGridLayout layout = getDataElementsLayout();
+		Container container = getContainer();
 
-		for (String sStyle : rStyles) {
-			if (sStyle.length() > 0) {
-				rLayout.addCellStyle(rContainer, sStyle);
+		for (String style : styles) {
+			if (style.length() > 0) {
+				layout.addCellStyle(container, style);
 			}
 		}
 	}
@@ -281,34 +275,34 @@ public class DataElementTablePanelManager extends DataElementPanelManager {
 	/**
 	 * Adds a new row of data element UIs to the layout.
 	 *
-	 * @param aElementUI             The first data element UI to add
-	 * @param sLabelCellStyle        The style for the grid cell of the element
-	 *                               label
-	 * @param nPreviousRowLastColumn The last column of the previous row
+	 * @param elementUI             The first data element UI to add
+	 * @param labelCellStyle        The style for the grid cell of the element
+	 *                              label
+	 * @param previousRowLastColumn The last column of the previous row
 	 */
-	private void addElementRow(DataElementUI<?> aElementUI,
-		String sLabelCellStyle, int nPreviousRowLastColumn) {
-		DataElement<?> rDataElement = aElementUI.getDataElement();
+	private void addElementRow(DataElementUI<?> elementUI,
+		String labelCellStyle, int previousRowLastColumn) {
+		DataElement<?> dataElement = elementUI.getDataElement();
 
-		while (nPreviousRowLastColumn++ < nElementColumns) {
+		while (previousRowLastColumn++ < elementColumns) {
 			addEmptyCell();
 		}
 
-		if (aElementUI != null && !rDataElement.isImmutable() &&
-			rDataElement.isOptional()) {
-			aElementUI.addOptionSelector(this);
-		} else if (bHasOptions) {
+		if (elementUI != null && !dataElement.isImmutable() &&
+			dataElement.isOptional()) {
+			elementUI.addOptionSelector(this);
+		} else if (hasOptions) {
 			addEmptyCell();
 		}
 
-		if (aElementUI != null && !(rDataElement.hasFlag(HIDE_LABEL) ||
-			rDataElement.hasFlag(HEADER_LABEL))) {
-			StyleData aElementLabelStyle =
-				addStyles(ELEMENT_LABEL_STYLE, sLabelCellStyle);
+		if (elementUI != null && !(dataElement.hasFlag(HIDE_LABEL) ||
+			dataElement.hasFlag(HEADER_LABEL))) {
+			StyleData elementLabelStyle =
+				addStyles(ELEMENT_LABEL_STYLE, labelCellStyle);
 
-			aElementUI.createElementLabel(this, aElementLabelStyle,
-				aElementUI.createElementLabelString(getContext()));
-			addCellStyles(CSS.gfDataElementLabel(), sLabelCellStyle);
+			elementUI.createElementLabel(this, elementLabelStyle,
+				elementUI.createElementLabelString(getContext()));
+			addCellStyles(CSS.gfDataElementLabel(), labelCellStyle);
 		}
 	}
 
@@ -328,45 +322,45 @@ public class DataElementTablePanelManager extends DataElementPanelManager {
 	 * current
 	 * cell.
 	 *
-	 * @param rDataElement  The data element
-	 * @param sStyle        The style name for the data element
-	 * @param sWidth        The HTML width or NULL for none
-	 * @param sHeight       The HTML height or NULL for none
-	 * @param nExtraColumns The count of extra columns that the element should
-	 *                      span (zero for none)
+	 * @param dataElement  The data element
+	 * @param style        The style name for the data element
+	 * @param width        The HTML width or NULL for none
+	 * @param height       The HTML height or NULL for none
+	 * @param extraColumns The count of extra columns that the element should
+	 *                     span (zero for none)
 	 * @return The column span
 	 */
-	private int checkLayoutProperties(DataElement<?> rDataElement,
-		String sStyle, String sWidth, String sHeight, int nExtraColumns) {
-		Container rContainer = getContainer();
-		TableGridLayout rLayout = getDataElementsLayout();
-		String sAddStyle = rDataElement.getProperty(STYLE, null);
-		int nRowSpan = rDataElement.getIntProperty(ROW_SPAN, 1);
-		int nColSpan = rDataElement.getIntProperty(COLUMN_SPAN, 1);
+	private int checkLayoutProperties(DataElement<?> dataElement, String style,
+		String width, String height, int extraColumns) {
+		Container container = getContainer();
+		TableGridLayout layout = getDataElementsLayout();
+		String addStyle = dataElement.getProperty(STYLE, null);
+		int rowSpan = dataElement.getIntProperty(ROW_SPAN, 1);
+		int colSpan = dataElement.getIntProperty(COLUMN_SPAN, 1);
 
-		if (nRowSpan > 1) {
-			rLayout.joinRows(rContainer, nRowSpan);
+		if (rowSpan > 1) {
+			layout.joinRows(container, rowSpan);
 		}
 
-		if (nColSpan + nExtraColumns > 1) {
-			rLayout.joinColumns(rContainer, nColSpan + nExtraColumns);
+		if (colSpan + extraColumns > 1) {
+			layout.joinColumns(container, colSpan + extraColumns);
 		}
 
-		if (sWidth != null || sHeight != null) {
-			rLayout.setCellSize(rContainer, sWidth, sHeight);
+		if (width != null || height != null) {
+			layout.setCellSize(container, width, height);
 		}
 
-		if (sAddStyle != null) {
-			sStyle += " " + sAddStyle;
+		if (addStyle != null) {
+			style += " " + addStyle;
 		}
 
-		sStyle = sStyle.trim();
+		style = style.trim();
 
-		if (sStyle.length() > 0) {
-			rLayout.addCellStyle(rContainer, sStyle);
+		if (style.length() > 0) {
+			layout.addCellStyle(container, style);
 		}
 
-		return nColSpan;
+		return colSpan;
 	}
 
 	/**

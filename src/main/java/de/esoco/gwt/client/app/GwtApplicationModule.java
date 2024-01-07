@@ -30,7 +30,7 @@ import de.esoco.ewt.style.ViewStyle;
  */
 public abstract class GwtApplicationModule implements EWTModule {
 
-	private ViewStyle eViewStyle;
+	private ViewStyle viewStyle;
 
 	/**
 	 * Creates a new instance with the view style
@@ -43,43 +43,43 @@ public abstract class GwtApplicationModule implements EWTModule {
 	/**
 	 * Creates a new instance with a specific view style.
 	 *
-	 * @param eViewStyle The view style
+	 * @param viewStyle The view style
 	 */
-	public GwtApplicationModule(ViewStyle eViewStyle) {
-		this.eViewStyle = eViewStyle;
+	public GwtApplicationModule(ViewStyle viewStyle) {
+		this.viewStyle = viewStyle;
 	}
 
 	/**
 	 * @see EWTModule#createModuleView(UserInterfaceContext)
 	 */
 	@Override
-	public View createModuleView(UserInterfaceContext rContext) {
-		MainView aMainView = rContext.createMainView(getMainViewStyle());
+	public View createModuleView(UserInterfaceContext context) {
+		MainView mainView = context.createMainView(getMainViewStyle());
 
-		ContainerBuilder<?> aMainViewBuilder =
-			new ContainerBuilder<View>(aMainView);
+		ContainerBuilder<?> mainViewBuilder =
+			new ContainerBuilder<View>(mainView);
 
-		createModulePanel(aMainViewBuilder);
+		createModulePanel(mainViewBuilder);
 
-		return aMainView;
+		return mainView;
 	}
 
 	/**
 	 * @see EWTModule#showModuleView(UserInterfaceContext, View)
 	 */
 	@Override
-	public void showModuleView(UserInterfaceContext rContext, View rView) {
-		rView.pack();
-		rContext.displayViewCentered(rView);
+	public void showModuleView(UserInterfaceContext context, View view) {
+		view.pack();
+		context.displayViewCentered(view);
 	}
 
 	/**
 	 * Must be implemented by subclasses to create the module's main panel with
 	 * the given builder.
 	 *
-	 * @param rBuilder The view builder
+	 * @param builder The view builder
 	 */
-	protected abstract void createModulePanel(ContainerBuilder<?> rBuilder);
+	protected abstract void createModulePanel(ContainerBuilder<?> builder);
 
 	/**
 	 * Returns the view style for the main view of this module. May be
@@ -88,6 +88,6 @@ public abstract class GwtApplicationModule implements EWTModule {
 	 * @return The view style
 	 */
 	protected ViewStyle getMainViewStyle() {
-		return eViewStyle;
+		return viewStyle;
 	}
 }

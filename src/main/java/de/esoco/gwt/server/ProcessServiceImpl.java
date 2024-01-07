@@ -123,19 +123,19 @@ public abstract class ProcessServiceImpl<E extends Entity>
 	private static final RelationType<Map<Integer, Process>> USER_PROCESS_MAP =
 		newMapType(false);
 
-	private static Locale rDefaultLocale = Locale.ENGLISH;
+	private static Locale defaultLocale = Locale.ENGLISH;
 
-	private static List<ProcessDefinition> aProcessDefinitions =
+	private static List<ProcessDefinition> processDefinitions =
 		new ArrayList<ProcessDefinition>();
 
 	static {
 		RelationTypes.init(ProcessServiceImpl.class);
 	}
 
-	private final DataElementFactory rDataElementFactory =
+	private final DataElementFactory dataElementFactory =
 		new DataElementFactory(this);
 
-	private Option<Class<? extends ProcessDefinition>> aAppProcess =
+	private Option<Class<? extends ProcessDefinition>> appProcess =
 		Option.none();
 
 	/**
@@ -144,12 +144,12 @@ public abstract class ProcessServiceImpl<E extends Entity>
 	 * can
 	 * be associated with the index stored in the description.
 	 *
-	 * @param rDefClass The process definition class
+	 * @param defClass The process definition class
 	 * @return A new process description of the process definition
 	 */
 	public static ProcessDescription createProcessDescription(
-		Class<? extends ProcessDefinition> rDefClass) {
-		return createProcessDescriptions(rDefClass, null);
+		Class<? extends ProcessDefinition> defClass) {
+		return createProcessDescriptions(defClass, null);
 	}
 
 	/**
@@ -161,190 +161,189 @@ public abstract class ProcessServiceImpl<E extends Entity>
 	 * added to the list, one for the creation of a new entity and one for the
 	 * editing of an existing entity.
 	 *
-	 * @param rDefClass        rDefinition The process definition
-	 * @param rDescriptionList A list to add the description(s) to or NULL to
-	 *                         only return the description
+	 * @param defClass        definition The process definition
+	 * @param descriptionList A list to add the description(s) to or NULL to
+	 *                        only return the description
 	 * @return A new process description of the process definition
 	 */
 	protected static ProcessDescription createProcessDescriptions(
-		Class<? extends ProcessDefinition> rDefClass,
-		List<ProcessDescription> rDescriptionList) {
-		ProcessDefinition rDefinition =
-			ProcessManager.getProcessDefinition(rDefClass);
+		Class<? extends ProcessDefinition> defClass,
+		List<ProcessDescription> descriptionList) {
+		ProcessDefinition definition =
+			ProcessManager.getProcessDefinition(defClass);
 
-		int nIndex = aProcessDefinitions.indexOf(rDefinition);
+		int index = processDefinitions.indexOf(definition);
 
-		if (nIndex < 0) {
-			nIndex = aProcessDefinitions.size();
-			aProcessDefinitions.add(rDefinition);
+		if (index < 0) {
+			index = processDefinitions.size();
+			processDefinitions.add(definition);
 		}
 
-		boolean bInputRequired =
-			rDefinition.hasRelation(REQUIRED_PROCESS_INPUT_PARAMS);
+		boolean inputRequired =
+			definition.hasRelation(REQUIRED_PROCESS_INPUT_PARAMS);
 
-		if (!bInputRequired &&
-			rDefinition.get(OPTIONAL_PROCESS_INPUT_PARAMS).size() > 0 &&
-			rDescriptionList != null) {
+		if (!inputRequired &&
+			definition.get(OPTIONAL_PROCESS_INPUT_PARAMS).size() > 0 &&
+			descriptionList != null) {
 			// create a special edit process description with the same ID (!)
 			// that will be invoked if a selection is available
-			ProcessDescription aDescription =
-				new ProcessDescription(rDefinition.get(NAME) + "Edit",
-					rDefinition.get(DESCRIPTION), nIndex, true);
+			ProcessDescription description =
+				new ProcessDescription(definition.get(NAME) + "Edit",
+					definition.get(DESCRIPTION), index, true);
 
-			rDescriptionList.add(aDescription);
+			descriptionList.add(description);
 		}
 
-		ProcessDescription aDescription =
-			new ProcessDescription(rDefinition.get(NAME),
-				rDefinition.get(DESCRIPTION), nIndex, bInputRequired);
+		ProcessDescription description =
+			new ProcessDescription(definition.get(NAME),
+				definition.get(DESCRIPTION), index, inputRequired);
 
-		if (rDescriptionList != null) {
-			rDescriptionList.add(aDescription);
+		if (descriptionList != null) {
+			descriptionList.add(description);
 		}
 
-		return aDescription;
+		return description;
 	}
 
 	/**
 	 * Sets the default locale to be used if the client locale cannot be
 	 * determined.
 	 *
-	 * @param rLocale The new default locale
+	 * @param locale The new default locale
 	 */
-	public static void setDefaultLocale(Locale rLocale) {
-		rDefaultLocale = rLocale;
+	public static void setDefaultLocale(Locale locale) {
+		defaultLocale = locale;
 	}
 
 	@Override
-	public ProcessState executeProcess(ProcessDescription rDescription,
-		Relatable rInitParams)
-		throws AuthenticationException, ServiceException {
-		boolean bCheckAuthentication = !hasProcessAuthentication() ||
-			rDescription.hasFlag(PROCESS_AUTHENTICATED);
+	public ProcessState executeProcess(ProcessDescription description,
+		Relatable initParams) throws AuthenticationException,
+		ServiceException {
+		boolean checkAuthentication = !hasProcessAuthentication() ||
+			description.hasFlag(PROCESS_AUTHENTICATED);
 
-		SessionData rSessionData = getSessionData(bCheckAuthentication);
+		SessionData sessionData = getSessionData(checkAuthentication);
 
-		ProcessExecutionMode eExecutionMode = ProcessExecutionMode.EXECUTE;
-		Process rProcess = null;
-		Integer rId = null;
-		ProcessState rProcessState = null;
-		Map<Integer, Process> rProcessMap = null;
-		boolean bHasSessionTimeout = false;
+		ProcessExecutionMode executionMode = ProcessExecutionMode.EXECUTE;
+		Process process = null;
+		Integer id = null;
+		ProcessState processState = null;
+		Map<Integer, Process> processMap = null;
+		boolean hasSessionTimeout = false;
 
-		List<Process> rProcessList = getSessionContext().get(PROCESS_LIST);
+		List<Process> processList = getSessionContext().get(PROCESS_LIST);
 
 		try {
 			// this can only happen in the case of process-based authentication
 			// in the case that the session has expired
-			if (rSessionData == null) {
-				rSessionData = createSessionData();
+			if (sessionData == null) {
+				sessionData = createSessionData();
 
-				if (rDescription instanceof ProcessState) {
+				if (description instanceof ProcessState) {
 					// if a session timeout occurred re-start the app process
 					// from a new process description
-					rDescription = new ProcessDescription(rDescription);
-					bHasSessionTimeout = true;
+					description = new ProcessDescription(description);
+					hasSessionTimeout = true;
 				}
 			}
 
-			rProcessMap = rSessionData.get(USER_PROCESS_MAP);
-			rProcess = getProcess(rDescription, rSessionData, rInitParams);
+			processMap = sessionData.get(USER_PROCESS_MAP);
+			process = getProcess(description, sessionData, initParams);
 
-			rId = rProcess.getParameter(PROCESS_ID);
+			id = process.getParameter(PROCESS_ID);
 
-			if (bHasSessionTimeout) {
-				rProcess.set(PROCESS_SESSION_EXPIRED);
+			if (hasSessionTimeout) {
+				process.set(PROCESS_SESSION_EXPIRED);
 			}
 
-			if (rDescription instanceof ProcessState) {
-				rProcessState = (ProcessState) rDescription;
+			if (description instanceof ProcessState) {
+				processState = (ProcessState) description;
 
-				eExecutionMode = rProcessState.getExecutionMode();
+				executionMode = processState.getExecutionMode();
 			} else {
-				setClientProperties(rDescription, rProcess);
+				setClientProperties(description, process);
 
-				if (rProcess.get(INTERACTION_EVENT_PARAM) ==
+				if (process.get(INTERACTION_EVENT_PARAM) ==
 					RELOAD_CURRENT_STEP) {
-					eExecutionMode = ProcessExecutionMode.RELOAD;
+					executionMode = ProcessExecutionMode.RELOAD;
 				}
 			}
 
-			rProcess.set(CLIENT_WIDTH, rDescription.getClientWidth());
-			rProcess.set(CLIENT_HEIGHT, rDescription.getClientHeight());
+			process.set(CLIENT_WIDTH, description.getClientWidth());
+			process.set(CLIENT_HEIGHT, description.getClientHeight());
 
-			rProcess.executeInteractionCleanupActions();
+			process.executeInteractionCleanupActions();
 
-			ProcessStep rPreviousStep = rProcess.getCurrentStep();
+			ProcessStep previousStep = process.getCurrentStep();
 
-			executeProcess(rProcess, eExecutionMode);
+			executeProcess(process, executionMode);
 
-			boolean bRefresh = rProcess.getCurrentStep() != rPreviousStep ||
-				eExecutionMode == ProcessExecutionMode.RELOAD;
+			boolean refresh = process.getCurrentStep() != previousStep ||
+				executionMode == ProcessExecutionMode.RELOAD;
 
-			rProcessState =
-				createProcessState(rDescription, rProcess, bRefresh);
+			processState = createProcessState(description, process, refresh);
 
-			if (rProcess.isFinished()) {
-				rProcessList.remove(rProcess);
-				rProcessMap.remove(rId);
+			if (process.isFinished()) {
+				processList.remove(process);
+				processMap.remove(id);
 			}
 		} catch (Throwable e) {
-			if (rProcess != null) {
+			if (process != null) {
 				try {
-					rProcessState =
-						createProcessState(rDescription, rProcess, false);
-				} catch (Exception eSecondary) {
+					processState =
+						createProcessState(description, process, false);
+				} catch (Exception secondary) {
 					// Only log secondary exceptions and fall through to
 					// standard exception handling
 					Log.error("Could not create exception process state",
-						eSecondary);
+						secondary);
 				}
 			}
 
-			ServiceException eService = wrapException(e, rProcessState);
+			ServiceException service = wrapException(e, processState);
 
 			// keep the process on recoverable error for re-execution when the
 			// client has tried to resolve the error condition
-			if (!eService.isRecoverable() && rProcess != null) {
-				rProcessList.remove(rProcess);
-				rProcessMap.remove(rId);
+			if (!service.isRecoverable() && process != null) {
+				processList.remove(process);
+				processMap.remove(id);
 			}
 
-			throw eService;
+			throw service;
 		}
 
-		return rProcessState;
+		return processState;
 	}
 
 	/**
 	 * Handles the {@link ProcessService#EXECUTE_PROCESS} command.
 	 *
-	 * @param rDescription The description of the process to execute
+	 * @param description The description of the process to execute
 	 * @return A process state object if the process stopped for an interaction
 	 * or NULL if the process has already terminated
 	 * @throws ServiceException If the process execution fails
 	 */
-	public ProcessState handleExecuteProcess(ProcessDescription rDescription)
+	public ProcessState handleExecuteProcess(ProcessDescription description)
 		throws ServiceException {
-		return executeProcess(rDescription, null);
+		return executeProcess(description, null);
 	}
 
 	/**
 	 * Cancels all processes that are active in the given session.
 	 *
-	 * @param rSessionData The session data
+	 * @param sessionData The session data
 	 */
-	protected void cancelActiveProcesses(SessionData rSessionData) {
-		List<Process> rProcessList = getSessionContext().get(PROCESS_LIST);
+	protected void cancelActiveProcesses(SessionData sessionData) {
+		List<Process> processList = getSessionContext().get(PROCESS_LIST);
 
-		Map<Integer, Process> rProcessMap = rSessionData.get(USER_PROCESS_MAP);
+		Map<Integer, Process> processMap = sessionData.get(USER_PROCESS_MAP);
 
-		for (Process rProcess : rProcessMap.values()) {
-			rProcess.execute(ProcessExecutionMode.CANCEL);
-			rProcessList.remove(rProcess);
+		for (Process process : processMap.values()) {
+			process.execute(ProcessExecutionMode.CANCEL);
+			processList.remove(process);
 		}
 
-		rProcessMap.clear();
+		processMap.clear();
 	}
 
 	/**
@@ -355,10 +354,10 @@ public abstract class ProcessServiceImpl<E extends Entity>
 	 */
 	@Override
 	protected <T extends DataElement<?>> void checkCommandExecution(
-		Command<T, ?> rCommand, T rData) throws ServiceException {
-		if (!hasProcessAuthentication() || !rCommand.equals(EXECUTE_PROCESS) ||
-			!rData.getName().startsWith(APPLICATION_PROCESS_PATH)) {
-			super.checkCommandExecution(rCommand, rData);
+		Command<T, ?> command, T data) throws ServiceException {
+		if (!hasProcessAuthentication() || !command.equals(EXECUTE_PROCESS) ||
+			!data.getName().startsWith(APPLICATION_PROCESS_PATH)) {
+			super.checkCommandExecution(command, data);
 		}
 	}
 
@@ -368,22 +367,22 @@ public abstract class ProcessServiceImpl<E extends Entity>
 	 * @see AuthenticatedServiceImpl#endSession(SessionData)
 	 */
 	@Override
-	protected void endSession(SessionData rSessionData) {
-		cancelActiveProcesses(rSessionData);
+	protected void endSession(SessionData sessionData) {
+		cancelActiveProcesses(sessionData);
 
-		super.endSession(rSessionData);
+		super.endSession(sessionData);
 	}
 
 	/**
 	 * Performs the actual invocation of a process execution method.
 	 *
-	 * @param rProcess The process to execute
-	 * @param eMode    The execution mode
+	 * @param process The process to execute
+	 * @param mode    The execution mode
 	 * @throws ProcessException If the process execution fails
 	 */
-	protected void executeProcess(Process rProcess, ProcessExecutionMode eMode)
+	protected void executeProcess(Process process, ProcessExecutionMode mode)
 		throws ProcessException {
-		rProcess.execute(eMode);
+		process.execute(mode);
 	}
 
 	/**
@@ -396,7 +395,7 @@ public abstract class ProcessServiceImpl<E extends Entity>
 	 * @return TRUE for process based authentication
 	 */
 	protected boolean hasProcessAuthentication() {
-		return aAppProcess.exists();
+		return appProcess.exists();
 	}
 
 	/**
@@ -408,18 +407,17 @@ public abstract class ProcessServiceImpl<E extends Entity>
 	 * copied
 	 * to the process, overriding any existing parameters.
 	 *
-	 * @param rProcess    The process to initialize
-	 * @param rInitParams Optional process initialization parameters or NULL
-	 *                      for
-	 *                    none
+	 * @param process    The process to initialize
+	 * @param initParams Optional process initialization parameters or NULL for
+	 *                   none
 	 * @throws ProcessException If the process initialization fails
 	 * @throws ServiceException If the user is not authenticated or the
 	 *                          preparing the process context fails
 	 */
-	protected void initProcess(Process rProcess, Relatable rInitParams)
+	protected void initProcess(Process process, Relatable initParams)
 		throws ProcessException, ServiceException {
-		if (rInitParams != null) {
-			ObjectRelations.copyRelations(rInitParams, rProcess, true);
+		if (initParams != null) {
+			ObjectRelations.copyRelations(initParams, process, true);
 		}
 	}
 
@@ -430,8 +428,8 @@ public abstract class ProcessServiceImpl<E extends Entity>
 	 * @see AuthenticatedServiceImpl#resetSessionData(SessionData)
 	 */
 	@Override
-	protected void resetSessionData(SessionData rSessionData) {
-		cancelActiveProcesses(rSessionData);
+	protected void resetSessionData(SessionData sessionData) {
+		cancelActiveProcesses(sessionData);
 	}
 
 	/**
@@ -440,15 +438,14 @@ public abstract class ProcessServiceImpl<E extends Entity>
 	 * true. This method should be invoked before any other process definitions
 	 * are created through {@link #createProcessDescriptions(Class, List)}.
 	 *
-	 * @param rProcessDefinition The class of the application process
-	 *                           definition
+	 * @param processDefinition The class of the application process definition
 	 */
 	protected void setApplicationProcess(
-		Class<? extends ProcessDefinition> rProcessDefinition) {
-		aAppProcess = Option.of(rProcessDefinition);
+		Class<? extends ProcessDefinition> processDefinition) {
+		appProcess = Option.of(processDefinition);
 
 		// add to process definition list
-		createProcessDescriptions(rProcessDefinition, null);
+		createProcessDescriptions(processDefinition, null);
 	}
 
 	/**
@@ -457,81 +454,81 @@ public abstract class ProcessServiceImpl<E extends Entity>
 	 * an {@link InvalidParametersException} the service exception will contain
 	 * information about the invalid parameters.
 	 *
-	 * @param e             The exception to handle
-	 * @param rProcessState The current process state
+	 * @param e            The exception to handle
+	 * @param processState The current process state
 	 * @return The resulting {@link ServiceException}
 	 */
 	protected ServiceException wrapException(Throwable e,
-		ProcessState rProcessState) {
-		ServiceException eResult;
+		ProcessState processState) {
+		ServiceException result;
 
 		if (e instanceof ServiceException) {
-			eResult = (ServiceException) e;
+			result = (ServiceException) e;
 		} else {
-			String sMessage = e.getMessage();
+			String message = e.getMessage();
 
 			if (e instanceof InvalidParametersException) {
-				Map<RelationType<?>, String> rParamMessageMap =
+				Map<RelationType<?>, String> paramMessageMap =
 					((InvalidParametersException) e).getInvalidParams();
 
-				Map<String, String> aInvalidParams =
-					new HashMap<String, String>(rParamMessageMap.size());
+				Map<String, String> invalidParams =
+					new HashMap<String, String>(paramMessageMap.size());
 
-				for (Entry<RelationType<?>, String> rEntry :
-					rParamMessageMap.entrySet()) {
-					aInvalidParams.put(rEntry.getKey().getName(),
-						rEntry.getValue());
+				for (Entry<RelationType<?>, String> entry :
+					paramMessageMap.entrySet()) {
+					invalidParams.put(entry.getKey().getName(),
+						entry.getValue());
 				}
 
-				eResult = new ServiceException(sMessage, aInvalidParams,
-					rProcessState);
+				result =
+					new ServiceException(message, invalidParams, processState);
 			} else if (e.getCause() instanceof ConcurrentEntityModificationException) {
-				String sEntityId =
+				String entityId =
 					((ConcurrentEntityModificationException) e.getCause()).getEntityId();
 
-				Map<String, String> aLockedEntity =
+				Map<String, String> lockedEntity =
 					new HashMap<String, String>(1);
 
-				aLockedEntity.put(ERROR_LOCKED_ENTITY_ID, sEntityId);
+				lockedEntity.put(ERROR_LOCKED_ENTITY_ID, entityId);
 
-				eResult =
-					new ServiceException(ERROR_ENTITY_LOCKED, aLockedEntity,
-						rProcessState);
+				result = new ServiceException(ERROR_ENTITY_LOCKED,
+					lockedEntity,
+					processState);
 			} else {
-				eResult = new ServiceException(sMessage, e);
+				result = new ServiceException(message, e);
 			}
 		}
 
-		return eResult;
+		return result;
 	}
 
 	/**
 	 * Applies the list of modified entities in a process to the given process
 	 * state.
 	 *
-	 * @param rProcess      The process to read the modification from
-	 * @param rProcessState The process state to apply the modifications too
+	 * @param process      The process to read the modification from
+	 * @param processState The process state to apply the modifications too
 	 */
-	private void applyModifiedEntities(Process rProcess,
-		ProcessState rProcessState) {
-		Map<String, Entity> rModifiedEntities =
-			rProcess.get(CONTEXT_MODIFIED_ENTITIES);
+	private void applyModifiedEntities(Process process,
+		ProcessState processState) {
+		Map<String, Entity> modifiedEntities =
+			process.get(CONTEXT_MODIFIED_ENTITIES);
 
-		if (!rModifiedEntities.isEmpty()) {
-			StringBuilder aLocks = new StringBuilder();
+		if (!modifiedEntities.isEmpty()) {
+			StringBuilder locks = new StringBuilder();
 
-			for (Entity rLockedEntity : rModifiedEntities.values()) {
-				if (!rLockedEntity.hasFlag(MetaTypes.LOCKED)) {
-					aLocks.append(rLockedEntity.getGlobalId());
-					aLocks.append(",");
+			for (Entity lockedEntity : modifiedEntities.values()) {
+				if (!lockedEntity.hasFlag(MetaTypes.LOCKED)) {
+					locks.append(lockedEntity.getGlobalId());
+					locks.append(",");
 				}
 			}
 
-			if (aLocks.length() > 0) {
-				aLocks.setLength(aLocks.length() - 1);
+			if (locks.length() > 0) {
+				locks.setLength(locks.length() - 1);
 
-				rProcessState.setProperty(PROCESS_ENTITY_LOCKS,
-					aLocks.toString());
+				processState.setProperty(PROCESS_ENTITY_LOCKS,
+					locks.toString());
 			}
 		}
 	}
@@ -541,32 +538,32 @@ public abstract class ProcessServiceImpl<E extends Entity>
 	 * process and a corresponding process already exists in the given process
 	 * collection.
 	 *
-	 * @param rDescription The application process description
-	 * @param rProcesses   The processes to search
+	 * @param description The application process description
+	 * @param processes   The processes to search
 	 * @return The application process to re-use or NULL for none
 	 */
-	private Process checkReuseExistingAppProcess(
-		ProcessDescription rDescription, Collection<Process> rProcesses) {
-		String sProcessName = rDescription.getName();
-		Process rProcess = null;
+	private Process checkReuseExistingAppProcess(ProcessDescription description,
+		Collection<Process> processes) {
+		String processName = description.getName();
+		Process process = null;
 
-		if (sProcessName.startsWith(APPLICATION_PROCESS_PATH)) {
-			if (aAppProcess.exists() &&
-				sProcessName.endsWith(APPLICATION_MAIN_PROCESS)) {
+		if (processName.startsWith(APPLICATION_PROCESS_PATH)) {
+			if (appProcess.exists() &&
+				processName.endsWith(APPLICATION_MAIN_PROCESS)) {
 				// will never fail as exists() is checked above
-				sProcessName = aAppProcess.map(p -> p.getName()).orFail();
+				processName = appProcess.map(p -> p.getName()).orFail();
 			}
 
-			for (Process rExistingProcess : rProcesses) {
-				if (sProcessName.endsWith(rExistingProcess.getName())) {
-					rProcess = rExistingProcess;
+			for (Process existingProcess : processes) {
+				if (processName.endsWith(existingProcess.getName())) {
+					process = existingProcess;
 
 					break;
 				}
 			}
 		}
 
-		return rProcess;
+		return process;
 	}
 
 	/**
@@ -574,31 +571,31 @@ public abstract class ProcessServiceImpl<E extends Entity>
 	 * a data element list is modified it will be added to the target
 	 * collection. Otherwise it's children will be checked recursively.
 	 *
-	 * @param rDataElements     The data elements to check for modification
-	 * @param rModifiedElements A collection to add modified elements to
+	 * @param dataElements     The data elements to check for modification
+	 * @param modifiedElements A collection to add modified elements to
 	 */
 	private void collectModifiedDataElements(
-		Collection<DataElement<?>> rDataElements,
-		Collection<DataElement<?>> rModifiedElements) {
-		for (DataElement<?> rDataElement : rDataElements) {
-			boolean bChanged = rDataElement.hasFlag(VALUE_CHANGED) |
-				rDataElement.hasFlag(PROPERTIES_CHANGED);
+		Collection<DataElement<?>> dataElements,
+		Collection<DataElement<?>> modifiedElements) {
+		for (DataElement<?> dataElement : dataElements) {
+			boolean changed = dataElement.hasFlag(VALUE_CHANGED) |
+				dataElement.hasFlag(PROPERTIES_CHANGED);
 
-			if (rDataElement instanceof DataElementList) {
-				if (rDataElement.hasFlag(STRUCTURE_CHANGED)) {
-					rModifiedElements.add(rDataElement);
+			if (dataElement instanceof DataElementList) {
+				if (dataElement.hasFlag(STRUCTURE_CHANGED)) {
+					modifiedElements.add(dataElement);
 				} else {
-					if (bChanged) {
-						rModifiedElements.add(
-							rDataElement.copy(CopyMode.PROPERTIES));
+					if (changed) {
+						modifiedElements.add(
+							dataElement.copy(CopyMode.PROPERTIES));
 					}
 
 					collectModifiedDataElements(
-						((DataElementList) rDataElement).getElements(),
-						rModifiedElements);
+						((DataElementList) dataElement).getElements(),
+						modifiedElements);
 				}
-			} else if (bChanged) {
-				rModifiedElements.add(rDataElement);
+			} else if (changed) {
+				modifiedElements.add(dataElement);
 			}
 		}
 	}
@@ -610,125 +607,123 @@ public abstract class ProcessServiceImpl<E extends Entity>
 	 * method returns NULL no data element will be added to the result for the
 	 * respective relation.
 	 *
-	 * @param rInteractionStep The process fragment to query the relations from
-	 * @param bMarkAsChanged   Whether all data elements should be marked as
-	 *                         modified
+	 * @param interactionStep The process fragment to query the relations from
+	 * @param markAsChanged   Whether all data elements should be marked as
+	 *                        modified
 	 * @return A new list containing the resulting data elements
 	 * @throws StorageException If the initialization of a storage-based data
 	 *                          element fails
 	 */
 	private List<DataElement<?>> createInteractionElements(
-		ProcessFragment rInteractionStep, boolean bMarkAsChanged)
+		ProcessFragment interactionStep, boolean markAsChanged)
 		throws StorageException {
-		DataElementFactory rFactory = getDataElementFactory();
+		DataElementFactory factory = getDataElementFactory();
 
-		List<RelationType<?>> rInteractionParams =
-			rInteractionStep.get(INTERACTION_PARAMS);
+		List<RelationType<?>> interactionParams =
+			interactionStep.get(INTERACTION_PARAMS);
 
-		List<DataElement<?>> aDataElements =
-			new ArrayList<DataElement<?>>(rInteractionParams.size());
+		List<DataElement<?>> dataElements =
+			new ArrayList<DataElement<?>>(interactionParams.size());
 
-		for (RelationType<?> rParam : rInteractionParams) {
-			DataElement<?> aElement =
-				rFactory.getDataElement(rInteractionStep, rParam);
+		for (RelationType<?> param : interactionParams) {
+			DataElement<?> element =
+				factory.getDataElement(interactionStep, param);
 
-			if (aElement != null) {
-				aDataElements.add(aElement);
+			if (element != null) {
+				dataElements.add(element);
 
-				if (bMarkAsChanged) {
-					aElement.markAsChanged();
+				if (markAsChanged) {
+					element.markAsChanged();
 				}
 			}
 		}
 
-		return aDataElements;
+		return dataElements;
 	}
 
 	/**
 	 * Creates a new process instance and sets the standard parameters on it.
 	 *
-	 * @param rDefinition  The process definition
-	 * @param rSessionData The data of the current session
+	 * @param definition  The process definition
+	 * @param sessionData The data of the current session
 	 * @return The new process instance
 	 * @throws ProcessException If creating the instance fails
 	 */
-	private Process createProcess(ProcessDefinition rDefinition,
-		SessionData rSessionData) throws ProcessException {
-		Process rProcess = ProcessManager.getProcess(rDefinition);
-		Entity rUser = rSessionData.get(SessionData.SESSION_USER);
+	private Process createProcess(ProcessDefinition definition,
+		SessionData sessionData) throws ProcessException {
+		Process process = ProcessManager.getProcess(definition);
+		Entity user = sessionData.get(SessionData.SESSION_USER);
 
-		rProcess.setParameter(SESSION_MANAGER, this);
-		rProcess.setParameter(EXTERNAL_SERVICE_ACCESS, this);
-		rProcess.setParameter(STORAGE_ADAPTER_REGISTRY, this);
-		rProcess.setParameter(PROCESS_USER, rUser);
-		rProcess.setParameter(PROCESS_LOCALE,
+		process.setParameter(SESSION_MANAGER, this);
+		process.setParameter(EXTERNAL_SERVICE_ACCESS, this);
+		process.setParameter(STORAGE_ADAPTER_REGISTRY, this);
+		process.setParameter(PROCESS_USER, user);
+		process.setParameter(PROCESS_LOCALE,
 			getThreadLocalRequest().getLocale());
 
-		return rProcess;
+		return process;
 	}
 
 	/**
 	 * Creates a new {@link ProcessState} instance from a certain process.
 	 * Invoked by {@link #executeProcess(ProcessDescription, Relatable)}.
 	 *
-	 * @param rDescription The process definition
-	 * @param rProcess     The process
-	 * @param bRefresh     TRUE if all data elements should be refreshed
-	 *                        even if
-	 *                     not marked as modified
+	 * @param description The process definition
+	 * @param process     The process
+	 * @param refresh     TRUE if all data elements should be refreshed even if
+	 *                    not marked as modified
 	 * @return A new process state object
 	 * @throws StorageException If the creation of a storage-based interaction
 	 *                          data element fails
 	 */
 	@SuppressWarnings("boxing")
-	private ProcessState createProcessState(ProcessDescription rDescription,
-		Process rProcess, boolean bRefresh) throws StorageException {
-		Integer sProcessId = rProcess.getParameter(PROCESS_ID);
-		String sProcessInfo = rProcess.getParameter(PROCESS_INFO);
-		ProcessState aProcessState;
+	private ProcessState createProcessState(ProcessDescription description,
+		Process process, boolean refresh) throws StorageException {
+		Integer processId = process.getParameter(PROCESS_ID);
+		String processInfo = process.getParameter(PROCESS_INFO);
+		ProcessState processState;
 
-		if (rProcess.isFinished()) {
-			aProcessState =
-				new ProcessState(rDescription, sProcessId, sProcessInfo);
+		if (process.isFinished()) {
+			processState =
+				new ProcessState(description, processId, processInfo);
 		} else {
-			ProcessStep rInteractionStep = rProcess.getInteractionStep();
+			ProcessStep interactionStep = process.getInteractionStep();
 
-			List<DataElement<?>> aInteractionElements =
-				createInteractionElements(rInteractionStep, bRefresh);
+			List<DataElement<?>> interactionElements =
+				createInteractionElements(interactionStep, refresh);
 
-			List<DataElementList> aViewElements =
-				createViewDataElements(rInteractionStep);
+			List<DataElementList> viewElements =
+				createViewDataElements(interactionStep);
 
-			if (!bRefresh) {
-				aInteractionElements =
-					reduceToModifiedElements(aInteractionElements);
+			if (!refresh) {
+				interactionElements =
+					reduceToModifiedElements(interactionElements);
 			}
 
-			aProcessState =
-				new ProcessState(rDescription, sProcessId, sProcessInfo,
-					rInteractionStep.getName(), aInteractionElements,
-					aViewElements, getSpawnProcesses(rProcess),
-					getProcessStateFlags(rProcess, rInteractionStep));
+			processState = new ProcessState(description, processId,
+				processInfo,
+				interactionStep.getName(), interactionElements, viewElements,
+				getSpawnProcesses(process),
+				getProcessStateFlags(process, interactionStep));
 
-			if (rProcess.hasFlagParameter(MetaTypes.AUTHENTICATED)) {
-				aProcessState.setFlag(PROCESS_AUTHENTICATED);
+			if (process.hasFlagParameter(MetaTypes.AUTHENTICATED)) {
+				processState.setFlag(PROCESS_AUTHENTICATED);
 			}
 
-			String sStyle = rInteractionStep.getParameter(PROCESS_STEP_STYLE);
+			String style = interactionStep.getParameter(PROCESS_STEP_STYLE);
 
-			if (sStyle != null) {
-				aProcessState.setProperty(UserInterfaceProperties.STYLE,
-					sStyle);
+			if (style != null) {
+				processState.setProperty(UserInterfaceProperties.STYLE, style);
 			}
 
-			applyModifiedEntities(rProcess, aProcessState);
+			applyModifiedEntities(process, processState);
 
 			// reset modifications after applying to also reset changes from
 			// parameter relation listeners that are invoked during application
-			rInteractionStep.resetParameterModifications();
+			interactionStep.resetParameterModifications();
 		}
 
-		return aProcessState;
+		return processState;
 	}
 
 	/**
@@ -738,34 +733,32 @@ public abstract class ProcessServiceImpl<E extends Entity>
 	 * method returns NULL no data element will be added to the result for the
 	 * respective relation.
 	 *
-	 * @param rInteractionStep rObject The related object to query the
-	 *                            relations
-	 *                         from
+	 * @param interactionStep rObject The related object to query the relations
+	 *                        from
 	 * @return A new list containing the resulting data elements
 	 * @throws StorageException If the initialization of a storage-based data
 	 *                          element fails
 	 */
 	private List<DataElementList> createViewDataElements(
-		ProcessFragment rInteractionStep) throws StorageException {
-		DataElementFactory rFactory = getDataElementFactory();
+		ProcessFragment interactionStep) throws StorageException {
+		DataElementFactory factory = getDataElementFactory();
 
-		Set<RelationType<List<RelationType<?>>>> rViewParams =
-			rInteractionStep.get(VIEW_PARAMS);
+		Set<RelationType<List<RelationType<?>>>> viewParams =
+			interactionStep.get(VIEW_PARAMS);
 
-		List<DataElementList> aViewElements = null;
+		List<DataElementList> viewElements = null;
 
-		if (rViewParams.size() > 0) {
-			aViewElements = new ArrayList<>(rViewParams.size());
+		if (viewParams.size() > 0) {
+			viewElements = new ArrayList<>(viewParams.size());
 
-			for (RelationType<List<RelationType<?>>> rViewParam :
-				rViewParams) {
-				aViewElements.add(
-					(DataElementList) rFactory.getDataElement(rInteractionStep,
-						rViewParam));
+			for (RelationType<List<RelationType<?>>> viewParam : viewParams) {
+				viewElements.add(
+					(DataElementList) factory.getDataElement(interactionStep,
+						viewParam));
 			}
 		}
 
-		return aViewElements;
+		return viewElements;
 	}
 
 	/**
@@ -774,7 +767,7 @@ public abstract class ProcessServiceImpl<E extends Entity>
 	 * @return The data element factory
 	 */
 	private final DataElementFactory getDataElementFactory() {
-		return rDataElementFactory;
+		return dataElementFactory;
 	}
 
 	/**
@@ -782,11 +775,13 @@ public abstract class ProcessServiceImpl<E extends Entity>
 	 * description
 	 * or process state and after preparing it for execution.
 	 *
-	 * @param rDescription The process description or process state, depending
-	 *                     on the current execution state of the process
-	 * @param rSessionData The data of the current session
-	 * @param rInitParams  Optional process initialization parameters or NULL
-	 *                     for none
+	 * @param description The process description or process state,
+	 *                       depending on
+	 *                    the current execution state of the process
+	 * @param sessionData The data of the current session
+	 * @param initParams  Optional process initialization parameters or NULL
+	 *                      for
+	 *                    none
 	 * @return The prepared process
 	 * @throws ProcessException         If accessing the process fails
 	 * @throws ServiceException         If the client is not authenticated or
@@ -796,84 +791,83 @@ public abstract class ProcessServiceImpl<E extends Entity>
 	 *                                  invalid
 	 */
 	@SuppressWarnings("boxing")
-	private Process getProcess(ProcessDescription rDescription,
-		SessionData rSessionData, Relatable rInitParams)
+	private Process getProcess(ProcessDescription description,
+		SessionData sessionData, Relatable initParams)
 		throws ProcessException, ServiceException, StorageException {
-		Process rProcess = null;
+		Process process = null;
 
-		Map<Integer, Process> rUserProcessMap =
-			rSessionData.get(USER_PROCESS_MAP);
+		Map<Integer, Process> userProcessMap =
+			sessionData.get(USER_PROCESS_MAP);
 
-		if (rDescription.getClass() == ProcessDescription.class) {
+		if (description.getClass() == ProcessDescription.class) {
 			// if the user reloads the browser windows the existing process can
 			// be re-used instead of creating a new one
-			rProcess = checkReuseExistingAppProcess(rDescription,
-				rUserProcessMap.values());
+			process = checkReuseExistingAppProcess(description,
+				userProcessMap.values());
 
-			if (rProcess != null) {
-				rProcess.set(INTERACTION_EVENT_PARAM, RELOAD_CURRENT_STEP);
+			if (process != null) {
+				process.set(INTERACTION_EVENT_PARAM, RELOAD_CURRENT_STEP);
 			} else {
-				ProcessDefinition rDefinition =
-					aProcessDefinitions.get(rDescription.getDescriptionId());
+				ProcessDefinition definition =
+					processDefinitions.get(description.getDescriptionId());
 
-				rProcess = createProcess(rDefinition, rSessionData);
+				process = createProcess(definition, sessionData);
 
-				getSessionContext().get(PROCESS_LIST).add(rProcess);
-				rUserProcessMap.put(rProcess.getParameter(PROCESS_ID),
-					rProcess);
-				initProcess(rProcess, rInitParams);
-				setProcessInput(rProcess, rDescription.getProcessInput());
+				getSessionContext().get(PROCESS_LIST).add(process);
+				userProcessMap.put(process.getParameter(PROCESS_ID), process);
+				initProcess(process, initParams);
+				setProcessInput(process, description.getProcessInput());
 			}
-		} else if (rDescription instanceof ProcessState) {
-			ProcessState rProcessState = (ProcessState) rDescription;
+		} else if (description instanceof ProcessState) {
+			ProcessState processState = (ProcessState) description;
 
-			rProcess = rUserProcessMap.get(rProcessState.getProcessId());
+			process = userProcessMap.get(processState.getProcessId());
 
-			if (rProcess == null) {
+			if (process == null) {
 				throw new IllegalStateException("NoProcessFound");
 			}
 
-			updateProcess(rProcess, rProcessState);
+			updateProcess(process, processState);
 
 			if (hasProcessAuthentication()) {
-				initProcess(rProcess, rInitParams);
+				initProcess(process, initParams);
 			}
 		} else {
 			throw new IllegalArgumentException(
-				"Unknown process reference: " + rDescription);
+				"Unknown process reference: " + description);
 		}
 
-		return rProcess;
+		return process;
 	}
 
 	/**
 	 * Returns a set of flags for the current state of a process.
 	 *
-	 * @param rProcess         The process
-	 * @param rInteractionStep The current interaction step
+	 * @param process         The process
+	 * @param interactionStep The current interaction step
 	 */
-	private Set<ProcessStateFlag> getProcessStateFlags(Process rProcess,
-		ProcessStep rInteractionStep) {
-		Set<ProcessStateFlag> aStepFlags = new HashSet<ProcessStateFlag>();
+	private Set<ProcessStateFlag> getProcessStateFlags(Process process,
+		ProcessStep interactionStep) {
+		Set<ProcessStateFlag> stepFlags = new HashSet<ProcessStateFlag>();
 
-		if (rProcess.canRollbackToPreviousInteraction()) {
-			aStepFlags.add(ProcessStateFlag.ROLLBACK);
+		if (process.canRollbackToPreviousInteraction()) {
+			stepFlags.add(ProcessStateFlag.ROLLBACK);
 		}
 
-		if (rInteractionStep.hasFlag(AUTO_CONTINUE) ||
-			rInteractionStep.hasFlag(AUTO_UPDATE)) {
-			aStepFlags.add(ProcessStateFlag.AUTO_CONTINUE);
+		if (interactionStep.hasFlag(AUTO_CONTINUE) ||
+			interactionStep.hasFlag(AUTO_UPDATE)) {
+			stepFlags.add(ProcessStateFlag.AUTO_CONTINUE);
 		}
 
-		if (rInteractionStep.hasFlag(FINAL_STEP)) {
-			aStepFlags.add(ProcessStateFlag.FINAL_STEP);
+		if (interactionStep.hasFlag(FINAL_STEP)) {
+			stepFlags.add(ProcessStateFlag.FINAL_STEP);
 		}
 
-		if (rInteractionStep.hasFlag(IMMEDIATE_INTERACTION)) {
-			aStepFlags.add(ProcessStateFlag.HAS_IMMEDIATE_INTERACTION);
+		if (interactionStep.hasFlag(IMMEDIATE_INTERACTION)) {
+			stepFlags.add(ProcessStateFlag.HAS_IMMEDIATE_INTERACTION);
 		}
 
-		return aStepFlags;
+		return stepFlags;
 	}
 
 	/**
@@ -885,22 +879,22 @@ public abstract class ProcessServiceImpl<E extends Entity>
 	 * {@link de.esoco.process.ProcessRelationTypes#NEW_PROCESSES}. This list
 	 * will be cleared after it has been queried.
 	 *
-	 * @param rProcess The process to query the new processes from
+	 * @param process The process to query the new processes from
 	 * @return A list of process states or NULL for none
 	 */
-	private List<ProcessState> getSpawnProcesses(Process rProcess) {
-		List<ProcessState> rSpawnProcesses =
-			rProcess.getParameter(SPAWN_PROCESSES);
+	private List<ProcessState> getSpawnProcesses(Process process) {
+		List<ProcessState> spawnProcesses =
+			process.getParameter(SPAWN_PROCESSES);
 
-		if (rSpawnProcesses.size() > 0) {
-			rSpawnProcesses = new ArrayList<>(rSpawnProcesses);
+		if (spawnProcesses.size() > 0) {
+			spawnProcesses = new ArrayList<>(spawnProcesses);
 		} else {
-			rSpawnProcesses = null;
+			spawnProcesses = null;
 		}
 
-		rProcess.getParameter(SPAWN_PROCESSES).clear();
+		process.getParameter(SPAWN_PROCESSES).clear();
 
-		return rSpawnProcesses;
+		return spawnProcesses;
 	}
 
 	/**
@@ -909,44 +903,44 @@ public abstract class ProcessServiceImpl<E extends Entity>
 	 * element list is modified it will be added to the target collection.
 	 * Otherwise it's children will be checked recursively.
 	 *
-	 * @param rDataElements The data elements to check for modification
+	 * @param dataElements The data elements to check for modification
 	 * @return A list containing the modified elements from the input
 	 * collection
 	 */
 	private List<DataElement<?>> reduceToModifiedElements(
-		Collection<DataElement<?>> rDataElements) {
-		List<DataElement<?>> aModifiedElements = new ArrayList<>();
+		Collection<DataElement<?>> dataElements) {
+		List<DataElement<?>> modifiedElements = new ArrayList<>();
 
-		collectModifiedDataElements(rDataElements, aModifiedElements);
+		collectModifiedDataElements(dataElements, modifiedElements);
 
-		return aModifiedElements;
+		return modifiedElements;
 	}
 
 	/**
 	 * Sets properties of the current client (e.g. info, locale) as process
 	 * parameters.
 	 *
-	 * @param rDescription The process description containing the client
-	 *                     properties
-	 * @param rProcess     The process to set the parameters in
+	 * @param description The process description containing the client
+	 *                    properties
+	 * @param process     The process to set the parameters in
 	 */
-	private void setClientProperties(ProcessDescription rDescription,
-		Process rProcess) {
-		String sClientInfo = rDescription.getClientInfo();
-		String sClientLocale = rDescription.getClientLocale();
+	private void setClientProperties(ProcessDescription description,
+		Process process) {
+		String clientInfo = description.getClientInfo();
+		String clientLocale = description.getClientLocale();
 
-		rProcess.set(CLIENT_LOCALE, rDefaultLocale);
+		process.set(CLIENT_LOCALE, defaultLocale);
 
-		if (sClientInfo != null) {
-			rProcess.set(CLIENT_INFO, sClientInfo);
+		if (clientInfo != null) {
+			process.set(CLIENT_INFO, clientInfo);
 		}
 
-		if (sClientLocale != null) {
+		if (clientLocale != null) {
 			try {
-				rProcess.set(CLIENT_LOCALE,
-					Locale.forLanguageTag(sClientLocale));
+				process.set(CLIENT_LOCALE,
+					Locale.forLanguageTag(clientLocale));
 			} catch (Exception e) {
-				Log.warn("Unknown client locale: " + sClientLocale, e);
+				Log.warn("Unknown client locale: " + clientLocale, e);
 			}
 		}
 	}
@@ -955,28 +949,26 @@ public abstract class ProcessServiceImpl<E extends Entity>
 	 * Sets the process input parameters from a data element or a list of data
 	 * elements.
 	 *
-	 * @param rProcess      The process
-	 * @param rProcessInput The process input data element(s)
+	 * @param process      The process
+	 * @param processInput The process input data element(s)
 	 * @throws AuthenticationException If the current user is not authenticated
 	 * @throws StorageException        If accessing storage data fails
 	 */
-	private void setProcessInput(Process rProcess,
-		DataElement<?> rProcessInput)
+	private void setProcessInput(Process process, DataElement<?> processInput)
 		throws StorageException, AuthenticationException {
-		if (rProcessInput != null) {
-			List<DataElement<?>> rInputValues =
-				new ArrayList<DataElement<?>>();
+		if (processInput != null) {
+			List<DataElement<?>> inputValues = new ArrayList<DataElement<?>>();
 
-			if (rProcessInput instanceof DataElementList) {
-				for (DataElement<?> rInputValue :
-					(DataElementList) rProcessInput) {
-					rInputValues.add(rInputValue);
+			if (processInput instanceof DataElementList) {
+				for (DataElement<?> inputValue :
+					(DataElementList) processInput) {
+					inputValues.add(inputValue);
 				}
 			} else {
-				rInputValues.add(rProcessInput);
+				inputValues.add(processInput);
 			}
 
-			getDataElementFactory().applyDataElements(rInputValues, rProcess);
+			getDataElementFactory().applyDataElements(inputValues, process);
 		}
 	}
 
@@ -984,62 +976,61 @@ public abstract class ProcessServiceImpl<E extends Entity>
 	 * Updates a process from a certain process state that has been received
 	 * from the client.
 	 *
-	 * @param rProcess      The process to update
-	 * @param rProcessState The process state to update the process from
+	 * @param process      The process to update
+	 * @param processState The process state to update the process from
 	 * @throws AuthenticationException If the client is not authenticated
 	 * @throws StorageException        If a storage access fails
 	 * @throws IllegalStateException   If the process is NULL
 	 */
 	@SuppressWarnings("boxing")
-	private void updateProcess(Process rProcess, ProcessState rProcessState)
+	private void updateProcess(Process process, ProcessState processState)
 		throws AuthenticationException, StorageException {
-		ProcessExecutionMode eMode = rProcessState.getExecutionMode();
+		ProcessExecutionMode mode = processState.getExecutionMode();
 
-		RelationType<?> rInteractionParam = null;
+		RelationType<?> interactionParam = null;
 
-		if (eMode == ProcessExecutionMode.RELOAD) {
-			rInteractionParam = RELOAD_CURRENT_STEP;
+		if (mode == ProcessExecutionMode.RELOAD) {
+			interactionParam = RELOAD_CURRENT_STEP;
 		} else {
-			if (eMode == ProcessExecutionMode.EXECUTE) {
-				List<DataElement<?>> rInteractionParams =
-					rProcessState.getInteractionParams();
+			if (mode == ProcessExecutionMode.EXECUTE) {
+				List<DataElement<?>> interactionParams =
+					processState.getInteractionParams();
 
-				List<DataElementList> rViewParams =
-					rProcessState.getViewParams();
+				List<DataElementList> viewParams =
+					processState.getViewParams();
 
-				DataElementFactory rDataElementFactory =
+				DataElementFactory dataElementFactory =
 					getDataElementFactory();
 
-				rDataElementFactory.applyDataElements(rInteractionParams,
-					rProcess);
+				dataElementFactory.applyDataElements(interactionParams,
+					process);
 
-				if (!rViewParams.isEmpty()) {
-					rDataElementFactory.applyDataElements(rViewParams,
-						rProcess);
+				if (!viewParams.isEmpty()) {
+					dataElementFactory.applyDataElements(viewParams, process);
 				}
 			}
 
-			DataElement<?> rInteractionElement =
-				rProcessState.getInteractionElement();
+			DataElement<?> interactionElement =
+				processState.getInteractionElement();
 
-			if (rInteractionElement != null) {
-				rInteractionParam =
-					RelationType.valueOf(rInteractionElement.getName());
+			if (interactionElement != null) {
+				interactionParam =
+					RelationType.valueOf(interactionElement.getName());
 
-				if (rInteractionParam == null) {
+				if (interactionParam == null) {
 					throw new IllegalStateException(
-						"Unknown interaction parameter: " + rInteractionParam);
+						"Unknown interaction parameter: " + interactionParam);
 				}
 
-				InteractionEventType eEventType =
-					rProcessState.getInteractionEventType();
+				InteractionEventType eventType =
+					processState.getInteractionEventType();
 
-				rProcess.setParameter(INTERACTION_EVENT_TYPE, eEventType);
+				process.setParameter(INTERACTION_EVENT_TYPE, eventType);
 			} else {
-				rProcess.deleteRelation(INTERACTION_EVENT_TYPE);
+				process.deleteRelation(INTERACTION_EVENT_TYPE);
 			}
 		}
 
-		rProcess.setParameter(INTERACTION_EVENT_PARAM, rInteractionParam);
+		process.setParameter(INTERACTION_EVENT_PARAM, interactionParam);
 	}
 }

@@ -32,11 +32,11 @@ import de.esoco.gwt.shared.StorageServiceAsync;
  */
 public class ServiceRegistry {
 
-	private static CommandServiceAsync rCommandService;
+	private static CommandServiceAsync commandService;
 
-	private static AuthenticatedServiceAsync rAuthenticatedService;
+	private static AuthenticatedServiceAsync authenticatedService;
 
-	private static StorageServiceAsync rStorageService;
+	private static StorageServiceAsync storageService;
 
 	/**
 	 * Private, only static use.
@@ -54,7 +54,7 @@ public class ServiceRegistry {
 	 * for none
 	 */
 	public static AuthenticatedServiceAsync getAuthenticatedService() {
-		return rAuthenticatedService;
+		return authenticatedService;
 	}
 
 	/**
@@ -67,7 +67,7 @@ public class ServiceRegistry {
 	 * or NULL for none
 	 */
 	public static CommandServiceAsync getCommandService() {
-		return rCommandService;
+		return commandService;
 	}
 
 	/**
@@ -80,7 +80,7 @@ public class ServiceRegistry {
 	 * for none
 	 */
 	public static StorageServiceAsync getStorageService() {
-		return rStorageService;
+		return storageService;
 	}
 
 	/**
@@ -90,10 +90,10 @@ public class ServiceRegistry {
 	 * This method must be invoked by framework clients before the standard
 	 * services are accessed.
 	 *
-	 * @param rServiceAsync The service class to initialize the registry from
+	 * @param serviceAsync The service class to initialize the registry from
 	 */
-	public static void init(CommandServiceAsync rServiceAsync) {
-		registerStandardServices(rServiceAsync);
+	public static void init(CommandServiceAsync serviceAsync) {
+		registerStandardServices(serviceAsync);
 	}
 
 	/**
@@ -103,21 +103,21 @@ public class ServiceRegistry {
 	 * for generic use. The standard services can then be queried through the
 	 * other static methods in this class.
 	 *
-	 * @param rServiceAsync The application-specific asynchronous service
-	 *                      interface that extends one or more standard service
-	 *                      interfaces
+	 * @param serviceAsync The application-specific asynchronous service
+	 *                     interface that extends one or more standard service
+	 *                     interfaces
 	 */
-	public static void registerStandardServices(Object rServiceAsync) {
-		if (rServiceAsync instanceof CommandServiceAsync) {
-			rCommandService = (CommandServiceAsync) rServiceAsync;
+	public static void registerStandardServices(Object serviceAsync) {
+		if (serviceAsync instanceof CommandServiceAsync) {
+			commandService = (CommandServiceAsync) serviceAsync;
 		}
 
-		if (rServiceAsync instanceof AuthenticatedServiceAsync) {
-			rAuthenticatedService = (AuthenticatedServiceAsync) rServiceAsync;
+		if (serviceAsync instanceof AuthenticatedServiceAsync) {
+			authenticatedService = (AuthenticatedServiceAsync) serviceAsync;
 		}
 
-		if (rServiceAsync instanceof StorageServiceAsync) {
-			rStorageService = (StorageServiceAsync) rServiceAsync;
+		if (serviceAsync instanceof StorageServiceAsync) {
+			storageService = (StorageServiceAsync) serviceAsync;
 		}
 	}
 }

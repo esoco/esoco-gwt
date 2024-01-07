@@ -51,75 +51,75 @@ import static de.esoco.lib.property.LayoutProperties.COLUMNS;
  */
 public class DateDataElementUI extends DataElementUI<DateDataElement> {
 
-	private Map<Date, String> rCalendarEvents = Collections.emptyMap();
+	private Map<Date, String> calendarEvents = Collections.emptyMap();
 
 	/**
 	 * @see DataElementUI#convertValueToString(DataElement, Object)
 	 */
 	@Override
-	protected String convertValueToString(DataElement<?> rDataElement,
-		Object rValue) {
-		return rValue != null ?
-		       super.convertValueToString(rDataElement, rValue) :
+	protected String convertValueToString(DataElement<?> dataElement,
+		Object value) {
+		return value != null ?
+		       super.convertValueToString(dataElement, value) :
 		       " ";
 	}
 
 	@Override
-	protected Component createInputUI(ContainerBuilder<?> rBuilder,
-		StyleData rInputStyle, DateDataElement rDataElement) {
-		Date rDate = rDataElement.getValue();
-		Component rComponent;
+	protected Component createInputUI(ContainerBuilder<?> builder,
+		StyleData inputStyle, DateDataElement dataElement) {
+		Date date = dataElement.getValue();
+		Component component;
 
-		DateInputType eDateInputType =
-			rDataElement.getProperty(DATE_INPUT_TYPE, null);
+		DateInputType dateInputType =
+			dataElement.getProperty(DATE_INPUT_TYPE, null);
 
-		if (rDataElement.getProperty(CONTENT_TYPE, null) ==
+		if (dataElement.getProperty(CONTENT_TYPE, null) ==
 			ContentType.DATE_TIME) {
-			rInputStyle = rInputStyle.setFlags(StyleFlag.DATE_TIME);
+			inputStyle = inputStyle.setFlags(StyleFlag.DATE_TIME);
 		}
 
-		if (eDateInputType == DateInputType.INPUT_FIELD) {
-			DateField aDateField = rBuilder.addDateField(rInputStyle, rDate);
+		if (dateInputType == DateInputType.INPUT_FIELD) {
+			DateField dateField = builder.addDateField(inputStyle, date);
 
-			aDateField.setColumns(rDataElement.getIntProperty(COLUMNS, 10));
-			rComponent = aDateField;
+			dateField.setColumns(dataElement.getIntProperty(COLUMNS, 10));
+			component = dateField;
 		} else {
-			Calendar aCalendar = rBuilder.addCalendar(rInputStyle, rDate);
+			Calendar calendar = builder.addCalendar(inputStyle, date);
 
-			updateCalendar(aCalendar, rDataElement);
-			rComponent = aCalendar;
+			updateCalendar(calendar, dataElement);
+			component = calendar;
 		}
 
-		return rComponent;
+		return component;
 	}
 
 	@Override
 	protected DataElementInteractionHandler<DateDataElement> createInteractionHandler(
-		DataElementPanelManager rPanelManager, DateDataElement rDataElement) {
-		return new DateInteractionHandler(rPanelManager, rDataElement);
+		DataElementPanelManager panelManager, DateDataElement dataElement) {
+		return new DateInteractionHandler(panelManager, dataElement);
 	}
 
 	@Override
-	protected void transferDataElementValueToComponent(DateDataElement rElement,
-		Component rComponent) {
-		if (rComponent instanceof DateAttribute) {
-			((DateAttribute) rComponent).setDate(rElement.getValue());
+	protected void transferDataElementValueToComponent(DateDataElement element,
+		Component component) {
+		if (component instanceof DateAttribute) {
+			((DateAttribute) component).setDate(element.getValue());
 
-			if (rComponent instanceof Calendar) {
-				updateCalendar((Calendar) rComponent, rElement);
+			if (component instanceof Calendar) {
+				updateCalendar((Calendar) component, element);
 			}
 		} else {
-			super.transferDataElementValueToComponent(rElement, rComponent);
+			super.transferDataElementValueToComponent(element, component);
 		}
 	}
 
 	@Override
-	protected void transferInputToDataElement(Component rComponent,
-		DateDataElement rElement) {
-		if (rComponent instanceof DateAttribute) {
-			rElement.setValue(((DateAttribute) rComponent).getDate());
+	protected void transferInputToDataElement(Component component,
+		DateDataElement element) {
+		if (component instanceof DateAttribute) {
+			element.setValue(((DateAttribute) component).getDate());
 		} else {
-			super.transferInputToDataElement(rComponent, rElement);
+			super.transferInputToDataElement(component, element);
 		}
 	}
 
@@ -128,27 +128,27 @@ public class DateDataElementUI extends DataElementUI<DateDataElement> {
 	 * date
 	 * data element.
 	 *
-	 * @param rCalendar    The calendar component
-	 * @param rDataElement The date data element
+	 * @param calendar    The calendar component
+	 * @param dataElement The date data element
 	 */
-	private void updateCalendar(Calendar rCalendar,
-		DateDataElement rDataElement) {
-		for (Entry<Date, String> rEntry : rCalendarEvents.entrySet()) {
-			Date rDate = rEntry.getKey();
-			String sStyle = rEntry.getValue();
+	private void updateCalendar(Calendar calendar,
+		DateDataElement dataElement) {
+		for (Entry<Date, String> entry : calendarEvents.entrySet()) {
+			Date date = entry.getKey();
+			String style = entry.getValue();
 
-			rCalendar.removeDateStyle(rDate, sStyle);
+			calendar.removeDateStyle(date, style);
 		}
 
-		rCalendarEvents =
-			rDataElement.getProperty(DateDataElement.DATE_HIGHLIGHTS,
+		calendarEvents =
+			dataElement.getProperty(DateDataElement.DATE_HIGHLIGHTS,
 				Collections.<Date, String>emptyMap());
 
-		for (Entry<Date, String> rEntry : rCalendarEvents.entrySet()) {
-			Date rDate = rEntry.getKey();
-			String sStyle = rEntry.getValue();
+		for (Entry<Date, String> entry : calendarEvents.entrySet()) {
+			Date date = entry.getKey();
+			String style = entry.getValue();
 
-			rCalendar.addDateStyle(rDate, sStyle);
+			calendar.addDateStyle(date, style);
 		}
 	}
 
@@ -164,17 +164,17 @@ public class DateDataElementUI extends DataElementUI<DateDataElement> {
 		 * @see DataElementInteractionHandler#DataElementInteractionHandler(DataElementPanelManager,
 		 * DataElement)
 		 */
-		public DateInteractionHandler(DataElementPanelManager rPanelManager,
-			DateDataElement rDataElement) {
-			super(rPanelManager, rDataElement);
+		public DateInteractionHandler(DataElementPanelManager panelManager,
+			DateDataElement dataElement) {
+			super(panelManager, dataElement);
 		}
 
 		/**
 		 * {@inheritDoc}
 		 */
 		@Override
-		protected Set<EventType> getInteractionEventTypes(Component aComponent,
-			Set<InteractionEventType> rInteractionEventTypes) {
+		protected Set<EventType> getInteractionEventTypes(Component component,
+			Set<InteractionEventType> interactionEventTypes) {
 			return EnumSet.of(EventType.VALUE_CHANGED);
 		}
 	}

@@ -48,75 +48,73 @@ public class DataElementOrderedPanelManager extends DataElementPanelManager {
 	 * @see DataElementPanelManager#DataElementPanelManager(PanelManager,
 	 * DataElementList)
 	 */
-	public DataElementOrderedPanelManager(PanelManager<?, ?> rParent,
-		DataElementList rDataElementList) {
-		super(rParent, rDataElementList);
+	public DataElementOrderedPanelManager(PanelManager<?, ?> parent,
+		DataElementList dataElementList) {
+		super(parent, dataElementList);
 	}
 
 	@Override
 	protected ContainerBuilder<? extends Panel> createPanel(
-		ContainerBuilder<?> rBuilder, StyleData rStyleData,
-		LayoutType eLayout) {
-		ContainerBuilder<? extends Panel> aPanelBuilder;
+		ContainerBuilder<?> builder, StyleData styleData, LayoutType layout) {
+		ContainerBuilder<? extends Panel> panelBuilder;
 
-		switch (eLayout) {
+		switch (layout) {
 			case DOCK:
 				assert getDataElementList().getElementCount() <= 3 :
 					"Element count for DOCK layout mode must be <= 3";
-				aPanelBuilder =
-					rBuilder.addPanel(rStyleData, new DockLayout(true, false));
+				panelBuilder =
+					builder.addPanel(styleData, new DockLayout(true, false));
 				break;
 
 			case SPLIT:
-				aPanelBuilder = rBuilder.addSplitPanel(rStyleData);
+				panelBuilder = builder.addSplitPanel(styleData);
 				break;
 
 			default:
-				throw new IllegalStateException(
-					"Unsupported layout " + eLayout);
+				throw new IllegalStateException("Unsupported layout " + layout);
 		}
 
-		return aPanelBuilder;
+		return panelBuilder;
 	}
 
 	@Override
 	protected Map<DataElement<?>, StyleData> prepareChildDataElements(
-		DataElementList rDataElementList) {
-		Map<DataElement<?>, StyleData> rElementStyles = new LinkedHashMap<>();
+		DataElementList dataElementList) {
+		Map<DataElement<?>, StyleData> elementStyles = new LinkedHashMap<>();
 
-		Orientation eOrientation =
-			rDataElementList.getProperty(ORIENTATION, Orientation.HORIZONTAL);
+		Orientation orientation =
+			dataElementList.getProperty(ORIENTATION, Orientation.HORIZONTAL);
 
-		int nElementCount = rDataElementList.getElementCount();
+		int elementCount = dataElementList.getElementCount();
 
 		// reorder elements because the center element must be added last
-		AlignedPosition rCenter = AlignedPosition.CENTER;
-		AlignedPosition rFirst = eOrientation == Orientation.VERTICAL ?
-		                         AlignedPosition.TOP :
-		                         AlignedPosition.LEFT;
-		AlignedPosition rLast = eOrientation == Orientation.VERTICAL ?
-		                        AlignedPosition.BOTTOM :
-		                        AlignedPosition.RIGHT;
+		AlignedPosition center = AlignedPosition.CENTER;
+		AlignedPosition first = orientation == Orientation.VERTICAL ?
+		                        AlignedPosition.TOP :
+		                        AlignedPosition.LEFT;
+		AlignedPosition last = orientation == Orientation.VERTICAL ?
+		                       AlignedPosition.BOTTOM :
+		                       AlignedPosition.RIGHT;
 
-		if (nElementCount == 3) {
-			rElementStyles.put(rDataElementList.getElement(0), rFirst);
-			rElementStyles.put(rDataElementList.getElement(2), rLast);
-			rElementStyles.put(rDataElementList.getElement(1), rCenter);
-		} else if (nElementCount == 2) {
-			if (rDataElementList
+		if (elementCount == 3) {
+			elementStyles.put(dataElementList.getElement(0), first);
+			elementStyles.put(dataElementList.getElement(2), last);
+			elementStyles.put(dataElementList.getElement(1), center);
+		} else if (elementCount == 2) {
+			if (dataElementList
 				.getElement(1)
 				.hasProperty(
-					eOrientation == Orientation.VERTICAL ? HEIGHT : WIDTH)) {
-				rElementStyles.put(rDataElementList.getElement(1), rLast);
-				rElementStyles.put(rDataElementList.getElement(0), rCenter);
+					orientation == Orientation.VERTICAL ? HEIGHT : WIDTH)) {
+				elementStyles.put(dataElementList.getElement(1), last);
+				elementStyles.put(dataElementList.getElement(0), center);
 			} else {
-				rElementStyles.put(rDataElementList.getElement(0), rFirst);
-				rElementStyles.put(rDataElementList.getElement(1), rCenter);
+				elementStyles.put(dataElementList.getElement(0), first);
+				elementStyles.put(dataElementList.getElement(1), center);
 			}
 		} else {
-			rElementStyles.put(rDataElementList.getElement(0), rCenter);
+			elementStyles.put(dataElementList.getElement(0), center);
 		}
 
-		return rElementStyles;
+		return elementStyles;
 	}
 }

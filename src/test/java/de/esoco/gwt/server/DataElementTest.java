@@ -85,17 +85,16 @@ public class DataElementTest {
 	 */
 	@Test
 	public void testEnum() {
-		DataElementFactory aFactory = new DataElementFactory(null);
+		DataElementFactory factory = new DataElementFactory(null);
 
 		DataElement<?> e1 =
-			aFactory.createEnumDataElement("TEST", TestEnum.class, TestEnum.T1,
+			factory.createEnumDataElement("TEST", TestEnum.class, TestEnum.T1,
 				null, null);
 		DataElement<?> e1a =
-			aFactory.createEnumDataElement("TEST", TestEnum.class, TestEnum.T1,
+			factory.createEnumDataElement("TEST", TestEnum.class, TestEnum.T1,
 				null, null);
 		DataElement<?> e2 =
-			aFactory.createEnumDataElement("TEST2", TestEnum.class,
-				TestEnum.T2,
+			factory.createEnumDataElement("TEST2", TestEnum.class, TestEnum.T2,
 				null, null);
 
 		assertEquals(e1, e1a);
@@ -184,13 +183,13 @@ public class DataElementTest {
 	 */
 	@Test
 	public void testReadOnly() {
-		EnumSet<Flag> aImmutableFlag = EnumSet.of(Flag.IMMUTABLE);
+		EnumSet<Flag> immutableFlag = EnumSet.of(Flag.IMMUTABLE);
 
 		StringDataElement e =
-			new StringDataElement("ELEMENT", "VALUE", null, aImmutableFlag);
+			new StringDataElement("ELEMENT", "VALUE", null, immutableFlag);
 		DataElementList l =
 			new DataElementList("PARENT", null, Collections.singletonList(e),
-				aImmutableFlag);
+				immutableFlag);
 
 		try {
 			e.setValue("X");
@@ -237,16 +236,16 @@ public class DataElementTest {
 	/**
 	 * Helper method to fill a data element list.
 	 *
-	 * @param rList        rParent The parent list to add the elements to
-	 * @param sNamePrefix  The prefix for the element names
-	 * @param sValuePrefix The prefix for the values
-	 * @param nCount       The number of elements to add
+	 * @param list        parent The parent list to add the elements to
+	 * @param namePrefix  The prefix for the element names
+	 * @param valuePrefix The prefix for the values
+	 * @param count       The number of elements to add
 	 */
-	private void addElements(DataElementList rList, String sNamePrefix,
-		String sValuePrefix, int nCount) {
-		for (int i = 1; i <= nCount; i++) {
-			rList.addElement(
-				new StringDataElement(sNamePrefix + i, sValuePrefix + i));
+	private void addElements(DataElementList list, String namePrefix,
+		String valuePrefix, int count) {
+		for (int i = 1; i <= count; i++) {
+			list.addElement(
+				new StringDataElement(namePrefix + i, valuePrefix + i));
 		}
 	}
 }

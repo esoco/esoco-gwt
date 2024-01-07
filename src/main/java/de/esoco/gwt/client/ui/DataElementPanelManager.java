@@ -19,21 +19,18 @@ package de.esoco.gwt.client.ui;
 import de.esoco.data.element.DataElement;
 import de.esoco.data.element.DataElement.CopyMode;
 import de.esoco.data.element.DataElementList;
-
 import de.esoco.ewt.EWT;
 import de.esoco.ewt.build.ContainerBuilder;
 import de.esoco.ewt.component.Component;
 import de.esoco.ewt.component.Container;
 import de.esoco.ewt.component.SelectableButton;
+import de.esoco.ewt.event.EventType;
 import de.esoco.ewt.event.EwtEvent;
 import de.esoco.ewt.event.EwtEventHandler;
-import de.esoco.ewt.event.EventType;
 import de.esoco.ewt.layout.GenericLayout;
 import de.esoco.ewt.style.StyleData;
-
 import de.esoco.gwt.client.res.EsocoGwtCss;
 import de.esoco.gwt.client.res.EsocoGwtResources;
-
 import de.esoco.lib.property.InteractionEventType;
 import de.esoco.lib.property.LabelStyle;
 import de.esoco.lib.property.LayoutType;
@@ -42,8 +39,8 @@ import de.esoco.lib.property.StateProperties;
 import de.esoco.lib.text.TextConvert;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.EnumSet;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -94,123 +91,123 @@ public abstract class DataElementPanelManager
 	private static final Set<LayoutType> GRID_LAYOUTS =
 		EnumSet.of(LayoutType.GRID, LayoutType.FORM, LayoutType.GROUP);
 
-	private DataElementList rDataElementList;
+	private DataElementList dataElementList;
 
-	private LayoutType eLayout;
+	private LayoutType layout;
 
-	private Map<String, DataElementUI<?>> aDataElementUIs;
+	private Map<String, DataElementUI<?>> dataElementUIs;
 
-	private InteractiveInputHandler rInteractiveInputHandler = null;
+	private InteractiveInputHandler interactiveInputHandler = null;
 
-	private boolean bHandlingSelectionEvent = false;
+	private boolean handlingSelectionEvent = false;
 
-	private DataElementInteractionHandler<DataElementList> aInteractionHandler;
+	private DataElementInteractionHandler<DataElementList> interactionHandler;
 
-	private String sChildIndent;
+	private String childIndent;
 
 	/**
 	 * Creates a new instance.
 	 *
-	 * @param rParent          The parent panel manager
-	 * @param rDataElementList The data elements to display grouped
+	 * @param parent          The parent panel manager
+	 * @param dataElementList The data elements to display grouped
 	 */
-	protected DataElementPanelManager(PanelManager<?, ?> rParent,
-		DataElementList rDataElementList) {
-		super(rParent, createPanelStyle(rDataElementList));
+	protected DataElementPanelManager(PanelManager<?, ?> parent,
+		DataElementList dataElementList) {
+		super(parent, createPanelStyle(dataElementList));
 
-		this.rDataElementList = rDataElementList;
+		this.dataElementList = dataElementList;
 	}
 
 	/**
 	 * Checks whether two lists of data elements contains the same data
 	 * elements. The elements must be the same regargind their name and order.
 	 *
-	 * @param rList1 The first list of data elements to compare
-	 * @param rList2 The second list of data elements to compare
+	 * @param list1 The first list of data elements to compare
+	 * @param list2 The second list of data elements to compare
 	 * @return TRUE if the argument lists differ at least in one data element
 	 */
-	public static boolean containsSameElements(List<DataElement<?>> rList1,
-		List<DataElement<?>> rList2) {
-		int nCount = rList1.size();
-		boolean bHasSameElements = (rList2.size() == nCount);
+	public static boolean containsSameElements(List<DataElement<?>> list1,
+		List<DataElement<?>> list2) {
+		int count = list1.size();
+		boolean hasSameElements = (list2.size() == count);
 
-		if (bHasSameElements) {
-			for (int i = 0; i < nCount; i++) {
-				bHasSameElements =
-					rList1.get(i).getName().equals(rList2.get(i).getName());
+		if (hasSameElements) {
+			for (int i = 0; i < count; i++) {
+				hasSameElements =
+					list1.get(i).getName().equals(list2.get(i).getName());
 
-				if (!bHasSameElements) {
+				if (!hasSameElements) {
 					break;
 				}
 			}
 		}
 
-		return bHasSameElements;
+		return hasSameElements;
 	}
 
 	/**
 	 * Static helper method to create the panel manager's style name.
 	 *
-	 * @param rDataElementList The data element list to create the style name
-	 *                         for
+	 * @param dataElementList The data element list to create the style name
+	 *                        for
 	 * @return The panel style
 	 */
-	protected static String createPanelStyle(DataElementList rDataElementList) {
-		StringBuilder aStyle = new StringBuilder(CSS.gfDataElementPanel());
+	protected static String createPanelStyle(DataElementList dataElementList) {
+		StringBuilder style = new StringBuilder(CSS.gfDataElementPanel());
 
 		{
-			LayoutType eDisplayMode =
-				rDataElementList.getProperty(LAYOUT, LayoutType.TABLE);
+			LayoutType displayMode =
+				dataElementList.getProperty(LAYOUT, LayoutType.TABLE);
 
-			aStyle.append(" gf-DataElement");
-			aStyle.append(
-				TextConvert.capitalizedIdentifier(eDisplayMode.name()));
-			aStyle.append("Panel");
+			style.append(" gf-DataElement");
+			style.append(TextConvert.capitalizedIdentifier(displayMode.name()));
+			style.append("Panel");
 		}
 
-		aStyle.append(' ');
-		aStyle.append(rDataElementList.getResourceId());
+		style.append(' ');
+		style.append(dataElementList.getResourceId());
 
-		return aStyle.toString();
+		return style.toString();
 	}
 
 	/**
 	 * Factory method that creates a new subclass instance based on the
 	 * {@link LayoutType} of the data element list argument.
 	 *
-	 * @param rParent          The parent panel manager
-	 * @param rDataElementList The list of data elements to be handled by the
-	 *                         new panel manager
+	 * @param parent          The parent panel manager
+	 * @param dataElementList The list of data elements to be handled by the
+	 *                          new
+	 *                        panel manager
 	 * @return A new data element panel manager instance
 	 */
-	public static DataElementPanelManager newInstance(
-		PanelManager<?, ?> rParent, DataElementList rDataElementList) {
-		DataElementPanelManager aPanelManager = null;
+	public static DataElementPanelManager newInstance(PanelManager<?, ?> parent,
+		DataElementList dataElementList) {
+		DataElementPanelManager panelManager = null;
 
-		LayoutType eLayout =
-			rDataElementList.getProperty(LAYOUT, LayoutType.TABLE);
+		LayoutType layout =
+			dataElementList.getProperty(LAYOUT, LayoutType.TABLE);
 
-		if (eLayout == LayoutType.TABLE) {
-			aPanelManager =
-				new DataElementTablePanelManager(rParent, rDataElementList);
-		} else if (eLayout == LayoutType.INLINE) {
-			aPanelManager =
-				new DataElementInlinePanelManager(rParent, rDataElementList);
-		} else if (SWITCH_LAYOUTS.contains(eLayout)) {
-			aPanelManager =
-				new DataElementSwitchPanelManager(rParent, rDataElementList);
-		} else if (ORDERED_LAYOUTS.contains(eLayout)) {
-			aPanelManager =
-				new DataElementOrderedPanelManager(rParent, rDataElementList);
-		} else if (GRID_LAYOUTS.contains(eLayout)) {
-			aPanelManager =
-				new DataElementGridPanelManager(rParent, rDataElementList);
+		if (layout == LayoutType.TABLE) {
+			panelManager =
+				new DataElementTablePanelManager(parent, dataElementList);
+		} else if (layout == LayoutType.INLINE) {
+			panelManager =
+				new DataElementInlinePanelManager(parent, dataElementList);
+		} else if (SWITCH_LAYOUTS.contains(layout)) {
+			panelManager =
+				new DataElementSwitchPanelManager(parent, dataElementList);
+		} else if (ORDERED_LAYOUTS.contains(layout)) {
+			panelManager =
+				new DataElementOrderedPanelManager(parent, dataElementList);
+		} else if (GRID_LAYOUTS.contains(layout)) {
+			panelManager =
+				new DataElementGridPanelManager(parent, dataElementList);
 		} else {
-			aPanelManager =
-				new DataElementLayoutPanelManager(rParent, rDataElementList);
+			panelManager =
+				new DataElementLayoutPanelManager(parent, dataElementList);
 		}
 
-		return aPanelManager;
+		return panelManager;
 	}
 
 	/**
@@ -218,13 +215,13 @@ public abstract class DataElementPanelManager
 	 * that are displayed in this panel. The listener will be added by means of
 	 * {@link DataElementUI#addEventListener(EventType, EwtEventHandler)}.
 	 *
-	 * @param rEventType The event type the listener shall be registered for
-	 * @param rListener  The event listener to be notified of events
+	 * @param eventType The event type the listener shall be registered for
+	 * @param listener  The event listener to be notified of events
 	 */
-	public void addElementEventListener(EventType rEventType,
-		EwtEventHandler rListener) {
-		for (DataElementUI<?> rDataElementUI : aDataElementUIs.values()) {
-			rDataElementUI.addEventListener(rEventType, rListener);
+	public void addElementEventListener(EventType eventType,
+		EwtEventHandler listener) {
+		for (DataElementUI<?> dataElementUI : dataElementUIs.values()) {
+			dataElementUI.addEventListener(eventType, listener);
 		}
 	}
 
@@ -233,20 +230,20 @@ public abstract class DataElementPanelManager
 	 * component that is displayed in this panel. The listener will be added
 	 * with {@link DataElementUI#addEventListener(EventType, EwtEventHandler)}.
 	 *
-	 * @param rDataElement The data element to register the event listener for
-	 * @param rEventType   The event type the listener shall be registered for
-	 * @param rListener    The event listener to be notified of events
+	 * @param dataElement The data element to register the event listener for
+	 * @param eventType   The event type the listener shall be registered for
+	 * @param listener    The event listener to be notified of events
 	 */
-	public void addElementEventListener(DataElement<?> rDataElement,
-		EventType rEventType, EwtEventHandler rListener) {
-		DataElementUI<?> rDataElementUI =
-			aDataElementUIs.get(rDataElement.getName());
+	public void addElementEventListener(DataElement<?> dataElement,
+		EventType eventType, EwtEventHandler listener) {
+		DataElementUI<?> dataElementUI =
+			dataElementUIs.get(dataElement.getName());
 
-		if (rDataElementUI != null) {
-			rDataElementUI.addEventListener(rEventType, rListener);
+		if (dataElementUI != null) {
+			dataElementUI.addEventListener(eventType, listener);
 		} else {
 			throw new IllegalArgumentException(
-				"Unknown data element: " + rDataElement);
+				"Unknown data element: " + dataElement);
 		}
 	}
 
@@ -257,13 +254,14 @@ public abstract class DataElementPanelManager
 	 * @see PanelManager#buildIn(ContainerBuilder, StyleData)
 	 */
 	@Override
-	public void buildIn(ContainerBuilder<?> rBuilder, StyleData rStyle) {
-		super.buildIn(rBuilder, rStyle);
+	public void buildIn(ContainerBuilder<?> builder, StyleData style) {
+		super.buildIn(builder, style);
 
 		// only check selection dependencies from the root after all child data
 		// element UIs have been initialized
 		if (!(getParent() instanceof DataElementPanelManager)) {
-			checkSelectionDependencies(this, Arrays.asList(rDataElementList));
+			checkSelectionDependencies(this,
+				Collections.singletonList(dataElementList));
 		}
 	}
 
@@ -271,8 +269,8 @@ public abstract class DataElementPanelManager
 	 * Clears all error indicators in the contained data element UIs.
 	 */
 	public void clearErrors() {
-		for (DataElementUI<?> rUI : aDataElementUIs.values()) {
-			rUI.clearError();
+		for (DataElementUI<?> uI : dataElementUIs.values()) {
+			uI.clearError();
 		}
 	}
 
@@ -281,14 +279,14 @@ public abstract class DataElementPanelManager
 	 * data
 	 * elements.
 	 *
-	 * @param rModifiedElements A list to add modified data elements to
+	 * @param modifiedElements A list to add modified data elements to
 	 */
-	public void collectInput(List<DataElement<?>> rModifiedElements) {
-		checkIfDataElementListModified(rModifiedElements);
+	public void collectInput(List<DataElement<?>> modifiedElements) {
+		checkIfDataElementListModified(modifiedElements);
 
-		for (DataElementUI<?> rUI : aDataElementUIs.values()) {
-			if (rUI != null) {
-				rUI.collectInput(rModifiedElements);
+		for (DataElementUI<?> uI : dataElementUIs.values()) {
+			if (uI != null) {
+				uI.collectInput(modifiedElements);
 			}
 		}
 	}
@@ -300,22 +298,22 @@ public abstract class DataElementPanelManager
 	 */
 	@Override
 	public void dispose() {
-		for (DataElementUI<?> rUI : aDataElementUIs.values()) {
-			rUI.dispose();
+		for (DataElementUI<?> uI : dataElementUIs.values()) {
+			uI.dispose();
 		}
 
-		aDataElementUIs.clear();
+		dataElementUIs.clear();
 	}
 
 	/**
 	 * Enables or disables interactions through this panel manager's user
 	 * interface.
 	 *
-	 * @param bEnable TRUE to enable interactions, FALSE to disable them
+	 * @param enable TRUE to enable interactions, FALSE to disable them
 	 */
-	public void enableInteraction(boolean bEnable) {
-		for (DataElementUI<?> rUI : aDataElementUIs.values()) {
-			rUI.enableInteraction(bEnable);
+	public void enableInteraction(boolean enable) {
+		for (DataElementUI<?> uI : dataElementUIs.values()) {
+			uI.enableInteraction(enable);
 		}
 	}
 
@@ -323,49 +321,49 @@ public abstract class DataElementPanelManager
 	 * Searches for a data element with a certain name in this manager's
 	 * hierarchy.
 	 *
-	 * @param sName The name of the data element to search
+	 * @param name The name of the data element to search
 	 * @return The matching data element or NULL if no such element exists
 	 */
-	public DataElement<?> findDataElement(String sName) {
-		return rDataElementList.findChild(sName);
+	public DataElement<?> findDataElement(String name) {
+		return dataElementList.findChild(name);
 	}
 
 	/**
 	 * Searches for the UI of a data element with a certain name in this
 	 * manager's hierarchy.
 	 *
-	 * @param sElementName The name of the data element to search the UI for
+	 * @param elementName The name of the data element to search the UI for
 	 * @return The matching data element UI or NULL if no such element exists
 	 */
-	public DataElementUI<?> findDataElementUI(String sElementName) {
-		DataElementUI<?> rElementUI = aDataElementUIs.get(sElementName);
+	public DataElementUI<?> findDataElementUI(String elementName) {
+		DataElementUI<?> elementUI = dataElementUIs.get(elementName);
 
-		if (rElementUI == null) {
-			for (DataElementUI<?> rUI : aDataElementUIs.values()) {
-				if (rUI instanceof DataElementListUI) {
-					DataElementPanelManager rPanelManager =
-						((DataElementListUI) rUI).getPanelManager();
+		if (elementUI == null) {
+			for (DataElementUI<?> uI : dataElementUIs.values()) {
+				if (uI instanceof DataElementListUI) {
+					DataElementPanelManager panelManager =
+						((DataElementListUI) uI).getPanelManager();
 
-					rElementUI = rPanelManager.findDataElementUI(sElementName);
+					elementUI = panelManager.findDataElementUI(elementName);
 
-					if (rElementUI != null) {
+					if (elementUI != null) {
 						break;
 					}
 				}
 			}
 		}
 
-		return rElementUI;
+		return elementUI;
 	}
 
 	/**
 	 * Returns a certain element in this manager's list of data elements.
 	 *
-	 * @param nIndex The index of the element to return
+	 * @param index The index of the element to return
 	 * @return The data element
 	 */
-	public final DataElement<?> getDataElement(int nIndex) {
-		return rDataElementList.getElement(nIndex);
+	public final DataElement<?> getDataElement(int index) {
+		return dataElementList.getElement(index);
 	}
 
 	/**
@@ -374,7 +372,7 @@ public abstract class DataElementPanelManager
 	 * @return The dataElementList value
 	 */
 	public final DataElementList getDataElementList() {
-		return rDataElementList;
+		return dataElementList;
 	}
 
 	/**
@@ -382,29 +380,28 @@ public abstract class DataElementPanelManager
 	 * instance. Implementations must search child panel manager too if they
 	 * don't contain the data element themselves.
 	 *
-	 * @param rDataElement The data element to return the UI for
+	 * @param dataElement The data element to return the UI for
 	 * @return The data element UI for the given element or NULL if not found
 	 */
-	public final DataElementUI<?> getDataElementUI(
-		DataElement<?> rDataElement) {
-		DataElementUI<?> rDataElementUI =
-			aDataElementUIs.get(rDataElement.getName());
+	public final DataElementUI<?> getDataElementUI(DataElement<?> dataElement) {
+		DataElementUI<?> dataElementUI =
+			dataElementUIs.get(dataElement.getName());
 
-		if (rDataElementUI == null) {
-			for (DataElementUI<?> rUI : aDataElementUIs.values()) {
-				if (rUI instanceof DataElementListUI) {
-					rDataElementUI = ((DataElementListUI) rUI)
+		if (dataElementUI == null) {
+			for (DataElementUI<?> uI : dataElementUIs.values()) {
+				if (uI instanceof DataElementListUI) {
+					dataElementUI = ((DataElementListUI) uI)
 						.getPanelManager()
-						.getDataElementUI(rDataElement);
+						.getDataElementUI(dataElement);
 				}
 
-				if (rDataElementUI != null) {
+				if (dataElementUI != null) {
 					break;
 				}
 			}
 		}
 
-		return rDataElementUI;
+		return dataElementUI;
 	}
 
 	/**
@@ -415,10 +412,10 @@ public abstract class DataElementPanelManager
 	 * @return The root panel manager
 	 */
 	public DataElementPanelManager getRoot() {
-		PanelManager<?, ?> rParent = getParent();
+		PanelManager<?, ?> parent = getParent();
 
-		return rParent instanceof DataElementPanelManager ?
-		       ((DataElementPanelManager) rParent).getRoot() :
+		return parent instanceof DataElementPanelManager ?
+		       ((DataElementPanelManager) parent).getRoot() :
 		       this;
 	}
 
@@ -427,51 +424,50 @@ public abstract class DataElementPanelManager
 	 * nothing but subclasses can override this method if the need to modify
 	 * their state on visibility changes.
 	 *
-	 * @param rElementUI The UI of the data element
-	 * @param bVisible   The visibility of the data element
+	 * @param elementUI The UI of the data element
+	 * @param visible   The visibility of the data element
 	 */
-	public void setElementVisibility(DataElementUI<?> rElementUI,
-		boolean bVisible) {
+	public void setElementVisibility(DataElementUI<?> elementUI,
+		boolean visible) {
 	}
 
 	/**
 	 * Sets the handler of interactive input events for data elements.
 	 *
-	 * @param rHandler The interactive input handler
+	 * @param handler The interactive input handler
 	 */
 	public final void setInteractiveInputHandler(
-		InteractiveInputHandler rHandler) {
-		rInteractiveInputHandler = rHandler;
+		InteractiveInputHandler handler) {
+		interactiveInputHandler = handler;
 	}
 
 	/**
 	 * Updates this instance from a new data element list.
 	 *
-	 * @param rNewDataElementList The list containing the new data elements
-	 * @param bUpdateUI           TRUE to also update the UI, FALSE to only
-	 *                            update the data element references
+	 * @param newDataElementList The list containing the new data elements
+	 * @param updateUI           TRUE to also update the UI, FALSE to only
+	 *                           update the data element references
 	 */
-	public void update(DataElementList rNewDataElementList,
-		boolean bUpdateUI) {
-		boolean bIsUpdate = !rNewDataElementList.hasFlag(STRUCTURE_CHANGED) &&
-			rNewDataElementList.getName().equals(rDataElementList.getName()) &&
-			containsSameElements(rNewDataElementList.getElements(),
-				rDataElementList.getElements());
+	public void update(DataElementList newDataElementList, boolean updateUI) {
+		boolean isUpdate = !newDataElementList.hasFlag(STRUCTURE_CHANGED) &&
+			newDataElementList.getName().equals(dataElementList.getName()) &&
+			containsSameElements(newDataElementList.getElements(),
+				dataElementList.getElements());
 
-		boolean bStyleChanged =
-			!Objects.equals(rDataElementList.getProperty(STYLE, null),
-				rNewDataElementList.getProperty(STYLE, null));
+		boolean styleChanged =
+			!Objects.equals(dataElementList.getProperty(STYLE, null),
+				newDataElementList.getProperty(STYLE, null));
 
-		rDataElementList = rNewDataElementList;
+		dataElementList = newDataElementList;
 
-		if (bIsUpdate) {
-			updateElementUIs(bUpdateUI);
+		if (isUpdate) {
+			updateElementUIs(updateUI);
 		} else {
 			dispose();
 			rebuild();
 		}
 
-		updateFromProperties(bStyleChanged);
+		updateFromProperties(styleChanged);
 	}
 
 	/**
@@ -485,8 +481,8 @@ public abstract class DataElementPanelManager
 
 	@Override
 	public void updateUI() {
-		for (DataElementUI<?> rElementUI : aDataElementUIs.values()) {
-			rElementUI.update();
+		for (DataElementUI<?> elementUI : dataElementUIs.values()) {
+			elementUI.update();
 		}
 	}
 
@@ -498,22 +494,22 @@ public abstract class DataElementPanelManager
 	/**
 	 * Applies the UI properties of a data element to the UI component.
 	 *
-	 * @param rElementUI The data element UI to apply the properties to
+	 * @param elementUI The data element UI to apply the properties to
 	 */
-	protected void applyElementProperties(DataElementUI<?> rElementUI) {
-		Component rComponent = rElementUI.getElementComponent();
+	protected void applyElementProperties(DataElementUI<?> elementUI) {
+		Component component = elementUI.getElementComponent();
 
-		if (rComponent != null) {
-			DataElement<?> rElement = rElementUI.getDataElement();
-			String sWidth = rElement.getProperty(HTML_WIDTH, null);
-			String sHeight = rElement.getProperty(HTML_HEIGHT, null);
+		if (component != null) {
+			DataElement<?> element = elementUI.getDataElement();
+			String width = element.getProperty(HTML_WIDTH, null);
+			String height = element.getProperty(HTML_HEIGHT, null);
 
-			if (sWidth != null) {
-				rComponent.setWidth(sWidth);
+			if (width != null) {
+				component.setWidth(width);
 			}
 
-			if (sHeight != null) {
-				rComponent.setHeight(sHeight);
+			if (height != null) {
+				component.setHeight(height);
 			}
 		}
 	}
@@ -524,14 +520,14 @@ public abstract class DataElementPanelManager
 	 * interface.
 	 */
 	protected void applyElementSelection() {
-		GenericLayout rLayout = getContainer().getLayout();
+		GenericLayout layout = getContainer().getLayout();
 
-		if (rLayout instanceof SingleSelection) {
-			SingleSelection rSelectable = (SingleSelection) rLayout;
+		if (layout instanceof SingleSelection) {
+			SingleSelection selectable = (SingleSelection) layout;
 
-			if (rDataElementList.hasProperty(CURRENT_SELECTION)) {
-				rSelectable.setSelection(
-					rDataElementList.getIntProperty(CURRENT_SELECTION, 0));
+			if (dataElementList.hasProperty(CURRENT_SELECTION)) {
+				selectable.setSelection(
+					dataElementList.getIntProperty(CURRENT_SELECTION, 0));
 			}
 		}
 	}
@@ -539,27 +535,27 @@ public abstract class DataElementPanelManager
 	/**
 	 * Builds the user interface for a data element in this container.
 	 *
-	 * @param rDataElementUI The element UI to build
-	 * @param rStyle         The style for the data element UI
+	 * @param dataElementUI The element UI to build
+	 * @param style         The style for the data element UI
 	 */
-	protected void buildDataElementUI(DataElementUI<?> rDataElementUI,
-		StyleData rStyle) {
-		ContainerBuilder<?> rUiBuilder = this;
+	protected void buildDataElementUI(DataElementUI<?> dataElementUI,
+		StyleData style) {
+		ContainerBuilder<?> uiBuilder = this;
 
-		if (rDataElementUI.getDataElement().hasFlag(SHOW_LABEL)) {
-			rUiBuilder = addPanel(StyleData.DEFAULT, LayoutType.FLOW);
+		if (dataElementUI.getDataElement().hasFlag(SHOW_LABEL)) {
+			uiBuilder = addPanel(StyleData.DEFAULT, LayoutType.FLOW);
 
-			String sLabel =
-				rDataElementUI.createElementLabelString(getContext());
+			String label =
+				dataElementUI.createElementLabelString(getContext());
 
-			if (sLabel.length() > 0) {
-				rDataElementUI.createElementLabel(rUiBuilder, FORM_LABEL_STYLE,
-					sLabel);
+			if (label.length() > 0) {
+				dataElementUI.createElementLabel(uiBuilder, FORM_LABEL_STYLE,
+					label);
 			}
 		}
 
-		rDataElementUI.buildUserInterface(rUiBuilder, rStyle);
-		applyElementProperties(rDataElementUI);
+		dataElementUI.buildUserInterface(uiBuilder, style);
+		applyElementProperties(dataElementUI);
 	}
 
 	/**
@@ -567,29 +563,30 @@ public abstract class DataElementPanelManager
 	 * Invoked by {@link #addComponents()}.
 	 */
 	protected void buildElementUIs() {
-		Map<DataElement<?>, StyleData> rDataElementStyles =
-			prepareChildDataElements(rDataElementList);
+		Map<DataElement<?>, StyleData> dataElementStyles =
+			prepareChildDataElements(dataElementList);
 
-		for (Entry<DataElement<?>, StyleData> rElementStyle :
-			rDataElementStyles.entrySet()) {
-			DataElement<?> rDataElement = rElementStyle.getKey();
-			StyleData rStyle = rElementStyle.getValue();
+		for (Entry<DataElement<?>, StyleData> elementStyle :
+			dataElementStyles.entrySet()) {
+			DataElement<?> dataElement = elementStyle.getKey();
+			StyleData style = elementStyle.getValue();
 
-			DataElementUI<?> aDataElementUI =
-				DataElementUIFactory.create(this, rDataElement);
+			DataElementUI<?> dataElementUI =
+				DataElementUIFactory.create(this, dataElement);
 
-			if (!(rDataElement instanceof DataElementList)) {
-				String sElementStyle = aDataElementUI.getElementStyleName();
+			if (!(dataElement instanceof DataElementList)) {
+				String elementStyleName = dataElementUI.getElementStyleName();
 
-				if (rDataElement.isImmutable()) {
-					sElementStyle = CSS.readonly() + " " + sElementStyle;
+				if (dataElement.isImmutable()) {
+					elementStyleName = CSS.readonly() + " " + elementStyleName;
 				}
 
-				rStyle = addStyles(rStyle, CSS.gfDataElement(), sElementStyle);
+				style = addStyles(style, CSS.gfDataElement(),
+					elementStyleName);
 			}
 
-			buildDataElementUI(aDataElementUI, rStyle);
-			aDataElementUIs.put(rDataElement.getName(), aDataElementUI);
+			buildDataElementUI(dataElementUI, style);
+			dataElementUIs.put(dataElement.getName(), dataElementUI);
 		}
 
 		setupEventHandling();
@@ -600,46 +597,46 @@ public abstract class DataElementPanelManager
 	 * the given data element the corresponding event handling is initialized
 	 * for all concerned data elements.
 	 *
-	 * @param rRootManager The root manager to search for dependent elements
-	 * @param rDataElement The data element to check for dependencies
+	 * @param rootManager The root manager to search for dependent elements
+	 * @param dataElement The data element to check for dependencies
 	 */
-	protected void checkSelectionDependency(
-		DataElementPanelManager rRootManager, DataElement<?> rDataElement) {
-		String sDependendElements =
-			rDataElement.getProperty(SELECTION_DEPENDENCY, null);
+	protected void checkSelectionDependency(DataElementPanelManager rootManager,
+		DataElement<?> dataElement) {
+		String dependendElements =
+			dataElement.getProperty(SELECTION_DEPENDENCY, null);
 
-		if (sDependendElements != null) {
-			String[] sElementNames = sDependendElements.split(",");
+		if (dependendElements != null) {
+			String[] elementNames = dependendElements.split(",");
 
-			DataElementUI<?> rMainUI = getDataElementUI(rDataElement);
+			DataElementUI<?> mainUI = getDataElementUI(dataElement);
 
-			SelectionDependencyHandler aSelectionHandler =
-				new SelectionDependencyHandler(rMainUI);
+			SelectionDependencyHandler selectionHandler =
+				new SelectionDependencyHandler(mainUI);
 
-			for (String sElement : sElementNames) {
-				boolean bReverseState =
-					sElement.startsWith(SELECTION_DEPENDENCY_REVERSE_PREFIX);
+			for (String elementName : elementNames) {
+				boolean reverseState =
+					elementName.startsWith(SELECTION_DEPENDENCY_REVERSE_PREFIX);
 
-				if (bReverseState) {
-					sElement = sElement.substring(1);
+				if (reverseState) {
+					elementName = elementName.substring(1);
 				}
 
-				DataElement<?> rElement =
-					rRootManager.findDataElement(sElement);
+				DataElement<?> element =
+					rootManager.findDataElement(elementName);
 
-				if (rElement != null) {
-					DataElementUI<?> rUI =
-						rRootManager.getDataElementUI(rElement);
+				if (element != null) {
+					DataElementUI<?> uI =
+						rootManager.getDataElementUI(element);
 
-					if (rUI != null) {
-						aSelectionHandler.addDependency(rUI, bReverseState);
+					if (uI != null) {
+						selectionHandler.addDependency(uI, reverseState);
 					} else {
-						assert false : "No UI for " + sElement;
+						assert false : "No UI for " + element;
 					}
 				} else {
 					EWT.log(
 						"Warning: No data element %s for selection dependency",
-						sElement);
+						element);
 				}
 			}
 		}
@@ -648,33 +645,32 @@ public abstract class DataElementPanelManager
 	@Override
 	@SuppressWarnings("unchecked")
 	protected ContainerBuilder<Container> createContainer(
-		ContainerBuilder<?> rBuilder, StyleData rStyle) {
-		ContainerBuilder<? extends Container> aPanelBuilder = null;
+		ContainerBuilder<?> builder, StyleData style) {
+		ContainerBuilder<? extends Container> panelBuilder = null;
 
-		aDataElementUIs =
-			new LinkedHashMap<>(rDataElementList.getElementCount());
+		dataElementUIs =
+			new LinkedHashMap<>(dataElementList.getElementCount());
 
-		rStyle = DataElementUI.applyElementStyle(rDataElementList, rStyle);
+		style = DataElementUI.applyElementStyle(dataElementList, style);
 
-		eLayout = rDataElementList.getProperty(LAYOUT, LayoutType.TABS);
+		layout = dataElementList.getProperty(LAYOUT, LayoutType.TABS);
 
-		aPanelBuilder = createPanel(rBuilder, rStyle, eLayout);
+		panelBuilder = createPanel(builder, style, layout);
 
-		return (ContainerBuilder<Container>) aPanelBuilder;
+		return (ContainerBuilder<Container>) panelBuilder;
 	}
 
 	/**
 	 * Must be implemented by subclasses to create the panel in which the data
 	 * element user interfaces are placed.
 	 *
-	 * @param rBuilder   The builder to create the panel with
-	 * @param rStyleData The style to create the panel with
-	 * @param eLayout    The layout of the data element list
+	 * @param builder   The builder to create the panel with
+	 * @param styleData The style to create the panel with
+	 * @param layout    The layout of the data element list
 	 * @return A container builder instance for the new panel
 	 */
 	protected abstract ContainerBuilder<?> createPanel(
-		ContainerBuilder<?> rBuilder, StyleData rStyleData,
-		LayoutType eLayout);
+		ContainerBuilder<?> builder, StyleData styleData, LayoutType layout);
 
 	/**
 	 * Returns the {@link DataElementUI} instances of this instance. The order
@@ -684,7 +680,7 @@ public abstract class DataElementPanelManager
 	 * @return A ordered mapping from data element names to data element UIs
 	 */
 	protected final Map<String, DataElementUI<?>> getDataElementUIs() {
-		return aDataElementUIs;
+		return dataElementUIs;
 	}
 
 	/**
@@ -693,7 +689,7 @@ public abstract class DataElementPanelManager
 	 * @return The layout
 	 */
 	protected final LayoutType getLayout() {
-		return eLayout;
+		return layout;
 	}
 
 	/**
@@ -701,22 +697,22 @@ public abstract class DataElementPanelManager
 	 * that is a child of this manager. Will be invoked by the event handler of
 	 * the child's data element UI.
 	 *
-	 * @param rDataElement The data element in which the event occurred
-	 * @param eEventType   bActionEvent TRUE for an action event, FALSE for a
-	 *                     continuous (selection) event
+	 * @param dataElement The data element in which the event occurred
+	 * @param eventType   actionEvent TRUE for an action event, FALSE for a
+	 *                    continuous (selection) event
 	 */
-	protected void handleInteractiveInput(DataElement<?> rDataElement,
-		InteractionEventType eEventType) {
-		if (!bHandlingSelectionEvent) {
-			if (rInteractiveInputHandler != null) {
-				rInteractiveInputHandler.handleInteractiveInput(rDataElement,
-					eEventType);
+	protected void handleInteractiveInput(DataElement<?> dataElement,
+		InteractionEventType eventType) {
+		if (!handlingSelectionEvent) {
+			if (interactiveInputHandler != null) {
+				interactiveInputHandler.handleInteractiveInput(dataElement,
+					eventType);
 			} else {
-				PanelManager<?, ?> rParent = getParent();
+				PanelManager<?, ?> parent = getParent();
 
-				if (rParent instanceof DataElementPanelManager) {
-					((DataElementPanelManager) rParent).handleInteractiveInput(
-						rDataElement, eEventType);
+				if (parent instanceof DataElementPanelManager) {
+					((DataElementPanelManager) parent).handleInteractiveInput(
+						dataElement, eventType);
 				}
 			}
 		}
@@ -726,69 +722,70 @@ public abstract class DataElementPanelManager
 	 * Prepares the child data elements that need to be displayed in this
 	 * instance.
 	 *
-	 * @param rDataElementList The list of child data elements
+	 * @param dataElementList The list of child data elements
 	 * @return A mapping from child data elements to the corresponding styles
 	 */
 	protected Map<DataElement<?>, StyleData> prepareChildDataElements(
-		DataElementList rDataElementList) {
-		Map<DataElement<?>, StyleData> rDataElementStyles =
+		DataElementList dataElementList) {
+		Map<DataElement<?>, StyleData> dataElementStyles =
 			new LinkedHashMap<>();
 
-		for (DataElement<?> rDataElement : rDataElementList) {
-			rDataElementStyles.put(rDataElement, StyleData.DEFAULT);
+		for (DataElement<?> dataElement : dataElementList) {
+			dataElementStyles.put(dataElement, StyleData.DEFAULT);
 		}
 
-		return rDataElementStyles;
+		return dataElementStyles;
 	}
 
 	/**
 	 * Initializes the event handling for this instance.
 	 */
 	protected void setupEventHandling() {
-		DataElementInteractionHandler<DataElementList> aEventHandler =
-			new DataElementInteractionHandler<>(this, rDataElementList);
+		DataElementInteractionHandler<DataElementList> eventHandler =
+			new DataElementInteractionHandler<>(this, dataElementList);
 
-		if (aEventHandler.setupEventHandling(getContainer(), false)) {
-			aInteractionHandler = aEventHandler;
+		if (eventHandler.setupEventHandling(getContainer(), false)) {
+			interactionHandler = eventHandler;
 		}
 	}
 
 	/**
 	 * Updates the data element UIs of this instance.
 	 *
-	 * @param bUpdateUI TRUE to also update the UI, FALSE to only update the
-	 *                  data element references
+	 * @param updateUI TRUE to also update the UI, FALSE to only update the
+	 *                    data
+	 *                 element references
 	 */
-	protected void updateElementUIs(boolean bUpdateUI) {
-		if (aInteractionHandler != null) {
-			aInteractionHandler.updateDataElement(rDataElementList);
+	protected void updateElementUIs(boolean updateUI) {
+		if (interactionHandler != null) {
+			interactionHandler.updateDataElement(dataElementList);
 		}
 
-		if (bUpdateUI) {
+		if (updateUI) {
 			getContainer().applyStyle(
-				DataElementUI.applyElementStyle(rDataElementList,
+				DataElementUI.applyElementStyle(dataElementList,
 					getBaseStyle()));
 		}
 
-		List<DataElement<?>> rOrderedElements = new ArrayList<>(
-			prepareChildDataElements(rDataElementList).keySet());
+		List<DataElement<?>> orderedElements =
+			new ArrayList<>(prepareChildDataElements(dataElementList).keySet());
 
-		int nIndex = 0;
+		int index = 0;
 
-		for (DataElementUI<?> rUI : aDataElementUIs.values()) {
-			DataElement<?> rNewElement = rOrderedElements.get(nIndex++);
+		for (DataElementUI<?> uI : dataElementUIs.values()) {
+			DataElement<?> newElement = orderedElements.get(index++);
 
-			rUI.updateDataElement(rNewElement, bUpdateUI);
+			uI.updateDataElement(newElement, updateUI);
 		}
 	}
 
 	/**
 	 * Updates the style and selection from the data element list.
 	 *
-	 * @param bStyleChanged TRUE if the container style has changed
+	 * @param styleChanged TRUE if the container style has changed
 	 */
-	protected void updateFromProperties(boolean bStyleChanged) {
-		if (bStyleChanged) {
+	protected void updateFromProperties(boolean styleChanged) {
+		if (styleChanged) {
 			updateContainerStyle();
 		}
 
@@ -799,12 +796,11 @@ public abstract class DataElementPanelManager
 	 * Checks whether the data element list of this instance has been modified
 	 * and adds it to the given list if necessary.
 	 *
-	 * @param rModifiedElements The list of modified elements
+	 * @param modifiedElements The list of modified elements
 	 */
-	void checkIfDataElementListModified(
-		List<DataElement<?>> rModifiedElements) {
-		if (rDataElementList.isModified()) {
-			rModifiedElements.add(rDataElementList.copy(CopyMode.PROPERTIES,
+	void checkIfDataElementListModified(List<DataElement<?>> modifiedElements) {
+		if (dataElementList.isModified()) {
+			modifiedElements.add(dataElementList.copy(CopyMode.PROPERTIES,
 				DataElement.SERVER_PROPERTIES));
 		}
 	}
@@ -814,19 +810,19 @@ public abstract class DataElementPanelManager
 	 * data
 	 * elements and initializes the element UIs accordingly.
 	 *
-	 * @param rRootManager The root manager to search for dependent elements
-	 * @param rElements    The data elements to check
+	 * @param rootManager The root manager to search for dependent elements
+	 * @param elements    The data elements to check
 	 */
-	void checkSelectionDependencies(DataElementPanelManager rRootManager,
-		Collection<DataElement<?>> rElements) {
-		for (DataElement<?> rDataElement : rElements) {
-			checkSelectionDependency(rRootManager, rDataElement);
+	void checkSelectionDependencies(DataElementPanelManager rootManager,
+		Collection<DataElement<?>> elements) {
+		for (DataElement<?> dataElement : elements) {
+			checkSelectionDependency(rootManager, dataElement);
 
-			if (rDataElement instanceof DataElementList) {
-				List<DataElement<?>> rChildElements =
-					((DataElementList) rDataElement).getElements();
+			if (dataElement instanceof DataElementList) {
+				List<DataElement<?>> childElements =
+					((DataElementList) dataElement).getElements();
 
-				checkSelectionDependencies(rRootManager, rChildElements);
+				checkSelectionDependencies(rootManager, childElements);
 			}
 		}
 	}
@@ -838,20 +834,20 @@ public abstract class DataElementPanelManager
 	 * @return The hierarchy indent
 	 */
 	String getHierarchyChildIndent() {
-		if (sChildIndent == null) {
-			DataElementList rParent = rDataElementList.getParent();
-			StringBuilder aIndent = new StringBuilder();
+		if (childIndent == null) {
+			DataElementList parent = dataElementList.getParent();
+			StringBuilder indent = new StringBuilder();
 
-			while (rParent != null) {
-				aIndent.append("| ");
-				rParent = rParent.getParent();
+			while (parent != null) {
+				indent.append("| ");
+				parent = parent.getParent();
 			}
 
-			aIndent.setLength(aIndent.length() - 1);
-			sChildIndent = aIndent.toString();
+			indent.setLength(indent.length() - 1);
+			childIndent = indent.toString();
 		}
 
-		return sChildIndent;
+		return childIndent;
 	}
 
 	/**
@@ -861,10 +857,10 @@ public abstract class DataElementPanelManager
 	 * @return The hierarchy indent
 	 */
 	String getHierarchyIndent() {
-		PanelManager<?, ?> rParent = getParent();
+		PanelManager<?, ?> parent = getParent();
 
-		return rParent instanceof DataElementPanelManager ?
-		       ((DataElementPanelManager) rParent).getHierarchyIndent() :
+		return parent instanceof DataElementPanelManager ?
+		       ((DataElementPanelManager) parent).getHierarchyIndent() :
 		       "";
 	}
 
@@ -872,19 +868,19 @@ public abstract class DataElementPanelManager
 	 * Check if the container style needs to be updated for a new data element.
 	 */
 	private void updateContainerStyle() {
-		String sElementStyle = rDataElementList.getProperty(STYLE, null);
-		String sStyleName = getStyleName();
+		String elementStyle = dataElementList.getProperty(STYLE, null);
+		String styleName = getStyleName();
 
-		if (sElementStyle != null && sStyleName.indexOf(sElementStyle) < 0) {
-			sStyleName = sStyleName + " " + sElementStyle;
+		if (elementStyle != null && styleName.indexOf(elementStyle) < 0) {
+			styleName = styleName + " " + elementStyle;
 		}
 
-		rDataElementList.setProperty(STYLE, sStyleName);
+		dataElementList.setProperty(STYLE, styleName);
 
-		StyleData rNewStyle =
-			DataElementUI.applyElementStyle(rDataElementList, getBaseStyle());
+		StyleData newStyle =
+			DataElementUI.applyElementStyle(dataElementList, getBaseStyle());
 
-		getContainer().applyStyle(rNewStyle);
+		getContainer().applyStyle(newStyle);
 	}
 
 	/**
@@ -892,23 +888,23 @@ public abstract class DataElementPanelManager
 	 *
 	 * @author eso
 	 */
-	public static interface InteractiveInputHandler {
+	public interface InteractiveInputHandler {
 
 		/**
 		 * Handles the occurrence of an interactive input event for a certain
 		 * data element.
 		 *
-		 * @param rDataElement The data element that caused the event
-		 * @param eEventType   The interaction event that occurred
+		 * @param dataElement The data element that caused the event
+		 * @param eventType   The interaction event that occurred
 		 */
-		void handleInteractiveInput(DataElement<?> rDataElement,
-			InteractionEventType eEventType);
+		void handleInteractiveInput(DataElement<?> dataElement,
+			InteractionEventType eventType);
 	}
 
 	/**
 	 * An inner class that handles selection events for components that are
-	 * referenced by a {@link DataElement#SELECTION_DEPENDENCY} property. The
-	 * dependency can either be the mutual exclusion of components that
+	 * referenced by a {@link StateProperties#SELECTION_DEPENDENCY} property.
+	 * The dependency can either be the mutual exclusion of components that
 	 * implement the {@link SingleSelection} interface of the enabling and
 	 * disabling of components that are referenced by a button or another
 	 * selectable component.
@@ -917,61 +913,60 @@ public abstract class DataElementPanelManager
 	 */
 	private class SelectionDependencyHandler implements EwtEventHandler {
 
-		private final DataElementUI<?> rMainUI;
+		private final DataElementUI<?> mainUI;
 
-		private Map<DataElementUI<?>, Boolean> rUIs =
+		private final Map<DataElementUI<?>, Boolean> uIs =
 			new LinkedHashMap<DataElementUI<?>, Boolean>(2);
 
 		/**
 		 * Creates a new instance.
 		 *
-		 * @param rMainUI The main data element user interface
+		 * @param mainUI The main data element user interface
 		 */
 		@SuppressWarnings("boxing")
-		public SelectionDependencyHandler(DataElementUI<?> rMainUI) {
-			this.rMainUI = rMainUI;
+		public SelectionDependencyHandler(DataElementUI<?> mainUI) {
+			this.mainUI = mainUI;
 
-			Component rComponent = rMainUI.getElementComponent();
+			Component component = mainUI.getElementComponent();
 
-			rUIs.put(rMainUI, false);
+			uIs.put(mainUI, false);
 
-			if (rComponent instanceof SingleSelection) {
-				rComponent.addEventListener(EventType.SELECTION, this);
+			if (component instanceof SingleSelection) {
+				component.addEventListener(EventType.SELECTION, this);
 			} else {
-				rComponent.addEventListener(EventType.ACTION, this);
+				component.addEventListener(EventType.ACTION, this);
 			}
 		}
 
 		/**
 		 * Adds a component to be handled by this instance.
 		 *
-		 * @param rUI           The dependent UI
-		 * @param bReverseState TRUE to reverse the state of the dependent UI
+		 * @param uI           The dependent UI
+		 * @param reverseState TRUE to reverse the state of the dependent UI
 		 */
 		@SuppressWarnings("boxing")
-		public void addDependency(DataElementUI<?> rUI,
-			boolean bReverseState) {
-			Component rMain = rMainUI.getElementComponent();
-			Component rDependent = rUI.getElementComponent();
+		public void addDependency(DataElementUI<?> uI, boolean reverseState) {
+			Component main = mainUI.getElementComponent();
+			Component dependent = uI.getElementComponent();
 
-			boolean bIsSingleSelection = rDependent instanceof SingleSelection;
-			boolean bIsMutualSelection = rMain instanceof SingleSelection;
+			boolean isSingleSelection = dependent instanceof SingleSelection;
+			boolean isMutualSelection = main instanceof SingleSelection;
 
-			rUIs.put(rUI, bReverseState);
+			uIs.put(uI, reverseState);
 
-			if (bIsSingleSelection && bIsMutualSelection) {
-				rDependent.addEventListener(EventType.SELECTION, this);
+			if (isSingleSelection && isMutualSelection) {
+				dependent.addEventListener(EventType.SELECTION, this);
 			} else {
-				boolean bEnabled = false;
+				boolean enabled = false;
 
-				if (rMain instanceof SelectableButton) {
-					bEnabled = ((SelectableButton) rMain).isSelected();
-				} else if (rMain instanceof SingleSelection) {
-					bEnabled =
-						((SingleSelection) rMain).getSelectionIndex() >= 0;
+				if (main instanceof SelectableButton) {
+					enabled = ((SelectableButton) main).isSelected();
+				} else if (main instanceof SingleSelection) {
+					enabled =
+						((SingleSelection) main).getSelectionIndex() >= 0;
 				}
 
-				rUI.setEnabled(bReverseState ? !bEnabled : bEnabled);
+				uI.setEnabled(reverseState != enabled);
 			}
 		}
 
@@ -980,90 +975,86 @@ public abstract class DataElementPanelManager
 		 */
 		@Override
 		@SuppressWarnings("boxing")
-		public void handleEvent(EwtEvent rEvent) {
+		public void handleEvent(EwtEvent event) {
 			// prevent re-invocation due to selection change in dependent UIs
-			if (!bHandlingSelectionEvent) {
-				bHandlingSelectionEvent = true;
+			if (!handlingSelectionEvent) {
+				handlingSelectionEvent = true;
 
-				for (Entry<DataElementUI<?>, Boolean> rEntry :
-					rUIs.entrySet()) {
-					DataElementUI<?> rTargetUI = rEntry.getKey();
-					boolean bReverseState = rEntry.getValue();
+				for (Entry<DataElementUI<?>, Boolean> entry : uIs.entrySet()) {
+					DataElementUI<?> targetUI = entry.getKey();
+					boolean reverseState = entry.getValue();
 
-					Object rSourceComponent = rEvent.getSource();
+					Object sourceComponent = event.getSource();
 
-					if (rTargetUI.getElementComponent() != rSourceComponent) {
-						if (rEvent.getType() == EventType.ACTION) {
-							handleActionEvent(rSourceComponent, rTargetUI,
-								bReverseState);
+					if (targetUI.getElementComponent() != sourceComponent) {
+						if (event.getType() == EventType.ACTION) {
+							handleActionEvent(sourceComponent, targetUI,
+								reverseState);
 						} else {
-							handleSelectionEvent(rSourceComponent, rTargetUI,
-								bReverseState);
+							handleSelectionEvent(sourceComponent, targetUI,
+								reverseState);
 						}
 					}
 				}
 
-				bHandlingSelectionEvent = false;
+				handlingSelectionEvent = false;
 			}
 		}
 
 		/**
 		 * Performs the dependency changes caused by an action event.
 		 *
-		 * @param rSourceComponent The component that has been selected
-		 * @param rTargetUI        The target data element UI
-		 * @param bReverseState    TRUE to reverse the state of the source
-		 *                         component in the target component
+		 * @param sourceComponent The component that has been selected
+		 * @param targetUI        The target data element UI
+		 * @param reverseState    TRUE to reverse the state of the source
+		 *                        component in the target component
 		 */
-		private void handleActionEvent(Object rSourceComponent,
-			DataElementUI<?> rTargetUI, boolean bReverseState) {
-			if (rSourceComponent instanceof SelectableButton) {
-				setEnabled(rTargetUI,
-					((SelectableButton) rSourceComponent).isSelected(),
-					bReverseState);
+		private void handleActionEvent(Object sourceComponent,
+			DataElementUI<?> targetUI, boolean reverseState) {
+			if (sourceComponent instanceof SelectableButton) {
+				setEnabled(targetUI,
+					((SelectableButton) sourceComponent).isSelected(),
+					reverseState);
 			} else {
-				setEnabled(rTargetUI,
-					!rTargetUI.getElementComponent().isEnabled(),
-					bReverseState);
+				setEnabled(targetUI,
+					!targetUI.getElementComponent().isEnabled(), reverseState);
 			}
 		}
 
 		/**
 		 * Performs the dependency changes caused by a selection event.
 		 *
-		 * @param rSourceComponent The component that has been selected
-		 * @param rTargetUI        The target data element UI
-		 * @param bReverseState    TRUE to reverse the state of the source
-		 *                         component in the target component
+		 * @param sourceComponent The component that has been selected
+		 * @param targetUI        The target data element UI
+		 * @param reverseState    TRUE to reverse the state of the source
+		 *                        component in the target component
 		 */
-		private void handleSelectionEvent(Object rSourceComponent,
-			DataElementUI<?> rTargetUI, boolean bReverseState) {
-			Component rTargetComponent = rTargetUI.getElementComponent();
+		private void handleSelectionEvent(Object sourceComponent,
+			DataElementUI<?> targetUI, boolean reverseState) {
+			Component targetComponent = targetUI.getElementComponent();
 
-			if (rTargetComponent instanceof SingleSelection) {
-				((SingleSelection) rTargetComponent).setSelection(-1);
+			if (targetComponent instanceof SingleSelection) {
+				((SingleSelection) targetComponent).setSelection(-1);
 			} else {
-				int nSelection =
-					((SingleSelection) rSourceComponent).getSelectionIndex();
+				int selection =
+					((SingleSelection) sourceComponent).getSelectionIndex();
 
-				boolean bEnabled = nSelection >= 0;
+				boolean enabled = selection >= 0;
 
-				setEnabled(rTargetUI, bEnabled, bReverseState);
+				setEnabled(targetUI, enabled, reverseState);
 			}
 		}
 
 		/**
 		 * Sets the enabled state of a dependent component.
 		 *
-		 * @param rDependentUI  The dependent component
-		 * @param bEnabled      bState rSelectedComponent The selected
-		 *                      component
-		 * @param bReverseState TRUE to reverse the enabled state
+		 * @param dependentUI  The dependent component
+		 * @param enabled      state rSelectedComponent The selected component
+		 * @param reverseState TRUE to reverse the enabled state
 		 */
-		private void setEnabled(DataElementUI<?> rDependentUI,
-			boolean bEnabled,
-			boolean bReverseState) {
-			rDependentUI.setEnabled(bReverseState ? !bEnabled : bEnabled);
+		private void setEnabled(DataElementUI<?> dependentUI, boolean enabled,
+			boolean reverseState) {
+			dependentUI.setEnabled(reverseState != enabled);
 		}
 	}
 }

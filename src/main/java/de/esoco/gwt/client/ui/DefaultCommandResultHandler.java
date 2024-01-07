@@ -29,20 +29,19 @@ import de.esoco.gwt.shared.Command;
 public abstract class DefaultCommandResultHandler<T extends DataElement<?>>
 	implements CommandResultHandler<T> {
 
-	private PanelManager<?, ?> rPanelManager;
+	private PanelManager<?, ?> panelManager;
 
 	/**
 	 * Creates a new instance.
 	 *
-	 * @param rPanelManager The panel manager this instance belongs to
+	 * @param panelManager The panel manager this instance belongs to
 	 */
-	public DefaultCommandResultHandler(PanelManager<?, ?> rPanelManager) {
-		this.rPanelManager = rPanelManager;
+	public DefaultCommandResultHandler(PanelManager<?, ?> panelManager) {
+		this.panelManager = panelManager;
 	}
 
 	@Override
-	public void handleCommandFailure(Command<?, ?> rCommand,
-		Throwable rCaught) {
-		rPanelManager.handleCommandFailure(rCommand, rCaught);
+	public void handleCommandFailure(Command<?, ?> command, Throwable caught) {
+		panelManager.handleCommandFailure(command, caught);
 	}
 }

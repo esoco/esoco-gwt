@@ -54,11 +54,11 @@ import static de.esoco.lib.property.StyleProperties.TABLE_ROWS;
 public class SelectionDataElementUI
 	extends DataElementUI<SelectionDataElement> {
 
-	private TableControl aTable = null;
+	private TableControl table = null;
 
-	private DataModel<? extends DataModel<?>> aDataModel;
+	private DataModel<? extends DataModel<?>> dataModel;
 
-	private ListDataModel<ColumnDefinition> aColumnModel;
+	private ListDataModel<ColumnDefinition> columnModel;
 
 	/**
 	 * Returns the currently selected data model.
@@ -66,196 +66,192 @@ public class SelectionDataElementUI
 	 * @return The selected data model or NULL for no selection
 	 */
 	public DataModel<?> getSelection() {
-		return aTable != null ? aTable.getSelection() : null;
+		return table != null ? table.getSelection() : null;
 	}
 
 	@Override
-	protected Component createDisplayUI(ContainerBuilder<?> rBuilder,
-		StyleData rDisplayStyle, SelectionDataElement rDataElement) {
-		Validator<?> rValidator = rDataElement.getValidator();
-		Component aComponent;
+	protected Component createDisplayUI(ContainerBuilder<?> builder,
+		StyleData displayStyle, SelectionDataElement dataElement) {
+		Validator<?> validator = dataElement.getValidator();
+		Component component;
 
-		if (rValidator instanceof TabularDataValidator) {
-			aComponent =
-				createTableComponent(rBuilder, rDisplayStyle, rDataElement,
-					(TabularDataValidator) rValidator);
+		if (validator instanceof TabularDataValidator) {
+			component = createTableComponent(builder, displayStyle,
+				dataElement,
+				(TabularDataValidator) validator);
 		} else {
-			aComponent =
-				super.createDisplayUI(rBuilder, rDisplayStyle, rDataElement);
+			component =
+				super.createDisplayUI(builder, displayStyle, dataElement);
 		}
 
-		return aComponent;
+		return component;
 	}
 
 	@Override
-	protected Component createInputUI(ContainerBuilder<?> rBuilder,
-		StyleData rInputStyle, SelectionDataElement rDataElement) {
-		Validator<?> rValidator = rDataElement.getValidator();
-		Component aComponent;
+	protected Component createInputUI(ContainerBuilder<?> builder,
+		StyleData inputStyle, SelectionDataElement dataElement) {
+		Validator<?> validator = dataElement.getValidator();
+		Component component;
 
-		if (rValidator instanceof TabularDataValidator) {
-			aComponent =
-				createTableComponent(rBuilder, rInputStyle, rDataElement,
-					(TabularDataValidator) rValidator);
+		if (validator instanceof TabularDataValidator) {
+			component = createTableComponent(builder, inputStyle, dataElement,
+				(TabularDataValidator) validator);
 		} else {
-			aComponent =
-				super.createInputUI(rBuilder, rInputStyle, rDataElement);
+			component = super.createInputUI(builder, inputStyle, dataElement);
 		}
 
-		return aComponent;
+		return component;
 	}
 
 	@Override
 	protected void transferDataElementValueToComponent(
-		SelectionDataElement rDataElement, Component rComponent) {
-		if (aTable != null) {
-			initTable(rDataElement);
+		SelectionDataElement dataElement, Component component) {
+		if (table != null) {
+			initTable(dataElement);
 		} else {
-			super.transferDataElementValueToComponent(rDataElement,
-				rComponent);
+			super.transferDataElementValueToComponent(dataElement, component);
 
-			aTable.setSelection(
-				rDataElement.getIntProperty(CURRENT_SELECTION, -1));
+			table.setSelection(
+				dataElement.getIntProperty(CURRENT_SELECTION, -1));
 		}
 	}
 
 	@Override
-	protected void transferInputToDataElement(Component rComponent,
-		SelectionDataElement rDataElement) {
-		if (aTable != null) {
-			DataModel<?> rSelectedRow = aTable.getSelection();
+	protected void transferInputToDataElement(Component component,
+		SelectionDataElement dataElement) {
+		if (table != null) {
+			DataModel<?> selectedRow = table.getSelection();
 
-			rDataElement.setProperty(CURRENT_SELECTION,
-				aTable.getSelectionIndex());
+			dataElement.setProperty(CURRENT_SELECTION,
+				table.getSelectionIndex());
 
-			if (rSelectedRow instanceof HierarchicalDataObject) {
-				rDataElement.setValue(
-					((HierarchicalDataObject) rSelectedRow).getId());
+			if (selectedRow instanceof HierarchicalDataObject) {
+				dataElement.setValue(
+					((HierarchicalDataObject) selectedRow).getId());
 			} else {
-				rDataElement.setValue(SelectionDataElement.NO_SELECTION);
+				dataElement.setValue(SelectionDataElement.NO_SELECTION);
 			}
 
-			Map<String, String> rTableConstraints =
-				((FilterableDataModel<?>) aDataModel).getFilters();
+			Map<String, String> tableConstraints =
+				((FilterableDataModel<?>) dataModel).getFilters();
 
-			if (rTableConstraints.isEmpty()) {
-				rTableConstraints = null;
+			if (tableConstraints.isEmpty()) {
+				tableConstraints = null;
 			}
 
-			rDataElement.setProperty(FILTER_CRITERIA, rTableConstraints);
+			dataElement.setProperty(FILTER_CRITERIA, tableConstraints);
 		} else {
-			super.transferInputToDataElement(rComponent, rDataElement);
+			super.transferInputToDataElement(component, dataElement);
 		}
 	}
 
 	/**
 	 * Crates the data model for a table.
 	 *
-	 * @param rValidator The validator to create the model from
+	 * @param validator The validator to create the model from
 	 * @return The data model
 	 */
 	private DataModel<? extends DataModel<?>> checkTableDataModel(
-		TabularDataValidator rValidator) {
-		DataModel<? extends DataModel<?>> aModel;
+		TabularDataValidator validator) {
+		DataModel<? extends DataModel<?>> model;
 
-		if (rValidator instanceof QueryValidator) {
-			QueryValidator rQueryValidator = (QueryValidator) rValidator;
-			QueryDataModel rCurrentModel = (QueryDataModel) aDataModel;
-			String sQueryId = rQueryValidator.getQueryId();
+		if (validator instanceof QueryValidator) {
+			QueryValidator queryValidator = (QueryValidator) validator;
+			QueryDataModel currentModel = (QueryDataModel) dataModel;
+			String queryId = queryValidator.getQueryId();
 
-			aModel = rCurrentModel;
+			model = currentModel;
 
-			if (rCurrentModel == null ||
-				!rCurrentModel.getQueryId().equals(sQueryId)) {
-				aModel = new QueryDataModel(sQueryId, 0);
+			if (currentModel == null ||
+				!currentModel.getQueryId().equals(queryId)) {
+				model = new QueryDataModel(queryId, 0);
 
-				if (aDataModel != null) {
-					((QueryDataModel) aModel).useConstraints(rCurrentModel);
+				if (dataModel != null) {
+					((QueryDataModel) model).useConstraints(currentModel);
 				}
 			} else {
-				rCurrentModel.resetQuerySize();
+				currentModel.resetQuerySize();
 			}
-		} else if (rValidator instanceof SelectionValidator) {
-			SelectionValidator rSelectionValidator =
-				(SelectionValidator) rValidator;
+		} else if (validator instanceof SelectionValidator) {
+			SelectionValidator selectionValidator =
+				(SelectionValidator) validator;
 
-			aModel = new FilterableListDataModel<HierarchicalDataObject>(
-				"DATA",
-				rSelectionValidator.getValues(), rValidator.getColumns());
+			model = new FilterableListDataModel<HierarchicalDataObject>("DATA",
+				selectionValidator.getValues(), validator.getColumns());
 		} else {
 			throw new IllegalArgumentException(
-				"Invalid table validator: " + rValidator);
+				"Invalid table validator: " + validator);
 		}
 
-		return aModel;
+		return model;
 	}
 
 	/**
 	 * Creates a component that allows to select an element from the results of
 	 * a remote query.
 	 *
-	 * @param rBuilder     The builder to create the component with
-	 * @param rInputStyle  The default style data
-	 * @param rDataElement The data element
-	 * @param rValidator   The tabular data validator from the data element
+	 * @param builder     The builder to create the component with
+	 * @param inputStyle  The default style data
+	 * @param dataElement The data element
+	 * @param validator   The tabular data validator from the data element
 	 * @return The new component
 	 */
 	@SuppressWarnings("boxing")
-	private Component createTableComponent(ContainerBuilder<?> rBuilder,
-		StyleData rInputStyle, SelectionDataElement rDataElement,
-		TabularDataValidator rValidator) {
-		List<ColumnDefinition> rColumns = rValidator.getColumns();
+	private Component createTableComponent(ContainerBuilder<?> builder,
+		StyleData inputStyle, SelectionDataElement dataElement,
+		TabularDataValidator validator) {
+		List<ColumnDefinition> columns = validator.getColumns();
 
-		if (rColumns != null) {
-			int nRows = rDataElement.getIntProperty(TABLE_ROWS, -1);
+		if (columns != null) {
+			int rows = dataElement.getIntProperty(TABLE_ROWS, -1);
 
-			if (nRows > 0) {
-				rInputStyle = rInputStyle.set(TABLE_ROWS, nRows);
+			if (rows > 0) {
+				inputStyle = inputStyle.set(TABLE_ROWS, rows);
 			}
 
-			if (rDataElement.hasFlag(UserInterfaceProperties.HIERARCHICAL)) {
-				aTable = rBuilder.addTreeTable(rInputStyle);
+			if (dataElement.hasFlag(UserInterfaceProperties.HIERARCHICAL)) {
+				table = builder.addTreeTable(inputStyle);
 			} else {
-				aTable = rBuilder.addTable(rInputStyle);
+				table = builder.addTable(inputStyle);
 			}
 
-			initTable(rDataElement);
+			initTable(dataElement);
 		} else {
 			throw new IllegalArgumentException(
-				"Missing table columns for " + rDataElement);
+				"Missing table columns for " + dataElement);
 		}
 
-		return aTable;
+		return table;
 	}
 
 	/**
 	 * Initializes the table from the data element.
 	 *
-	 * @param rDataElement The selection data element
+	 * @param dataElement The selection data element
 	 */
-	private void initTable(final SelectionDataElement rDataElement) {
-		TabularDataValidator rValidator =
-			(TabularDataValidator) rDataElement.getValidator();
+	private void initTable(final SelectionDataElement dataElement) {
+		TabularDataValidator validator =
+			(TabularDataValidator) dataElement.getValidator();
 
-		aDataModel = checkTableDataModel(rValidator);
+		dataModel = checkTableDataModel(validator);
 
-		Map<String, String> rConstraints =
-			rDataElement.getProperty(FILTER_CRITERIA, Collections.emptyMap());
+		Map<String, String> constraints =
+			dataElement.getProperty(FILTER_CRITERIA, Collections.emptyMap());
 
-		((FilterableDataModel<?>) aDataModel).setFilters(rConstraints);
+		((FilterableDataModel<?>) dataModel).setFilters(constraints);
 
-		aColumnModel = new ListDataModel<ColumnDefinition>("COLUMNS",
-			rValidator.getColumns());
+		columnModel = new ListDataModel<ColumnDefinition>("COLUMNS",
+			validator.getColumns());
 
-		int nSelection = rDataElement.getIntProperty(CURRENT_SELECTION, -1);
+		int selection = dataElement.getIntProperty(CURRENT_SELECTION, -1);
 
-		aTable.setColumns(aColumnModel);
-		aTable.setData(aDataModel);
-		aTable.setSelection(nSelection, false);
-		aTable.getContext().runLater(new Runnable() {
+		table.setColumns(columnModel);
+		table.setData(dataModel);
+		table.setSelection(selection, false);
+		table.getContext().runLater(new Runnable() {
 			@Override
 			public void run() {
-				aTable.repaint();
+				table.repaint();
 			}
 		});
 	}

@@ -18,9 +18,7 @@ package de.esoco.gwt.client.data;
 
 import de.esoco.data.element.DataElement;
 import de.esoco.data.element.DataElementList;
-
 import de.esoco.ewt.UserInterfaceContext;
-
 import de.esoco.lib.model.ListDataModel;
 
 import java.util.ArrayList;
@@ -35,15 +33,15 @@ public class DataElementListModel extends ListDataModel<Object> {
 
 	private static final long serialVersionUID = 1L;
 
-	private final UserInterfaceContext rContext;
+	private final transient UserInterfaceContext context;
 
-	private final String sResourcePrefix;
+	private final String resourcePrefix;
 
-	private DataElementList rModelElement;
+	private final DataElementList modelElement;
 
-	private DataElementListModel rParent = null;
+	private DataElementListModel parent = null;
 
-	private String sDisplayString = null;
+	private String displayString = null;
 
 	/**
 	 * Recursively creates a new instance from a list of root data elements.
@@ -58,28 +56,28 @@ public class DataElementListModel extends ListDataModel<Object> {
 	 * data elements to this model. The attributes list must contain valid
 	 * attribute names for the given data elements.</p>
 	 *
-	 * @param rContext        The user interface context for resource lookups
-	 *                        (may be NULL if no resource access is needed)
-	 * @param rModelElement   The list of root elements to create this model
-	 *                        from
-	 * @param rElementNames   A list of the names of elements in the list to be
-	 *                        included in this model or NULL for all
-	 * @param sResourcePrefix The prefix to be prepended to all model strings
-	 *                        that are used for resource lookups
-	 * @param bListsOnly      TRUE if only element lists shall be added to the
-	 *                        model, but no other child elements; FALSE to
-	 *                        include the full element hierarchy
+	 * @param context        The user interface context for resource lookups
+	 *                       (may be NULL if no resource access is needed)
+	 * @param modelElement   The list of root elements to create this model
+	 *                       from
+	 * @param elementNames   A list of the names of elements in the list to be
+	 *                       included in this model or NULL for all
+	 * @param resourcePrefix The prefix to be prepended to all model strings
+	 *                       that are used for resource lookups
+	 * @param listsOnly      TRUE if only element lists shall be added to the
+	 *                       model, but no other child elements; FALSE to
+	 *                       include the full element hierarchy
 	 */
-	public DataElementListModel(UserInterfaceContext rContext,
-		DataElementList rModelElement, List<String> rElementNames,
-		String sResourcePrefix, boolean bListsOnly) {
-		super(rModelElement.getName());
+	public DataElementListModel(UserInterfaceContext context,
+		DataElementList modelElement, List<String> elementNames,
+		String resourcePrefix, boolean listsOnly) {
+		super(modelElement.getName());
 
-		this.rContext = rContext;
-		this.rModelElement = rModelElement;
-		this.sResourcePrefix = sResourcePrefix;
+		this.context = context;
+		this.modelElement = modelElement;
+		this.resourcePrefix = resourcePrefix;
 
-		setData(createModelData(rModelElement, rElementNames, bListsOnly));
+		setData(createModelData(modelElement, elementNames, listsOnly));
 	}
 
 	/**
@@ -88,7 +86,7 @@ public class DataElementListModel extends ListDataModel<Object> {
 	 * @return The user interface context or NULL if not set
 	 */
 	public final UserInterfaceContext getContext() {
-		return rContext;
+		return context;
 	}
 
 	/**
@@ -97,7 +95,7 @@ public class DataElementListModel extends ListDataModel<Object> {
 	 * @return The model element
 	 */
 	public DataElementList getModelElement() {
-		return rModelElement;
+		return modelElement;
 	}
 
 	/**
@@ -108,7 +106,7 @@ public class DataElementListModel extends ListDataModel<Object> {
 	 * @return The parent data model or NULL for none
 	 */
 	public final DataElementListModel getParent() {
-		return rParent;
+		return parent;
 	}
 
 	/**
@@ -118,111 +116,109 @@ public class DataElementListModel extends ListDataModel<Object> {
 	 */
 	@Override
 	public String toString() {
-		if (sDisplayString == null) {
-			DataElement<?> rModelElement = getModelElement();
+		if (displayString == null) {
+			DataElement<?> modelElement = getModelElement();
 
-			sDisplayString = rModelElement.getResourceId();
+			displayString = modelElement.getResourceId();
 
-			if (rContext != null) {
-				sDisplayString =
-					rContext.expandResource(sResourcePrefix + sDisplayString);
+			if (context != null) {
+				displayString =
+					context.expandResource(resourcePrefix + displayString);
 			}
 		}
 
-		return sDisplayString;
+		return displayString;
 	}
 
 	/**
 	 * Creates a list containing the model data from a list of data elements
 	 *
-	 * @param rElements  The list of data elements
-	 * @param bListsOnly TRUE if only data element lists shall be added
+	 * @param elements  The list of data elements
+	 * @param listsOnly TRUE if only data element lists shall be added
 	 * @return A new list containing the model data
 	 */
-	private List<Object> createModelData(DataElementList rElements,
-		boolean bListsOnly) {
-		ArrayList<Object> aData =
-			new ArrayList<Object>(rElements.getElementCount());
+	private List<Object> createModelData(DataElementList elements,
+		boolean listsOnly) {
+		ArrayList<Object> data =
+			new ArrayList<Object>(elements.getElementCount());
 
-		for (DataElement<?> rElement : rElements) {
-			Object rValue = createModelValue(rElement, bListsOnly);
+		for (DataElement<?> element : elements) {
+			Object value = createModelValue(element, listsOnly);
 
-			if (rValue != null) {
-				aData.add(rValue);
+			if (value != null) {
+				data.add(value);
 			}
 		}
 
-		return aData;
+		return data;
 	}
 
 	/**
 	 * Creates a list containing the model data from a list of data elements,
 	 * limited to a certain set of element names.
 	 *
-	 * @param rElements  The list of data elements
-	 * @param rNames     A list of the element names to be included in the
-	 *                      model
-	 *                   data
-	 * @param bListsOnly TRUE if only data element lists shall be added
+	 * @param elements  The list of data elements
+	 * @param names     A list of the element names to be included in the model
+	 *                  data
+	 * @param listsOnly TRUE if only data element lists shall be added
 	 * @return A new list containing the model data
 	 */
-	private List<Object> createModelData(DataElementList rElements,
-		List<String> rNames, boolean bListsOnly) {
-		List<Object> aDataList;
+	private List<Object> createModelData(DataElementList elements,
+		List<String> names, boolean listsOnly) {
+		List<Object> dataList;
 
-		if (rNames == null) {
-			aDataList = createModelData(rElements, bListsOnly);
+		if (names == null) {
+			dataList = createModelData(elements, listsOnly);
 		} else {
-			int nCount = rNames.size();
+			int count = names.size();
 
-			aDataList = new ArrayList<Object>(nCount);
+			dataList = new ArrayList<Object>(count);
 
-			for (int i = 0; i < nCount; i++) {
-				DataElement<?> rElement =
-					rElements.getElementAt(rNames.get(i));
+			for (int i = 0; i < count; i++) {
+				DataElement<?> element = elements.getElementAt(names.get(i));
 
-				if (rElement != null) {
-					Object rValue = createModelValue(rElement, bListsOnly);
+				if (element != null) {
+					Object value = createModelValue(element, listsOnly);
 
-					if (rValue != null) {
-						aDataList.add(rValue);
+					if (value != null) {
+						dataList.add(value);
 					}
 				} else {
 					throw new IllegalArgumentException(
-						"Unknown attribute: " + rNames.get(i));
+						"Unknown attribute: " + names.get(i));
 				}
 			}
 		}
 
-		return aDataList;
+		return dataList;
 	}
 
 	/**
 	 * Helper method to create a model data value from a data element.
 	 *
-	 * @param rElement   The data element to convert
-	 * @param bListsOnly TRUE if only data element lists shall be converted
+	 * @param element   The data element to convert
+	 * @param listsOnly TRUE if only data element lists shall be converted
 	 * @return The resulting value or NULL for none
 	 */
-	private Object createModelValue(DataElement<?> rElement,
-		boolean bListsOnly) {
-		Object rValue = null;
+	private Object createModelValue(DataElement<?> element,
+		boolean listsOnly) {
+		Object value = null;
 
-		if (rElement instanceof DataElementList) {
-			DataElementListModel rChildModel =
-				new DataElementListModel(rContext, (DataElementList) rElement,
-					null, sResourcePrefix, bListsOnly);
+		if (element instanceof DataElementList) {
+			DataElementListModel childModel =
+				new DataElementListModel(context, (DataElementList) element,
+					null, resourcePrefix, listsOnly);
 
-			rChildModel.rParent = this;
-			rValue = rChildModel;
-		} else if (!bListsOnly) {
-			Object rElementValue = rElement.getValue();
+			childModel.parent = this;
+			value = childModel;
+		} else if (!listsOnly) {
+			Object elementValue = element.getValue();
 
-			if (rElementValue != null) {
-				rValue = rElementValue.toString();
+			if (elementValue != null) {
+				value = elementValue.toString();
 			}
 		}
 
-		return rValue;
+		return value;
 	}
 }

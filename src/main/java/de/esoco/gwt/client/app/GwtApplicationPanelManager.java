@@ -68,14 +68,14 @@ public abstract class GwtApplicationPanelManager<C extends Container,
 	 */
 	public static final int MESSAGE_DISPLAY_TIME = 10000;
 
-	private Map<ProcessDescription, Button> aProcessButtons = null;
+	private Map<ProcessDescription, Button> processButtons = null;
 
 	/**
 	 * @see AuthenticationPanelManager#AuthenticationPanelManager(AuthenticationPanelManager,
 	 * String)
 	 */
-	public GwtApplicationPanelManager(P rParent, String sPanelStyle) {
-		super(rParent, sPanelStyle);
+	public GwtApplicationPanelManager(P parent, String panelStyle) {
+		super(parent, panelStyle);
 	}
 
 	/**
@@ -85,7 +85,7 @@ public abstract class GwtApplicationPanelManager<C extends Container,
 	 * @return The list of process buttons
 	 */
 	public final List<Button> getProcessButtons() {
-		return new ArrayList<Button>(aProcessButtons.values());
+		return new ArrayList<Button>(processButtons.values());
 	}
 
 	/**
@@ -94,44 +94,45 @@ public abstract class GwtApplicationPanelManager<C extends Container,
 	 * {@link #addToolbar(ContainerBuilder, de.esoco.ewt.style.StyleData,
 	 * de.esoco.ewt.style.StyleData, int)}.
 	 *
-	 * @param rBuilder   The container builder to add the buttons with
-	 * @param rProcesses The process descriptions
+	 * @param builder   The container builder to add the buttons with
+	 * @param processes The process descriptions
 	 */
-	protected void addProcessButtons(ContainerBuilder<Panel> rBuilder,
-		DataElementList rProcesses) {
-		int nCount = rProcesses.getElementCount();
+	protected void addProcessButtons(ContainerBuilder<Panel> builder,
+		DataElementList processes) {
+		int count = processes.getElementCount();
 
-		if (aProcessButtons == null) {
-			aProcessButtons =
-				new LinkedHashMap<ProcessDescription, Button>(nCount);
+		if (processButtons == null) {
+			processButtons =
+				new LinkedHashMap<ProcessDescription, Button>(count);
 		}
 
-		for (int i = 0; i < nCount; i++) {
-			DataElement<?> rDataElement = rProcesses.getElement(i);
+		for (int i = 0; i < count; i++) {
+			DataElement<?> dataElement = processes.getElement(i);
 
-			if (rDataElement instanceof ProcessDescription) {
-				ProcessDescription rDesc = (ProcessDescription) rDataElement;
-				final Button aButton;
+			if (dataElement instanceof ProcessDescription) {
+				ProcessDescription desc = (ProcessDescription) dataElement;
+				final Button button;
 
-				if (rDesc.isSeparator()) {
-					aButton = null;
-					addToolbarSeparator(rBuilder);
+				if (desc.isSeparator()) {
+					button = null;
+					addToolbarSeparator(builder);
 				} else {
-					final String sName = rDesc.getName();
+					final String name = desc.getName();
 
-					aButton = addToolbarButton(rBuilder, "#$im" + sName,
-						"$prc" + sName);
+					button =
+						addToolbarButton(builder, "#$im" + name,
+							"$prc" + name);
 
-					aButton.addEventListener(EventType.ACTION,
+					button.addEventListener(EventType.ACTION,
 						new EwtEventHandler() {
 							@Override
-							public void handleEvent(EwtEvent rEvent) {
-								executeProcess(sName, getSelectedElement());
+							public void handleEvent(EwtEvent event) {
+								executeProcess(name, getSelectedElement());
 							}
 						});
 				}
 
-				aProcessButtons.put(rDesc, aButton);
+				processButtons.put(desc, button);
 			}
 		}
 
@@ -141,16 +142,16 @@ public abstract class GwtApplicationPanelManager<C extends Container,
 	/**
 	 * Appends a certain text to the window title.
 	 */
-	protected void appendToWindowTitle(String sText) {
-		String sTitle = Window.getTitle();
+	protected void appendToWindowTitle(String text) {
+		String title = Window.getTitle();
 
-		int nHyphen = sTitle.lastIndexOf('-');
+		int hyphen = title.lastIndexOf('-');
 
-		if (nHyphen > 0) {
-			sTitle = sTitle.substring(0, nHyphen - 1);
+		if (hyphen > 0) {
+			title = title.substring(0, hyphen - 1);
 		}
 
-		Window.setTitle(sTitle + " - " + sText);
+		Window.setTitle(title + " - " + text);
 	}
 
 	/**
@@ -159,23 +160,23 @@ public abstract class GwtApplicationPanelManager<C extends Container,
 	 * be invoked by {@link #executeProcess(String, DataElement)}. The default
 	 * implementation invokes the parent method if a parent exists.
 	 *
-	 * @param rProcessState The process state returned by the process execution
+	 * @param processState The process state returned by the process execution
 	 */
-	protected void displayProcess(ProcessState rProcessState) {
-		P rParent = getParent();
+	protected void displayProcess(ProcessState processState) {
+		P parent = getParent();
 
-		if (rParent != null) {
-			rParent.displayProcess(rProcessState);
+		if (parent != null) {
+			parent.displayProcess(processState);
 		}
 	}
 
 	/**
 	 * Executes the application process with a certain name.
 	 *
-	 * @param sProcessName rUserData The user data to read the process from
+	 * @param processName rUserData The user data to read the process from
 	 */
-	protected void executeApplicationProcess(String sProcessName) {
-		executeProcess(APPLICATION_PROCESS_PATH + "/" + sProcessName, null);
+	protected void executeApplicationProcess(String processName) {
+		executeProcess(APPLICATION_PROCESS_PATH + "/" + processName, null);
 	}
 
 	/**
@@ -188,51 +189,50 @@ public abstract class GwtApplicationPanelManager<C extends Container,
 	/**
 	 * Executes a certain process on the server.
 	 *
-	 * @param sProcessName  The name of the process to execute
-	 * @param rProcessInput The ID of the currently selected entity or -1 for
-	 *                      none
+	 * @param processName  The name of the process to execute
+	 * @param processInput The ID of the currently selected entity or -1 for
+	 *                     none
 	 */
-	protected void executeProcess(String sProcessName,
-		DataElement<?> rProcessInput) {
-		String sProcessGroup = getProcessGroup();
+	protected void executeProcess(String processName,
+		DataElement<?> processInput) {
+		String processGroup = getProcessGroup();
 
-		if (sProcessGroup != null) {
-			sProcessName = sProcessGroup + '/' + sProcessName;
+		if (processGroup != null) {
+			processName = processGroup + '/' + processName;
 		}
 
-		P rParent = getParent();
+		P parent = getParent();
 
-		if (rParent != null) {
-			rParent.executeProcess(sProcessName, rProcessInput);
+		if (parent != null) {
+			parent.executeProcess(processName, processInput);
 		} else {
-			ProcessDescription rProcessDescription;
+			ProcessDescription processDescription;
 
-			if (sProcessName.startsWith(APPLICATION_PROCESS_PATH)) {
-				rProcessDescription =
-					new ProcessDescription(sProcessName, null, 0, false);
+			if (processName.startsWith(APPLICATION_PROCESS_PATH)) {
+				processDescription =
+					new ProcessDescription(processName, null, 0, false);
 			} else {
-				sProcessName = USER_PROCESSES + "/" + sProcessName;
+				processName = USER_PROCESSES + "/" + processName;
 
-				rProcessDescription =
+				processDescription =
 					(ProcessDescription) getUserData().getElementAt(
-						sProcessName);
+						processName);
 
-				if (rProcessDescription.isInputRequired()) {
-					rProcessDescription.setProcessInput(rProcessInput);
+				if (processDescription.isInputRequired()) {
+					processDescription.setProcessInput(processInput);
 				}
 			}
 
-			setClientSize(rProcessDescription);
-			rProcessDescription.setClientLocale(
+			setClientSize(processDescription);
+			processDescription.setClientLocale(
 				LocaleInfo.getCurrentLocale().getLocaleName());
 
-			executeCommand(EXECUTE_PROCESS, rProcessDescription,
+			executeCommand(EXECUTE_PROCESS, processDescription,
 				new DefaultCommandResultHandler<ProcessState>(this) {
 					@Override
-					public void handleCommandResult(
-						ProcessState rProcessState) {
-						rProcessState.setClientInfo(createClientInfo());
-						displayProcess(rProcessState);
+					public void handleCommandResult(ProcessState processState) {
+						processState.setClientInfo(createClientInfo());
+						displayProcess(processState);
 					}
 				});
 		}
@@ -242,12 +242,12 @@ public abstract class GwtApplicationPanelManager<C extends Container,
 	 * Helper method to lookup a certain data element in a list of elements and
 	 * to return it's value as a string.
 	 *
-	 * @param rList    The list of data elements
-	 * @param sElement The name of the element to return the value of
+	 * @param list    The list of data elements
+	 * @param element The name of the element to return the value of
 	 * @return A string describing the element value
 	 */
-	protected String findElement(DataElementList rList, String sElement) {
-		return "" + rList.getElementAt(sElement).getValue();
+	protected String findElement(DataElementList list, String element) {
+		return "" + list.getElementAt(element).getValue();
 	}
 
 	/**
@@ -296,21 +296,21 @@ public abstract class GwtApplicationPanelManager<C extends Container,
 	 * of a
 	 * currently selected entity from a selection data element.
 	 *
-	 * @param rDataElement The data element to read the selection from
+	 * @param dataElement The data element to read the selection from
 	 * @return A new integer data element for the current selection or NULL if
 	 * no entity is selected
 	 */
 	protected IntegerDataElement getSelectedEntityId(
-		DataElement<?> rDataElement) {
-		String sSelection = rDataElement.getValue().toString();
-		IntegerDataElement aSelectionId = null;
+		DataElement<?> dataElement) {
+		String selection = dataElement.getValue().toString();
+		IntegerDataElement selectionId = null;
 
-		if (!SelectionDataElement.NO_SELECTION.equals(sSelection)) {
-			aSelectionId = new IntegerDataElement(ENTITY_ID_NAME,
-				Integer.parseInt(sSelection));
+		if (!SelectionDataElement.NO_SELECTION.equals(selection)) {
+			selectionId = new IntegerDataElement(ENTITY_ID_NAME,
+				Integer.parseInt(selection));
 		}
 
-		return aSelectionId;
+		return selectionId;
 	}
 
 	/**
@@ -340,15 +340,15 @@ public abstract class GwtApplicationPanelManager<C extends Container,
 	 * typically
 	 * implemented in the root of the panel hierarchy.
 	 *
-	 * @param rProcessPanelManager The manager of the causing panel
-	 * @param rProcessState        The last state of the finished process
+	 * @param processPanelManager The manager of the causing panel
+	 * @param processState        The last state of the finished process
 	 */
-	protected void processFinished(PanelManager<?, ?> rProcessPanelManager,
-		ProcessState rProcessState) {
-		P rParent = getParent();
+	protected void processFinished(PanelManager<?, ?> processPanelManager,
+		ProcessState processState) {
+		P parent = getParent();
 
-		if (rParent != null) {
-			rParent.processFinished(rProcessPanelManager, rProcessState);
+		if (parent != null) {
+			parent.processFinished(processPanelManager, processState);
 		}
 	}
 
@@ -359,15 +359,15 @@ public abstract class GwtApplicationPanelManager<C extends Container,
 	 * if a parent is available. The handling is typically implemented in the
 	 * root of the panel hierarchy.
 	 *
-	 * @param rPanelManager The manager of the causing panel
-	 * @param rProcessState The current process state
+	 * @param panelManager The manager of the causing panel
+	 * @param processState The current process state
 	 */
-	protected void processUpdated(PanelManager<?, ?> rPanelManager,
-		ProcessState rProcessState) {
-		P rParent = getParent();
+	protected void processUpdated(PanelManager<?, ?> panelManager,
+		ProcessState processState) {
+		P parent = getParent();
 
-		if (rParent != null) {
-			getParent().processUpdated(rPanelManager, rProcessState);
+		if (parent != null) {
+			getParent().processUpdated(panelManager, processState);
 		}
 	}
 
@@ -375,35 +375,35 @@ public abstract class GwtApplicationPanelManager<C extends Container,
 	 * Sets the current size of the user's client (the web browser) into the
 	 * given process description.
 	 */
-	protected void setClientSize(ProcessDescription rProcessDescription) {
-		C rContainer = getProcessContainer();
+	protected void setClientSize(ProcessDescription processDescription) {
+		C container = getProcessContainer();
 
-		int w = rContainer.getWidth();
-		int h = rContainer.getHeight();
+		int w = container.getWidth();
+		int h = container.getHeight();
 
 		if (w == 0 || h == 0) {
 			w = Window.getClientWidth();
 			h = Window.getClientHeight();
 		}
 
-		rProcessDescription.setClientSize(w, h);
+		processDescription.setClientSize(w, h);
 	}
 
 	/**
 	 * Sets the process button states depending on the process requirement for
 	 * an input value and the current selection state of this panel.
 	 *
-	 * @param bHasSelection nEntityId The ID of the selected entity or -1 for
-	 *                      none
+	 * @param hasSelection nEntityId The ID of the selected entity or -1 for
+	 *                     none
 	 */
-	protected void setProcessButtonStates(boolean bHasSelection) {
-		for (Entry<ProcessDescription, Button> rProcessButton :
-			aProcessButtons.entrySet()) {
-			Button rButton = rProcessButton.getValue();
+	protected void setProcessButtonStates(boolean hasSelection) {
+		for (Entry<ProcessDescription, Button> processButton :
+			processButtons.entrySet()) {
+			Button button = processButton.getValue();
 
-			if (rButton != null) {
-				rButton.setEnabled(bHasSelection ||
-					!rProcessButton.getKey().isInputRequired());
+			if (button != null) {
+				button.setEnabled(
+					hasSelection || !processButton.getKey().isInputRequired());
 			}
 		}
 	}

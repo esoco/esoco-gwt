@@ -52,51 +52,51 @@ import static de.esoco.lib.property.StyleProperties.AUTO_HIDE;
  */
 public class DataElementListView {
 
-	private static Set<ViewStyle.Flag> aDefaultViewFlags =
+	private static Set<ViewStyle.Flag> defaultViewFlags =
 		EnumSet.noneOf(ViewStyle.Flag.class);
 
-	private DataElementListUI aViewUI;
+	private DataElementListUI viewUI;
 
-	private View aView;
+	private View view;
 
 	/**
 	 * Creates a new instance.
 	 *
-	 * @param rParent      The parent data element panel manager
-	 * @param rViewElement The data element list to be displayed in a view
+	 * @param parent      The parent data element panel manager
+	 * @param viewElement The data element list to be displayed in a view
 	 */
-	public DataElementListView(DataElementPanelManager rParent,
-		DataElementList rViewElement) {
-		aViewUI = (DataElementListUI) DataElementUIFactory.create(rParent,
-			rViewElement);
+	public DataElementListView(DataElementPanelManager parent,
+		DataElementList viewElement) {
+		viewUI = (DataElementListUI) DataElementUIFactory.create(parent,
+			viewElement);
 	}
 
 	/**
 	 * Sets the default view style flags for new views.
 	 *
-	 * @param rDefaultViewFlags The default view style flags
+	 * @param defaultViewFlags The default view style flags
 	 */
 	public static final void setDefaultViewFlags(
-		Set<ViewStyle.Flag> rDefaultViewFlags) {
-		aDefaultViewFlags = EnumSet.copyOf(rDefaultViewFlags);
+		Set<ViewStyle.Flag> defaultViewFlags) {
+		defaultViewFlags = EnumSet.copyOf(defaultViewFlags);
 	}
 
 	/**
 	 * Collects the modified data element UIs that received user input.
 	 *
-	 * @param rModifiedElements A list to add modified data elements to
+	 * @param modifiedElements A list to add modified data elements to
 	 */
-	public void collectInput(List<DataElement<?>> rModifiedElements) {
-		aViewUI.collectInput(rModifiedElements);
+	public void collectInput(List<DataElement<?>> modifiedElements) {
+		viewUI.collectInput(modifiedElements);
 	}
 
 	/**
 	 * Invokes {@link DataElementListUI#enableInteraction(boolean)}.
 	 *
-	 * @param bEnable TRUE to enable interactions, FALSE to disable
+	 * @param enable TRUE to enable interactions, FALSE to disable
 	 */
-	public void enableInteraction(boolean bEnable) {
-		aViewUI.enableInteraction(bEnable);
+	public void enableInteraction(boolean enable) {
+		viewUI.enableInteraction(enable);
 	}
 
 	/**
@@ -105,14 +105,14 @@ public class DataElementListView {
 	 * @return The view's data elementUI
 	 */
 	public final DataElementListUI getViewUI() {
-		return aViewUI;
+		return viewUI;
 	}
 
 	/**
 	 * Hides this view.
 	 */
 	public void hide() {
-		aView.setVisible(false);
+		view.setVisible(false);
 	}
 
 	/**
@@ -121,36 +121,35 @@ public class DataElementListView {
 	 * @return TRUE if the view is visible, FALSE if it hidden
 	 */
 	public boolean isVisible() {
-		return aView.isVisible();
+		return view.isVisible();
 	}
 
 	/**
 	 * Shows this view.
 	 */
 	public void show() {
-		ViewDisplayType eViewType = aViewUI
+		ViewDisplayType viewType = viewUI
 			.getDataElement()
 			.getProperty(VIEW_DISPLAY_TYPE, ViewDisplayType.MODAL_DIALOG);
 
-		ContainerBuilder<View> rBuilder =
-			createView(aViewUI.getParent().getContainer().getView(),
-				eViewType);
+		ContainerBuilder<View> builder =
+			createView(viewUI.getParent().getContainer().getView(), viewType);
 
-		StyleData rStyle = PanelManager.addStyles(StyleData.DEFAULT,
-			aViewUI.getElementStyleName());
+		StyleData style = PanelManager.addStyles(StyleData.DEFAULT,
+			viewUI.getElementStyleName());
 
-		aViewUI.buildUserInterface(rBuilder, rStyle);
+		viewUI.buildUserInterface(builder, style);
 
-		DataElementPanelManager rViewManager = aViewUI.getPanelManager();
-		Collection<DataElement<?>> rElements =
-			Arrays.asList(rViewManager.getDataElementList());
+		DataElementPanelManager viewManager = viewUI.getPanelManager();
+		Collection<DataElement<?>> elements =
+			Arrays.asList(viewManager.getDataElementList());
 
-		rViewManager.checkSelectionDependencies(rViewManager, rElements);
+		viewManager.checkSelectionDependencies(viewManager, elements);
 
-		aView = rBuilder.getContainer();
+		view = builder.getContainer();
 
-		aView.pack();
-		aView.getContext().displayViewCentered(aView);
+		view.pack();
+		view.getContext().displayViewCentered(view);
 	}
 
 	/**
@@ -158,103 +157,103 @@ public class DataElementListView {
 	 *
 	 * @see DataElementUI#updateDataElement(DataElement, boolean)
 	 */
-	public void updateDataElement(DataElementList rNewElement,
-		boolean bUpdateUI) {
-		aViewUI.clearError();
-		aViewUI.updateDataElement(rNewElement, bUpdateUI);
+	public void updateDataElement(DataElementList newElement,
+		boolean updateUI) {
+		viewUI.clearError();
+		viewUI.updateDataElement(newElement, updateUI);
 	}
 
 	/**
 	 * Creates a view of a certain type to display the list element UIs.
 	 *
-	 * @param rParentView The parent view
-	 * @param eViewType   The view type
+	 * @param parentView The parent view
+	 * @param viewType   The view type
 	 */
-	private ContainerBuilder<View> createView(View rParentView,
-		ViewDisplayType eViewType) {
-		DataElementList rDataElementList = aViewUI.getDataElement();
-		UserInterfaceContext rContext = rParentView.getContext();
-		ViewStyle rViewStyle = ViewStyle.DEFAULT;
-		ContainerBuilder<View> aViewBuilder = null;
-		View aPanelView = null;
+	private ContainerBuilder<View> createView(View parentView,
+		ViewDisplayType viewType) {
+		DataElementList dataElementList = viewUI.getDataElement();
+		UserInterfaceContext context = parentView.getContext();
+		ViewStyle viewStyle = ViewStyle.DEFAULT;
+		ContainerBuilder<View> viewBuilder = null;
+		View panelView = null;
 
-		Set<ViewStyle.Flag> aViewFlags = EnumSet.copyOf(aDefaultViewFlags);
+		Set<ViewStyle.Flag> viewFlags = EnumSet.copyOf(defaultViewFlags);
 
-		String sDialogStyle =
+		String dialogStyle =
 			EsocoGwtResources.INSTANCE.css().gfDataElementListDialog();
 
-		if (eViewType == ViewDisplayType.MODAL_VIEW ||
-			eViewType == ViewDisplayType.MODAL_DIALOG) {
-			rViewStyle = ViewStyle.MODAL;
+		if (viewType == ViewDisplayType.MODAL_VIEW ||
+			viewType == ViewDisplayType.MODAL_DIALOG) {
+			viewStyle = ViewStyle.MODAL;
 		}
 
-		if (rDataElementList.hasProperty(VERTICAL_ALIGN)) {
-			Alignment eAlignment =
-				rDataElementList.getProperty(VERTICAL_ALIGN, null);
+		if (dataElementList.hasProperty(VERTICAL_ALIGN)) {
+			Alignment alignment =
+				dataElementList.getProperty(VERTICAL_ALIGN, null);
 
-			if (eAlignment == Alignment.END) {
-				aViewFlags.add(ViewStyle.Flag.BOTTOM);
+			if (alignment == Alignment.END) {
+				viewFlags.add(ViewStyle.Flag.BOTTOM);
 			} else {
-				aViewFlags.remove(ViewStyle.Flag.BOTTOM);
+				viewFlags.remove(ViewStyle.Flag.BOTTOM);
 			}
 
-			if (eAlignment == Alignment.FILL) {
-				aViewFlags.add(ViewStyle.Flag.FULL_SIZE);
+			if (alignment == Alignment.FILL) {
+				viewFlags.add(ViewStyle.Flag.FULL_SIZE);
 			} else {
-				aViewFlags.remove(ViewStyle.Flag.FULL_SIZE);
+				viewFlags.remove(ViewStyle.Flag.FULL_SIZE);
 			}
 		}
 
-		if (rDataElementList.hasFlag(AUTO_HIDE)) {
-			aViewFlags.add(ViewStyle.Flag.AUTO_HIDE);
+		if (dataElementList.hasFlag(AUTO_HIDE)) {
+			viewFlags.add(ViewStyle.Flag.AUTO_HIDE);
 		} else {
-			aViewFlags.remove(ViewStyle.Flag.AUTO_HIDE);
+			viewFlags.remove(ViewStyle.Flag.AUTO_HIDE);
 		}
 
-		if (!aViewFlags.isEmpty()) {
-			rViewStyle = rViewStyle.withFlags(aViewFlags);
+		if (!viewFlags.isEmpty()) {
+			viewStyle = viewStyle.withFlags(viewFlags);
 		}
 
-		switch (eViewType) {
+		switch (viewType) {
 			case DIALOG:
 			case MODAL_DIALOG:
-				aPanelView = rContext.createDialog(rParentView, rViewStyle);
+				panelView = context.createDialog(parentView, viewStyle);
 
 				break;
 
 			case VIEW:
 			case MODAL_VIEW:
-				aPanelView = rContext.createChildView(rParentView, rViewStyle);
+				panelView = context.createChildView(parentView, viewStyle);
 				break;
 		}
 
-		String sViewTitle = "$ti" + rDataElementList.getResourceId();
+		String viewTitle = "$ti" + dataElementList.getResourceId();
 
-		sViewTitle =
-			rDataElementList.getProperty(StandardProperties.TITLE, sViewTitle);
+		viewTitle =
+			dataElementList.getProperty(StandardProperties.TITLE, viewTitle);
 
-		aPanelView.addEventListener(EventType.VIEW_CLOSING,
+		panelView.addEventListener(EventType.VIEW_CLOSING,
 			this::handleViewClosing);
 
-		aViewBuilder = new ContainerBuilder<View>(aPanelView);
+		viewBuilder = new ContainerBuilder<View>(panelView);
 
-		aPanelView.setTitle(sViewTitle);
-		aPanelView.applyStyle(
+		panelView.setTitle(viewTitle);
+		panelView.applyStyle(
 			StyleData.DEFAULT.set(StyleData.WEB_ADDITIONAL_STYLES,
-				sDialogStyle));
+				dialogStyle));
 
-		return aViewBuilder;
+		return viewBuilder;
 	}
 
 	/**
 	 * Handles the view closing event.
 	 *
-	 * @param rEvent The event
+	 * @param event The event
 	 */
-	private void handleViewClosing(EwtEvent rEvent) {
-		aViewUI
+	private void handleViewClosing(EwtEvent event) {
+		viewUI
 			.getPanelManager()
-			.handleInteractiveInput(aViewUI.getDataElement(),
+			.handleInteractiveInput(viewUI.getDataElement(),
 				InteractionEventType.UPDATE);
 	}
 }

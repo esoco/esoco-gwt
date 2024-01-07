@@ -37,12 +37,12 @@ public interface CommandService extends RemoteService {
 	/**
 	 * Executes a command in the service.
 	 *
-	 * @param rCommand The command to execute
-	 * @param rData    The data to be processed by the command
+	 * @param command The command to execute
+	 * @param data    The data to be processed by the command
 	 * @return The resulting data element (will be NULL for commands that do
 	 * not
 	 * return a result)
 	 */
 	public <T extends DataElement<?>, R extends DataElement<?>> R executeCommand(
-		Command<T, R> rCommand, T rData) throws ServiceException;
+		Command<T, R> command, T data) throws ServiceException;
 }

@@ -170,8 +170,8 @@ public class CssInterfaceGenerator extends ToolBase {
 	/**
 	 * @see InterfaceGenerator#main(String[])
 	 */
-	public static void main(String[] rArgs) {
-		(new CssInterfaceGenerator()).execImpl(rArgs);
+	public static void main(String[] args) {
+		(new CssInterfaceGenerator()).execImpl(args);
 	}
 
 	/**
@@ -347,8 +347,7 @@ public class CssInterfaceGenerator extends ToolBase {
 		public String getPurposeSnippet() {
 			return
 				"Add package and import statements to generated interface so" +
-					" " +
-					"that " +
+					" " + "that " +
 					"they are still functional when they stand alone.";
 		}
 

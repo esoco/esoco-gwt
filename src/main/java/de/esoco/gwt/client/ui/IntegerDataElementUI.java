@@ -49,59 +49,59 @@ public class IntegerDataElementUI extends DataElementUI<IntegerDataElement> {
 	}
 
 	@Override
-	protected Component createDisplayUI(ContainerBuilder<?> rBuilder,
-		StyleData rStyle, IntegerDataElement rDataElement) {
-		Component rComponent;
+	protected Component createDisplayUI(ContainerBuilder<?> builder,
+		StyleData style, IntegerDataElement dataElement) {
+		Component component;
 
-		if (rDataElement.getProperty(CONTENT_TYPE, null) ==
+		if (dataElement.getProperty(CONTENT_TYPE, null) ==
 			ContentType.PROGRESS) {
-			ProgressBar rProgressBar = rBuilder.addProgressBar(rStyle);
-			Validator<?> rValidator = rDataElement.getValidator();
+			ProgressBar progressBar = builder.addProgressBar(style);
+			Validator<?> validator = dataElement.getValidator();
 
-			if (rValidator instanceof IntegerRangeValidator) {
-				IntegerRangeValidator rRange =
-					(IntegerRangeValidator) rValidator;
-				Integer rValue = rDataElement.getValue();
+			if (validator instanceof IntegerRangeValidator) {
+				IntegerRangeValidator range =
+					(IntegerRangeValidator) validator;
+				Integer value = dataElement.getValue();
 
-				rProgressBar.setMinimum(rRange.getMinimum());
-				rProgressBar.setMaximum(rRange.getMaximum());
-				rProgressBar.setValue(rValue != null ? rValue.intValue() : 0);
+				progressBar.setMinimum(range.getMinimum());
+				progressBar.setMaximum(range.getMaximum());
+				progressBar.setValue(value != null ? value.intValue() : 0);
 
-				checkSetupAutoUpdate(rProgressBar, rDataElement);
+				checkSetupAutoUpdate(progressBar, dataElement);
 			}
 
-			rComponent = rProgressBar;
+			component = progressBar;
 		} else {
-			rComponent = super.createDisplayUI(rBuilder, rStyle, rDataElement);
+			component = super.createDisplayUI(builder, style, dataElement);
 		}
 
-		return rComponent;
+		return component;
 	}
 
 	@Override
 	@SuppressWarnings("boxing")
-	protected Component createInputUI(ContainerBuilder<?> rBuilder,
-		StyleData rStyle, IntegerDataElement rDataElement) {
-		Validator<?> rValidator = rDataElement.getValidator();
-		Component aComponent;
+	protected Component createInputUI(ContainerBuilder<?> builder,
+		StyleData style, IntegerDataElement dataElement) {
+		Validator<?> validator = dataElement.getValidator();
+		Component component;
 
-		if (rValidator instanceof IntegerRangeValidator) {
-			IntegerRangeValidator rRange = (IntegerRangeValidator) rValidator;
+		if (validator instanceof IntegerRangeValidator) {
+			IntegerRangeValidator range = (IntegerRangeValidator) validator;
 
-			Spinner aSpinner = rBuilder.addSpinner(rStyle, rRange.getMinimum(),
-				rRange.getMaximum(), 1);
+			Spinner spinner = builder.addSpinner(style, range.getMinimum(),
+				range.getMaximum(), 1);
 
-			if (rDataElement.getValue() != null) {
-				aSpinner.setValue(rDataElement.getValue());
+			if (dataElement.getValue() != null) {
+				spinner.setValue(dataElement.getValue());
 			}
 
-			aComponent = aSpinner;
+			component = spinner;
 		} else {
-			rDataElement.setProperty(INPUT_CONSTRAINT, "-?\\d*");
-			aComponent = super.createInputUI(rBuilder, rStyle, rDataElement);
+			dataElement.setProperty(INPUT_CONSTRAINT, "-?\\d*");
+			component = super.createInputUI(builder, style, dataElement);
 		}
 
-		return aComponent;
+		return component;
 	}
 
 	/**
@@ -111,26 +111,26 @@ public class IntegerDataElementUI extends DataElementUI<IntegerDataElement> {
 	@Override
 	@SuppressWarnings("boxing")
 	protected void transferDataElementValueToComponent(
-		IntegerDataElement rElement, Component rComponent) {
-		Integer rValue = rElement.getValue();
+		IntegerDataElement element, Component component) {
+		Integer value = element.getValue();
 
-		if (rComponent instanceof Spinner) {
-			((Spinner) rComponent).setValue(rValue != null ? rValue : 0);
-		} else if (rComponent instanceof ProgressBar) {
-			((ProgressBar) rComponent).setValue(rValue != null ? rValue : 0);
+		if (component instanceof Spinner) {
+			((Spinner) component).setValue(value != null ? value : 0);
+		} else if (component instanceof ProgressBar) {
+			((ProgressBar) component).setValue(value != null ? value : 0);
 		} else {
-			super.transferDataElementValueToComponent(rElement, rComponent);
+			super.transferDataElementValueToComponent(element, component);
 		}
 	}
 
 	@Override
 	@SuppressWarnings("boxing")
-	protected void transferInputToDataElement(Component rComponent,
-		IntegerDataElement rDataElement) {
-		if (rComponent instanceof Spinner) {
-			rDataElement.setValue(((Spinner) rComponent).getValue());
+	protected void transferInputToDataElement(Component component,
+		IntegerDataElement dataElement) {
+		if (component instanceof Spinner) {
+			dataElement.setValue(((Spinner) component).getValue());
 		} else {
-			super.transferInputToDataElement(rComponent, rDataElement);
+			super.transferInputToDataElement(component, dataElement);
 		}
 	}
 
@@ -138,31 +138,29 @@ public class IntegerDataElementUI extends DataElementUI<IntegerDataElement> {
 	 * Checks whether the given progress bar data element should be updated
 	 * automatically.
 	 *
-	 * @param rProgressBar The progress bar component
-	 * @param rDataElement The associated data element
+	 * @param progressBar The progress bar component
+	 * @param dataElement The associated data element
 	 */
-	private void checkSetupAutoUpdate(ProgressBar rProgressBar,
-		IntegerDataElement rDataElement) {
-		int nIncrement = rDataElement.getIntProperty(AUTO_UPDATE_INCREMENT, 0);
-		int nInterval = rDataElement.getIntProperty(AUTO_UPDATE_INTERVAL, -1);
+	private void checkSetupAutoUpdate(ProgressBar progressBar,
+		IntegerDataElement dataElement) {
+		int increment = dataElement.getIntProperty(AUTO_UPDATE_INCREMENT, 0);
+		int interval = dataElement.getIntProperty(AUTO_UPDATE_INTERVAL, -1);
 
-		if (nIncrement != 0 && nInterval > 0) {
-			Timer aTimer = new Timer() {
+		if (increment != 0 && interval > 0) {
+			Timer timer = new Timer() {
 				@Override
 				public void run() {
-					int nCurrent = rProgressBar.getValue();
+					int current = progressBar.getValue();
 
-					if ((nIncrement > 0 &&
-						nCurrent < rProgressBar.getMaximum()) ||
-						(nIncrement < 0 &&
-							nCurrent > rProgressBar.getMinimum())) {
-						rProgressBar.setValue(nCurrent + nIncrement);
+					if ((increment > 0 && current < progressBar.getMaximum()) ||
+						(increment < 0 && current > progressBar.getMinimum())) {
+						progressBar.setValue(current + increment);
 					} else {
 						cancel();
 					}
 				}
 			};
-			aTimer.scheduleRepeating(nInterval);
+			timer.scheduleRepeating(interval);
 		}
 	}
 }

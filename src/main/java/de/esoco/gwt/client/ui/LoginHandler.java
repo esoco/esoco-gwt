@@ -28,15 +28,16 @@ public interface LoginHandler {
 	/**
 	 * Will be invoked if the login failed.
 	 *
-	 * @param rError The exception that signaled the failure
+	 * @param error The exception that signaled the failure
 	 */
-	public void loginFailed(Exception rError);
+	public void loginFailed(Exception error);
 
 	/**
 	 * Will be invoked if the login was successful.
 	 *
-	 * @param rUserData A list of data elements containing information related
-	 *                  to the login user
+	 * @param userData A list of data elements containing information
+	 *                    related to
+	 *                 the login user
 	 */
-	public void loginSuccessful(DataElementList rUserData);
+	public void loginSuccessful(DataElementList userData);
 }

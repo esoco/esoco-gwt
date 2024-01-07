@@ -28,10 +28,10 @@ public class AuthenticationException extends ServiceException {
 	/**
 	 * Creates a new instance.
 	 *
-	 * @param sMessage The error message
+	 * @param message The error message
 	 */
-	public AuthenticationException(String sMessage) {
-		super(sMessage);
+	public AuthenticationException(String message) {
+		super(message);
 	}
 
 	/**
@@ -39,23 +39,23 @@ public class AuthenticationException extends ServiceException {
 	 * user is possible to continue an existing current session. The state can
 	 * be queried through the inherited {@link #isRecoverable()} method.
 	 *
-	 * @param sMessage                  The error message
-	 * @param bReAuthenticationPossible TRUE if the current user can be
-	 *                                  re-authenticated
+	 * @param message                  The error message
+	 * @param reAuthenticationPossible TRUE if the current user can be
+	 *                                 re-authenticated
 	 */
-	public AuthenticationException(String sMessage,
-		boolean bReAuthenticationPossible) {
-		super(sMessage, bReAuthenticationPossible);
+	public AuthenticationException(String message,
+		boolean reAuthenticationPossible) {
+		super(message, reAuthenticationPossible);
 	}
 
 	/**
 	 * Creates a new instance.
 	 *
-	 * @param sMessage The error message
-	 * @param eCause   The causing exception
+	 * @param message The error message
+	 * @param cause   The causing exception
 	 */
-	public AuthenticationException(String sMessage, Exception eCause) {
-		super(sMessage, eCause);
+	public AuthenticationException(String message, Exception cause) {
+		super(message, cause);
 	}
 
 	/**

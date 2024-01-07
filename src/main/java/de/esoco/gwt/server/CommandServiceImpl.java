@@ -59,9 +59,9 @@ public abstract class CommandServiceImpl extends RemoteServiceServlet
 
 	private static final String DEFAULT_RESOURCE_KEY = "DEFAULT";
 
-	private String sApplicationName = null;
+	private String applicationName = null;
 
-	private Map<String, ResourceBundle> aLocaleResources = new HashMap<>();
+	private Map<String, ResourceBundle> localeResources = new HashMap<>();
 
 	/**
 	 * @see CommandService#executeCommand(Command, DataElement)
@@ -69,22 +69,22 @@ public abstract class CommandServiceImpl extends RemoteServiceServlet
 	@Override
 	@SuppressWarnings("unchecked")
 	public <T extends DataElement<?>, R extends DataElement<?>> R executeCommand(
-		Command<T, R> rCommand, T rData) throws ServiceException {
-		checkCommandExecution(rCommand, rData);
+		Command<T, R> command, T data) throws ServiceException {
+		checkCommandExecution(command, data);
 
-		String sMethod =
-			"handle" + TextConvert.capitalizedIdentifier(rCommand.getName());
+		String method =
+			"handle" + TextConvert.capitalizedIdentifier(command.getName());
 
 		try {
-			Method rHandler =
-				ReflectUtil.findAnyPublicMethod(getClass(), sMethod);
+			Method handler =
+				ReflectUtil.findAnyPublicMethod(getClass(), method);
 
-			if (rHandler == null) {
+			if (handler == null) {
 				throw new ServiceException(
-					"Missing command handling method " + sMethod);
+					"Missing command handling method " + method);
 			}
 
-			return (R) rHandler.invoke(this, rData);
+			return (R) handler.invoke(this, data);
 		} catch (Throwable e) {
 			throw handleException(e);
 		}
@@ -93,8 +93,8 @@ public abstract class CommandServiceImpl extends RemoteServiceServlet
 	/**
 	 * @see SessionManager#getAbsoluteFileName(String)
 	 */
-	public String getAbsoluteFileName(String sFileName) {
-		return getServletContext().getRealPath(sFileName);
+	public String getAbsoluteFileName(String fileName) {
+		return getServletContext().getRealPath(fileName);
 	}
 
 	/**
@@ -112,12 +112,12 @@ public abstract class CommandServiceImpl extends RemoteServiceServlet
 	 * command (parameter) validations. To deny the command execution the
 	 * implementation must throw an exception.
 	 *
-	 * @param rCommand The command that is about to be executed
-	 * @param rData    The command argument
+	 * @param command The command that is about to be executed
+	 * @param data    The command argument
 	 * @throws ServiceException If the command is not allowed to be executed
 	 */
 	protected <T extends DataElement<?>> void checkCommandExecution(
-		Command<T, ?> rCommand, T rData) throws ServiceException {
+		Command<T, ?> command, T data) throws ServiceException {
 	}
 
 	/**
@@ -130,61 +130,61 @@ public abstract class CommandServiceImpl extends RemoteServiceServlet
 	 * @return The application name
 	 */
 	protected String getApplicationName() {
-		if (sApplicationName == null) {
-			sApplicationName = getClass().getSimpleName();
+		if (applicationName == null) {
+			applicationName = getClass().getSimpleName();
 
-			int nIndex = sApplicationName.indexOf("ServiceImpl");
+			int index = applicationName.indexOf("ServiceImpl");
 
-			if (nIndex > 0) {
-				sApplicationName = sApplicationName.substring(0, nIndex);
+			if (index > 0) {
+				applicationName = applicationName.substring(0, index);
 			}
 		}
 
-		return sApplicationName;
+		return applicationName;
 	}
 
 	/**
 	 * Returns the app resource for a certain locale.
 	 *
-	 * @param sLocale The locale name or NULL for the default resource
+	 * @param locale The locale name or NULL for the default resource
 	 * @return The resource bundle (will NULL if not even a default resource is
 	 * found)
 	 */
-	protected ResourceBundle getResource(String sLocale) {
-		String sKey = sLocale != null ? sLocale : DEFAULT_RESOURCE_KEY;
+	protected ResourceBundle getResource(String locale) {
+		String key = locale != null ? locale : DEFAULT_RESOURCE_KEY;
 
-		ResourceBundle aResource = aLocaleResources.get(sKey);
+		ResourceBundle resource = localeResources.get(key);
 
-		if (aResource == null) {
-			if (sLocale != null) {
-				aResource = readResourceFile(
+		if (resource == null) {
+			if (locale != null) {
+				resource = readResourceFile(
 					String.format("%s/%s_%sStrings.properties",
-						getResourcePath(), getResourceBaseName(), sLocale));
+						getResourcePath(), getResourceBaseName(), locale));
 			} else {
-				aResource = readResourceFile(
+				resource = readResourceFile(
 					String.format("%s/%sStrings.properties", getResourcePath(),
 						getResourceBaseName()));
 			}
 
-			if (aResource == null && sLocale != null) {
-				int nLocaleSeparator = sLocale.indexOf('_');
-				String sNextLocale = null;
+			if (resource == null && locale != null) {
+				int localeSeparator = locale.indexOf('_');
+				String nextLocale = null;
 
-				if (nLocaleSeparator > 0) {
-					sNextLocale = sLocale.substring(0, nLocaleSeparator);
+				if (localeSeparator > 0) {
+					nextLocale = locale.substring(0, localeSeparator);
 				}
 
-				aResource = getResource(sNextLocale);
+				resource = getResource(nextLocale);
 			}
 
 			// not in else branch to also store the default resource under the
 			// locale key if no locale-specific file exists
-			if (aResource != null) {
-				aLocaleResources.put(sKey, aResource);
+			if (resource != null) {
+				localeResources.put(key, resource);
 			}
 		}
 
-		return aResource;
+		return resource;
 	}
 
 	/**
@@ -214,24 +214,24 @@ public abstract class CommandServiceImpl extends RemoteServiceServlet
 	 * resource for a given locale is found the corresponding string from the
 	 * default resource is returned instead (if available).
 	 *
-	 * @param sKey    The key identifying the resource
-	 * @param sLocale The locale to return the resource string for or NULL for
-	 *                the default resource
+	 * @param key    The key identifying the resource
+	 * @param locale The locale to return the resource string for or NULL for
+	 *               the default resource
 	 * @return The resource string or NULL if not found
 	 */
-	protected String getResourceString(String sKey, String sLocale) {
-		ResourceBundle aResource = getResource(sLocale);
-		String sResourceString = null;
+	protected String getResourceString(String key, String locale) {
+		ResourceBundle resource = getResource(locale);
+		String resourceString = null;
 
-		if (aResource != null) {
+		if (resource != null) {
 			try {
-				sResourceString = aResource.getString(sKey);
+				resourceString = resource.getString(key);
 			} catch (MissingResourceException e) {
 				// just return NULL
 			}
 		}
 
-		return sResourceString;
+		return resourceString;
 	}
 
 	/**
@@ -266,24 +266,24 @@ public abstract class CommandServiceImpl extends RemoteServiceServlet
 	/**
 	 * Tries to read a resource file with a certain name.
 	 *
-	 * @param sFileName The resource file name
+	 * @param fileName The resource file name
 	 * @return A new resource bundle instance from the given file or NULL if no
 	 * matching file could be found
 	 */
-	protected ResourceBundle readResourceFile(String sFileName) {
-		ResourceBundle aResource;
+	protected ResourceBundle readResourceFile(String fileName) {
+		ResourceBundle resource;
 
 		try {
-			sFileName = getAbsoluteFileName(sFileName);
+			fileName = getAbsoluteFileName(fileName);
 
-			InputStreamReader rReader =
-				new InputStreamReader(new FileInputStream(sFileName), "UTF-8");
+			InputStreamReader reader =
+				new InputStreamReader(new FileInputStream(fileName), "UTF-8");
 
-			aResource = new PropertyResourceBundle(rReader);
+			resource = new PropertyResourceBundle(reader);
 		} catch (IOException e) {
-			aResource = null;
+			resource = null;
 		}
 
-		return aResource;
+		return resource;
 	}
 }

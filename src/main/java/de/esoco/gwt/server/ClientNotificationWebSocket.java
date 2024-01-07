@@ -31,72 +31,72 @@ import javax.websocket.Session;
  */
 public class ClientNotificationWebSocket extends Endpoint {
 
-	private static ClientNotificationService rNotificationService;
+	private static ClientNotificationService notificationService;
 
 	/**
 	 * Sets the service this web socket belongs to.
 	 *
-	 * @param rService The service
+	 * @param service The service
 	 */
-	static void setService(ClientNotificationService rService) {
-		rNotificationService = rService;
+	static void setService(ClientNotificationService service) {
+		notificationService = service;
 	}
 
 	/**
 	 * Invoked when the socket is closed.
 	 *
-	 * @param rSession The closed session
-	 * @param rReason  The close reason
+	 * @param session The closed session
+	 * @param reason  The close reason
 	 */
 	@Override
-	public void onClose(Session rSession, CloseReason rReason) {
-		rNotificationService.getSessions().remove(rSession);
+	public void onClose(Session session, CloseReason reason) {
+		notificationService.getSessions().remove(session);
 
 		Log.infof("%s[%s] closed", getClass().getSimpleName(),
-			rSession.getId());
+			session.getId());
 	}
 
 	/**
 	 * Invoked on socket errors.
 	 *
-	 * @param rSession The session
-	 * @param eError   The error that occurred
+	 * @param session The session
+	 * @param error   The error that occurred
 	 */
 	@Override
-	public void onError(Session rSession, Throwable eError) {
-		rNotificationService.getSessions().remove(rSession);
+	public void onError(Session session, Throwable error) {
+		notificationService.getSessions().remove(session);
 
-		Log.errorf(eError, "%s[%s] error", getClass().getSimpleName(),
-			rSession.getId());
+		Log.errorf(error, "%s[%s] error", getClass().getSimpleName(),
+			session.getId());
 	}
 
 	/**
 	 * Invoked when the socket connection has been established.
 	 *
-	 * @param rSession The client session
-	 * @param rConfig  The endpoint configuration
+	 * @param session The client session
+	 * @param config  The endpoint configuration
 	 */
 	@Override
-	public void onOpen(Session rSession, EndpointConfig rConfig) {
-		rNotificationService.getSessions().add(rSession);
-		rSession.addMessageHandler(new MessageHandler.Whole<String>() {
+	public void onOpen(Session session, EndpointConfig config) {
+		notificationService.getSessions().add(session);
+		session.addMessageHandler(new MessageHandler.Whole<String>() {
 			@Override
-			public void onMessage(String sMessage) {
-				ClientNotificationWebSocket.this.onMessage(rSession, sMessage);
+			public void onMessage(String message) {
+				ClientNotificationWebSocket.this.onMessage(session, message);
 			}
 		});
 
 		Log.infof("%s[%s] opened", getClass().getSimpleName(),
-			rSession.getId());
+			session.getId());
 	}
 
 	/**
 	 * Receives client messages.
 	 *
-	 * @param rSession The client session
-	 * @param sMessage The message
+	 * @param session The client session
+	 * @param message The message
 	 */
-	void onMessage(Session rSession, String sMessage) {
+	void onMessage(Session session, String message) {
 		Log.warn("Client message ignored");
 	}
 }

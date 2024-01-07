@@ -22,14 +22,11 @@ import de.esoco.data.element.StringDataElement;
 import de.esoco.data.element.StringMapDataElement;
 import de.esoco.data.storage.AbstractStorageAdapter;
 import de.esoco.data.storage.StorageAdapterId;
-
 import de.esoco.entity.Entity;
 import de.esoco.entity.EntityDefinition;
 import de.esoco.entity.EntityManager;
 import de.esoco.entity.EntityRelationTypes.HierarchicalQueryMode;
-
 import de.esoco.gwt.shared.ServiceException;
-
 import de.esoco.lib.expression.Function;
 import de.esoco.lib.expression.Predicate;
 import de.esoco.lib.expression.Predicates;
@@ -40,7 +37,6 @@ import de.esoco.lib.model.ColumnDefinition;
 import de.esoco.lib.model.DataModel;
 import de.esoco.lib.property.SortDirection;
 import de.esoco.lib.text.TextUtil;
-
 import de.esoco.storage.Query;
 import de.esoco.storage.QueryPredicate;
 import de.esoco.storage.QueryResult;
@@ -48,6 +44,9 @@ import de.esoco.storage.Storage;
 import de.esoco.storage.StorageException;
 import de.esoco.storage.StorageManager;
 import de.esoco.storage.StorageRelationTypes;
+import org.obrel.core.ObjectRelations;
+import org.obrel.core.Relatable;
+import org.obrel.core.RelationType;
 
 import java.util.ArrayList;
 import java.util.Calendar;
@@ -60,18 +59,12 @@ import java.util.Set;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
-import org.obrel.core.ObjectRelations;
-import org.obrel.core.Relatable;
-import org.obrel.core.RelationType;
-
 import static de.esoco.data.DataRelationTypes.CHILD_STORAGE_ADAPTER_ID;
 import static de.esoco.data.DataRelationTypes.FLAG_ATTRIBUTE;
 import static de.esoco.data.DataRelationTypes.STORAGE_ADAPTER_IDS;
-
 import static de.esoco.entity.EntityRelationTypes.HIERARCHICAL_QUERY_MODE;
 import static de.esoco.entity.EntityRelationTypes.HIERARCHY_CHILD_PREDICATE;
 import static de.esoco.entity.EntityRelationTypes.HIERARCHY_ROOT_PREDICATE;
-
 import static de.esoco.lib.expression.CollectionPredicates.elementOf;
 import static de.esoco.lib.expression.Predicates.equalTo;
 import static de.esoco.lib.expression.Predicates.greaterOrEqual;
@@ -88,9 +81,8 @@ import static de.esoco.lib.property.StorageProperties.QUERY_LIMIT;
 import static de.esoco.lib.property.StorageProperties.QUERY_SEARCH;
 import static de.esoco.lib.property.StorageProperties.QUERY_SORT;
 import static de.esoco.lib.property.StorageProperties.QUERY_START;
-
-import static de.esoco.storage.StoragePredicates.similarTo;
 import static de.esoco.storage.StoragePredicates.like;
+import static de.esoco.storage.StoragePredicates.similarTo;
 import static de.esoco.storage.StoragePredicates.sortBy;
 
 /**
@@ -102,36 +94,36 @@ public class DatabaseStorageAdapter extends AbstractStorageAdapter {
 
 	private static final long serialVersionUID = 1L;
 
-	private static int nNextQueryId = 1;
+	private static int nextQueryId = 1;
 
-	private final DataElementFactory rDataElementFactory;
+	private final DataElementFactory dataElementFactory;
 
-	private final Lock aLock = new ReentrantLock();
+	private final Lock lock = new ReentrantLock();
 
-	private QueryPredicate<Entity> qBaseQuery;
+	private QueryPredicate<Entity> baseQuery;
 
-	private QueryPredicate<Entity> qCurrentQuery;
+	private QueryPredicate<Entity> currentQuery;
 
-	private Predicate<? super Entity> pDefaultConstraints;
+	private Predicate<? super Entity> defaultConstraints;
 
-	private Predicate<? super Entity> pDefaultSortCriteria;
+	private Predicate<? super Entity> defaultSortCriteria;
 
-	private Function<Entity, List<String>> fGetAttributes;
+	private Function<Entity, List<String>> getAttributes;
 
-	private List<ColumnDefinition> rColumns;
+	private List<ColumnDefinition> columns;
 
-	private List<Entity> aLastQueryResult;
+	private List<Entity> lastQueryResult;
 
 	/**
 	 * Creates a new instance that is associated with a certain data element
 	 * factory.
 	 *
-	 * @param rDataElementFactory The data element factory to create the result
-	 *                            objects with
+	 * @param dataElementFactory The data element factory to create the result
+	 *                           objects with
 	 */
 	public <E extends Entity> DatabaseStorageAdapter(
-		DataElementFactory rDataElementFactory) {
-		this.rDataElementFactory = rDataElementFactory;
+		DataElementFactory dataElementFactory) {
+		this.dataElementFactory = dataElementFactory;
 	}
 
 	/**
@@ -139,7 +131,7 @@ public class DatabaseStorageAdapter extends AbstractStorageAdapter {
 	 */
 	@Override
 	public List<ColumnDefinition> getColumns() {
-		return rColumns;
+		return columns;
 	}
 
 	/**
@@ -153,7 +145,7 @@ public class DatabaseStorageAdapter extends AbstractStorageAdapter {
 	 */
 	@Override
 	public QueryPredicate<Entity> getCurrentQueryCriteria() {
-		return qCurrentQuery;
+		return currentQuery;
 	}
 
 	/**
@@ -161,54 +153,55 @@ public class DatabaseStorageAdapter extends AbstractStorageAdapter {
 	 */
 	@Override
 	public String getStorageDescription() {
-		return String.format("%s, %s, %s", qBaseQuery, pDefaultConstraints,
-			pDefaultSortCriteria);
+		return String.format("%s, %s, %s", baseQuery, defaultConstraints,
+			defaultSortCriteria);
 	}
 
 	/**
 	 * Performs a query on a {@link Storage} and returns a data element that
 	 * contains the result.
 	 *
-	 * @param rQueryParams A data element list containing the query parameters
+	 * @param queryParams A data element list containing the query parameters
 	 * @return A data element containing the query result
 	 * @throws StorageException If accessing the storage fails
 	 */
 	@Override
 	public QueryResultElement<DataModel<String>> performQuery(
-		StringDataElement rQueryParams) throws StorageException {
-		aLock.lock();
+		StringDataElement queryParams) throws StorageException {
+		lock.lock();
 
 		try {
-			int nStart = rQueryParams.getIntProperty(QUERY_START, 0);
-			int nLimit = rQueryParams.getIntProperty(QUERY_LIMIT, 0);
-			int nQuerySize;
+			int start = queryParams.getIntProperty(QUERY_START, 0);
+			int limit = queryParams.getIntProperty(QUERY_LIMIT, 0);
+			int querySize;
 
-			List<DataModel<String>> aQueryRows =
+			List<DataModel<String>> queryRows =
 				new ArrayList<DataModel<String>>();
 
-			Map<String, String> rConstraints =
-				rQueryParams.getProperty(QUERY_SEARCH, null);
-			Map<String, SortDirection> rSortFields =
-				rQueryParams.getProperty(QUERY_SORT, null);
+			Map<String, String> constraints =
+				queryParams.getProperty(QUERY_SEARCH, null);
+			Map<String, SortDirection> sortFields =
+				queryParams.getProperty(QUERY_SORT, null);
 
-			Storage rStorage =
-				StorageManager.getStorage(qBaseQuery.getQueryType());
+			Storage storage =
+				StorageManager.getStorage(baseQuery.getQueryType());
 
 			try {
-				qCurrentQuery =
-					createFullQuery(qBaseQuery, rConstraints, rSortFields);
+				currentQuery =
+					createFullQuery(baseQuery, constraints, sortFields);
 
-				nQuerySize =
-					executeQuery(rStorage, qCurrentQuery, nStart, nLimit,
-						aQueryRows, qBaseQuery.get(FLAG_ATTRIBUTE));
+				querySize =
+					executeQuery(storage, currentQuery, start, limit,
+						queryRows,
+						baseQuery.get(FLAG_ATTRIBUTE));
 
 				return new QueryResultElement<DataModel<String>>(
-					"DBQ" + nNextQueryId++, aQueryRows, nQuerySize);
+					"DBQ" + nextQueryId++, queryRows, querySize);
 			} finally {
-				rStorage.release();
+				storage.release();
 			}
 		} finally {
-			aLock.unlock();
+			lock.unlock();
 		}
 	}
 
@@ -216,12 +209,12 @@ public class DatabaseStorageAdapter extends AbstractStorageAdapter {
 	 * Allows to query the position of an entity with a certain ID in the query
 	 * result of this adapter.
 	 *
-	 * @param rId The ID of the entity to query the position of
+	 * @param id The ID of the entity to query the position of
 	 * @return The entity position or -1 if undefined
 	 * @throws StorageException If the database query fails
 	 */
-	public int positionOf(Object rId) throws StorageException {
-		return queryPositionOrSize(rId);
+	public int positionOf(Object id) throws StorageException {
+		return queryPositionOrSize(id);
 	}
 
 	/**
@@ -238,38 +231,38 @@ public class DatabaseStorageAdapter extends AbstractStorageAdapter {
 	/**
 	 * Sets the query parameters of this instance.
 	 *
-	 * @param pBaseQuery           A query predicate containing the base query
-	 * @param fGetAttributes       A function that retrieves the attribute
-	 *                                value
-	 *                             strings from an entity
-	 * @param pDefaultCriteria     An optional predicate containing default
-	 *                             criteria to be used if no specific
-	 *                             constraints are given
-	 * @param pDefaultSortCriteria An optional predicate containing default
-	 *                                sort
-	 *                             criteria to be used if no specific sort
-	 *                             fields are given
-	 * @param rColumns             The query columns
+	 * @param baseQuery           A query predicate containing the base query
+	 * @param getAttributes       A function that retrieves the attribute value
+	 *                            strings from an entity
+	 * @param defaultCriteria     An optional predicate containing default
+	 *                            criteria to be used if no specific
+	 *                            constraints
+	 *                            are given
+	 * @param defaultSortCriteria An optional predicate containing default sort
+	 *                            criteria to be used if no specific sort
+	 *                            fields
+	 *                            are given
+	 * @param columns             The query columns
 	 */
 	@SuppressWarnings("unchecked")
 	public <E extends Entity> void setQueryParameters(
-		QueryPredicate<E> pBaseQuery,
-		Function<Entity, List<String>> fGetAttributes,
-		Predicate<? super E> pDefaultCriteria,
-		Predicate<? super E> pDefaultSortCriteria,
-		List<ColumnDefinition> rColumns) {
-		aLock.lock();
+		QueryPredicate<E> baseQuery,
+		Function<Entity, List<String>> getAttributes,
+		Predicate<? super E> defaultCriteria,
+		Predicate<? super E> defaultSortCriteria,
+		List<ColumnDefinition> columns) {
+		lock.lock();
 
 		try {
-			this.qBaseQuery = (QueryPredicate<Entity>) pBaseQuery;
-			this.fGetAttributes = fGetAttributes;
-			this.rColumns = rColumns;
-			this.pDefaultConstraints =
-				(Predicate<? super Entity>) pDefaultCriteria;
-			this.pDefaultSortCriteria =
-				(Predicate<? super Entity>) pDefaultSortCriteria;
+			this.baseQuery = (QueryPredicate<Entity>) baseQuery;
+			this.getAttributes = getAttributes;
+			this.columns = columns;
+			this.defaultConstraints =
+				(Predicate<? super Entity>) defaultCriteria;
+			this.defaultSortCriteria =
+				(Predicate<? super Entity>) defaultSortCriteria;
 		} finally {
-			aLock.unlock();
+			lock.unlock();
 		}
 	}
 
@@ -279,7 +272,7 @@ public class DatabaseStorageAdapter extends AbstractStorageAdapter {
 	 * @return The query predicate
 	 */
 	protected final QueryPredicate<Entity> getQueryPredicate() {
-		return qBaseQuery;
+		return baseQuery;
 	}
 
 	/**
@@ -287,100 +280,99 @@ public class DatabaseStorageAdapter extends AbstractStorageAdapter {
 	 * predicate
 	 * if they are available.
 	 *
-	 * @param pQuery       The query to apply the search constraints to
-	 * @param rConstraints A {@link StringMapDataElement} containing the search
-	 *                     constraints map or NULL for none
+	 * @param query            The query to apply the search constraints to
+	 * @param queryConstraints A {@link StringMapDataElement} containing the
+	 *                         search constraints map or NULL for none
 	 * @return A new query predicate if constraints are available or else the
 	 * unchanged input predicate
 	 */
 	private QueryPredicate<Entity> applyQueryConstraints(
-		QueryPredicate<Entity> pQuery, Map<String, String> rConstraints) {
-		Predicate<? super Entity> pConstraints = null;
+		QueryPredicate<Entity> query, Map<String, String> queryConstraints) {
+		Predicate<? super Entity> constraints = null;
 
-		if (rConstraints != null) {
-			EntityDefinition<Entity> rDef =
-				EntityManager.getEntityDefinition(pQuery.getQueryType());
+		if (queryConstraints != null) {
+			EntityDefinition<Entity> def =
+				EntityManager.getEntityDefinition(query.getQueryType());
 
-			for (Entry<String, String> rConstraint : rConstraints.entrySet()) {
-				String sAttr = rConstraint.getKey();
-				String sAttrConstraint = rConstraint.getValue().trim();
+			for (Entry<String, String> constraint :
+				queryConstraints.entrySet()) {
+				String attrName = constraint.getKey();
+				String attrConstraint = constraint.getValue().trim();
 
-				RelationType<?> rAttr = rDef.getAttribute(sAttr);
+				RelationType<?> attr = def.getAttribute(attrName);
 
-				if (rAttr == null) {
+				if (attr == null) {
 					throw new IllegalArgumentException(
-						"Unknown search attribute: " + sAttr);
+						"Unknown search attribute: " + attr);
 				}
 
-				if (sAttrConstraint != null && sAttrConstraint.length() > 1) {
-					boolean bAttrOr =
-						sAttrConstraint.charAt(0) == CONSTRAINT_OR_PREFIX;
+				if (attrConstraint.length() > 1) {
+					boolean attrOr =
+						attrConstraint.charAt(0) == CONSTRAINT_OR_PREFIX;
 
-					Predicate<? super Entity> pAttrConstraints = null;
+					Predicate<? super Entity> attrConstraints = null;
 
-					for (String sConstraint : sAttrConstraint.split(
+					for (String constraintElem : attrConstraint.split(
 						CONSTRAINT_SEPARATOR)) {
-						boolean bOr =
-							sConstraint.charAt(0) == CONSTRAINT_OR_PREFIX;
+						boolean or =
+							constraintElem.charAt(0) == CONSTRAINT_OR_PREFIX;
 
-						sConstraint = sConstraint.substring(1);
+						constraintElem = constraintElem.substring(1);
 
-						Predicate<? super Entity> pAttrConstraint =
-							createAttributeConstraint(rAttr, sConstraint);
+						Predicate<? super Entity> attrPredicate =
+							createAttributeConstraint(attr, constraintElem);
 
-						pAttrConstraints =
-							combinePredicates(pAttrConstraints,
-								pAttrConstraint,
-								bOr);
+						attrConstraints =
+							combinePredicates(attrConstraints, attrPredicate,
+								or);
 					}
 
-					pConstraints =
-						combinePredicates(pConstraints, pAttrConstraints,
-							bAttrOr);
+					constraints =
+						combinePredicates(constraints, attrConstraints,
+							attrOr);
 				}
 			}
 		}
 
-		return checkNewQuery(pQuery, pConstraints);
+		return checkNewQuery(query, constraints);
 	}
 
 	/**
 	 * Internal method to apply optional sort fields to a query predicate if
 	 * they are available.
 	 *
-	 * @param pQuery      The query predicate to apply the sort fields to
-	 * @param rSortFields A {@link StringMapDataElement} containing the sort
-	 *                    field map or NULL for none
+	 * @param query      The query predicate to apply the sort fields to
+	 * @param sortFields A {@link StringMapDataElement} containing the sort
+	 *                   field map or NULL for none
 	 * @return A new query predicate if sort fields are available or else the
 	 * unchanged input predicate
 	 */
-	private QueryPredicate<Entity> applySortFields(
-		QueryPredicate<Entity> pQuery,
-		Map<String, SortDirection> rSortFields) {
-		Predicate<? super Entity> pSortCriteria = null;
+	private QueryPredicate<Entity> applySortFields(QueryPredicate<Entity> query,
+		Map<String, SortDirection> sortFields) {
+		Predicate<? super Entity> sortCriteria = null;
 
-		if (rSortFields != null) {
-			EntityDefinition<Entity> rDef =
-				EntityManager.getEntityDefinition(pQuery.getQueryType());
+		if (sortFields != null) {
+			EntityDefinition<Entity> def =
+				EntityManager.getEntityDefinition(query.getQueryType());
 
-			for (Entry<String, SortDirection> rAttrSort :
-				rSortFields.entrySet()) {
-				String sAttr = rAttrSort.getKey();
-				RelationType<?> rAttr = rDef.getAttribute(sAttr);
+			for (Entry<String, SortDirection> attrSort :
+				sortFields.entrySet()) {
+				String attrName = attrSort.getKey();
+				RelationType<?> attr = def.getAttribute(attrName);
 
-				if (rAttr == null) {
+				if (attr == null) {
 					throw new IllegalArgumentException(
-						"Unknown attribute: " + sAttr);
+						"Unknown attribute: " + attrName);
 				}
 
-				pSortCriteria = Predicates.and(pSortCriteria,
-					sortBy(rAttr, rAttrSort.getValue()));
+				sortCriteria = Predicates.and(sortCriteria,
+					sortBy(attr, attrSort.getValue()));
 			}
 		} else {
-			pSortCriteria = pDefaultSortCriteria;
+			sortCriteria = defaultSortCriteria;
 		}
 
-		return checkNewQuery(pQuery, pSortCriteria);
+		return checkNewQuery(query, sortCriteria);
 	}
 
 	/**
@@ -389,400 +381,394 @@ public class DatabaseStorageAdapter extends AbstractStorageAdapter {
 	 * criteria have changed. If not the original query predicate will be
 	 * returned.
 	 *
-	 * @param pQuery         The query predicate
-	 * @param pExtraCriteria The new (or same
+	 * @param query         The query predicate
+	 * @param extraCriteria The new (or same
 	 * @return Either the same or a new query predicate
 	 */
-	private QueryPredicate<Entity> checkNewQuery(QueryPredicate<Entity> pQuery,
-		Predicate<? super Entity> pExtraCriteria) {
-		Predicate<? super Entity> pQueryCriteria = pQuery.getCriteria();
-		Predicate<? super Entity> pCriteria =
-			Predicates.and(pQueryCriteria, pExtraCriteria);
+	private QueryPredicate<Entity> checkNewQuery(QueryPredicate<Entity> query,
+		Predicate<? super Entity> extraCriteria) {
+		Predicate<? super Entity> queryCriteria = query.getCriteria();
+		Predicate<? super Entity> criteria =
+			Predicates.and(queryCriteria, extraCriteria);
 
-		if (pCriteria != pQueryCriteria) {
-			QueryPredicate<Entity> pNewQuery =
-				new QueryPredicate<Entity>(pQuery.getQueryType(), pCriteria);
+		if (criteria != queryCriteria) {
+			QueryPredicate<Entity> newQuery =
+				new QueryPredicate<Entity>(query.getQueryType(), criteria);
 
-			ObjectRelations.copyRelations(pQuery, pNewQuery, false);
-			pQuery = pNewQuery;
+			ObjectRelations.copyRelations(query, newQuery, false);
+			query = newQuery;
 		}
 
-		return pQuery;
+		return query;
 	}
 
 	/**
 	 * Combines to predicates with either a logical OR or AND. Any of the
 	 * predicate arguments can be NULL.
 	 *
-	 * @param pFirst  The first predicate
-	 * @param pSecond The second predicate
-	 * @param bOr     TRUE for OR, FALSE for AND
+	 * @param first  The first predicate
+	 * @param second The second predicate
+	 * @param or     TRUE for OR, FALSE for AND
 	 * @return The resulting predicate
 	 */
 	private Predicate<? super Entity> combinePredicates(
-		Predicate<? super Entity> pFirst, Predicate<? super Entity> pSecond,
-		boolean bOr) {
-		if (bOr) {
-			pFirst = Predicates.or(pFirst, pSecond);
+		Predicate<? super Entity> first, Predicate<? super Entity> second,
+		boolean or) {
+		if (or) {
+			first = Predicates.or(first, second);
 		} else {
-			pFirst = Predicates.and(pFirst, pSecond);
+			first = Predicates.and(first, second);
 		}
 
-		return pFirst;
+		return first;
 	}
 
 	/**
 	 * Creates a constraint predicate for a certain attributes.
 	 *
-	 * @param rAttr       The attribute to create the constraint for
-	 * @param sConstraint The constraint string
+	 * @param attr       The attribute to create the constraint for
+	 * @param constraint The constraint string
 	 * @return The predicate containing the attribute constraint or NULL if the
 	 * constraint is not valid
 	 */
 	@SuppressWarnings({ "unchecked" })
-	private Predicate<Entity> createAttributeConstraint(RelationType<?> rAttr,
-		String sConstraint) {
-		Class<?> rDatatype = rAttr.getTargetType();
-		Predicate<?> pAttribute = null;
-		char cComparison = sConstraint.charAt(0);
+	private Predicate<Entity> createAttributeConstraint(RelationType<?> attr,
+		String constraint) {
+		Class<?> datatype = attr.getTargetType();
+		Predicate<?> attribute = null;
+		char comparison = constraint.charAt(0);
 
-		if (CONSTRAINT_COMPARISON_CHARS.indexOf(sConstraint.charAt(0)) >= 0) {
-			sConstraint = sConstraint.substring(1);
+		if (CONSTRAINT_COMPARISON_CHARS.indexOf(constraint.charAt(0)) >= 0) {
+			constraint = constraint.substring(1);
 		}
 
-		sConstraint = sConstraint.replaceAll(CONSTRAINT_SEPARATOR_ESCAPE,
+		constraint = constraint.replaceAll(CONSTRAINT_SEPARATOR_ESCAPE,
 			CONSTRAINT_SEPARATOR);
 
-		if (sConstraint.length() > 0) {
-			if (cComparison == '#') {
-				String[] aRawValues = sConstraint.split(",");
+		if (constraint.length() > 0) {
+			if (comparison == '#') {
+				String[] rawValues = constraint.split(",");
 
-				List<Object> aValues =
-					new ArrayList<Object>(aRawValues.length);
+				List<Object> values = new ArrayList<Object>(rawValues.length);
 
-				for (String sValue : aRawValues) {
-					aValues.add(parseConstraintValue(sValue.trim(),
-						rDatatype));
+				for (String value : rawValues) {
+					values.add(parseConstraintValue(value.trim(), datatype));
 				}
 
-				pAttribute = rAttr.is(elementOf(aValues));
+				attribute = attr.is(elementOf(values));
 			} else {
-				Object rValue = parseConstraintValue(sConstraint, rDatatype);
+				Object value = parseConstraintValue(constraint, datatype);
 
-				if (rValue instanceof Comparable) {
-					pAttribute =
-						createComparableConstraint(rAttr, cComparison, rValue,
-							sConstraint);
+				if (value instanceof Comparable) {
+					attribute =
+						createComparableConstraint(attr, comparison, value,
+							constraint);
 				}
 			}
 		}
 
-		return (Predicate<Entity>) pAttribute;
+		return (Predicate<Entity>) attribute;
 	}
 
 	/**
 	 * Creates a query constraint predicate for a comparable value.
 	 *
-	 * @param rAttr       The attribute to create the predicate for
-	 * @param cComparison The comparison to perform
-	 * @param rValue      The comparable value
-	 * @param sConstraint The constraint string
+	 * @param attr       The attribute to create the predicate for
+	 * @param comparison The comparison to perform
+	 * @param value      The comparable value
+	 * @param constraint The constraint string
 	 * @return A predicate containing the query constraint
 	 */
 	@SuppressWarnings({ "unchecked" })
 	private <C extends Comparable<C>> Predicate<?> createComparableConstraint(
-		RelationType<?> rAttr, char cComparison, Object rValue,
-		String sConstraint) {
-		Predicate<?> pAttribute;
+		RelationType<?> attr, char comparison, Object value,
+		String constraint) {
+		Predicate<?> attribute;
 
-		RelationType<C> rComparableAttr = (RelationType<C>) rAttr;
-		C rCompareValue = (C) rValue;
+		RelationType<C> comparableAttr = (RelationType<C>) attr;
+		C compareValue = (C) value;
 
-		switch (cComparison) {
+		switch (comparison) {
 			case '<':
-				pAttribute = rComparableAttr.is(lessThan(rCompareValue));
+				attribute = comparableAttr.is(lessThan(compareValue));
 				break;
 
 			case '>':
-				pAttribute = rComparableAttr.is(greaterThan(rCompareValue));
+				attribute = comparableAttr.is(greaterThan(compareValue));
 				break;
 
 			case '\u2264': // <=
-				pAttribute = rComparableAttr.is(lessOrEqual(rCompareValue));
+				attribute = comparableAttr.is(lessOrEqual(compareValue));
 				break;
 
 			case '\u2265': // >=
-				pAttribute = rComparableAttr.is(greaterOrEqual(rCompareValue));
+				attribute = comparableAttr.is(greaterOrEqual(compareValue));
 				break;
 
 			case '~':
-				pAttribute = rComparableAttr.is(similarTo(sConstraint));
+				attribute = comparableAttr.is(similarTo(constraint));
 				break;
 
 			default:
-				pAttribute = createValueConstraint(rComparableAttr,
-					cComparison,
-					rCompareValue, sConstraint);
+				attribute = createValueConstraint(comparableAttr, comparison,
+					compareValue, constraint);
 		}
 
-		return pAttribute;
+		return attribute;
 	}
 
 	/**
 	 * Creates the final query predicate for this instance by applying
 	 * constraints and sort fields (if available) to the base query predicate.
 	 *
-	 * @param qBaseQuery   The base query predicate
-	 * @param rConstraints The additional query constraints (NULL for none)
-	 * @param rSortFields  The optional sort fields (NULL for none)
+	 * @param baseQuery   The base query predicate
+	 * @param constraints The additional query constraints (NULL for none)
+	 * @param sortFields  The optional sort fields (NULL for none)
 	 * @return The total size of the query
 	 * @throws StorageException If accessing the storage fails
 	 * @throws ServiceException If creating a result data object fails
 	 */
 	private QueryPredicate<Entity> createFullQuery(
-		QueryPredicate<Entity> qBaseQuery, Map<String, String> rConstraints,
-		Map<String, SortDirection> rSortFields) {
-		Class<Entity> rQueryType = qBaseQuery.getQueryType();
-		Predicate<? super Entity> pCriteria = qBaseQuery.getCriteria();
+		QueryPredicate<Entity> baseQuery, Map<String, String> constraints,
+		Map<String, SortDirection> sortFields) {
+		Class<Entity> queryType = baseQuery.getQueryType();
+		Predicate<? super Entity> criteria = baseQuery.getCriteria();
 
-		HierarchicalQueryMode eHierarchyMode =
-			qBaseQuery.get(HIERARCHICAL_QUERY_MODE);
+		HierarchicalQueryMode hierarchyMode =
+			baseQuery.get(HIERARCHICAL_QUERY_MODE);
 
-		boolean bNoConstraints =
-			rConstraints == null || rConstraints.size() == 0;
-		boolean bHierarchical =
-			eHierarchyMode == HierarchicalQueryMode.ALWAYS ||
-				eHierarchyMode == HierarchicalQueryMode.UNCONSTRAINED &&
-					bNoConstraints;
+		boolean noConstraints = constraints == null || constraints.size() == 0;
+		boolean hierarchical = hierarchyMode == HierarchicalQueryMode.ALWAYS ||
+			hierarchyMode == HierarchicalQueryMode.UNCONSTRAINED &&
+				noConstraints;
 
-		if (bHierarchical) {
-			Predicate<? super Entity> pIsHierarchyRoot =
-				qBaseQuery.get(HIERARCHY_ROOT_PREDICATE);
+		if (hierarchical) {
+			Predicate<? super Entity> isHierarchyRoot =
+				baseQuery.get(HIERARCHY_ROOT_PREDICATE);
 
-			if (pIsHierarchyRoot == null) {
-				RelationType<? extends Entity> rParentAttribute = EntityManager
-					.getEntityDefinition(rQueryType)
+			if (isHierarchyRoot == null) {
+				RelationType<? extends Entity> parentAttribute = EntityManager
+					.getEntityDefinition(queryType)
 					.getParentAttribute();
 
-				if (rParentAttribute != null) {
-					pIsHierarchyRoot = rParentAttribute.is(isNull());
+				if (parentAttribute != null) {
+					isHierarchyRoot = parentAttribute.is(isNull());
 				}
 			}
 
-			if (pIsHierarchyRoot != null) {
-				pCriteria = Predicates.and(pCriteria, pIsHierarchyRoot);
+			if (isHierarchyRoot != null) {
+				criteria = Predicates.and(criteria, isHierarchyRoot);
 			}
 		}
 
-		if (bNoConstraints && pDefaultConstraints != null) {
-			pCriteria = Predicates.and(pCriteria, pDefaultConstraints);
+		if (noConstraints && defaultConstraints != null) {
+			criteria = Predicates.and(criteria, defaultConstraints);
 		}
 
-		QueryPredicate<Entity> qFullQuery = qBaseQuery;
+		QueryPredicate<Entity> fullQuery = baseQuery;
 
-		if (pCriteria != qBaseQuery.getCriteria()) {
-			qFullQuery = new QueryPredicate<Entity>(rQueryType, pCriteria);
+		if (criteria != baseQuery.getCriteria()) {
+			fullQuery = new QueryPredicate<Entity>(queryType, criteria);
 
-			ObjectRelations.copyRelations(qBaseQuery, qFullQuery, false);
+			ObjectRelations.copyRelations(baseQuery, fullQuery, false);
 		}
 
-		qFullQuery = applyQueryConstraints(qFullQuery, rConstraints);
-		qFullQuery = applySortFields(qFullQuery, rSortFields);
+		fullQuery = applyQueryConstraints(fullQuery, constraints);
+		fullQuery = applySortFields(fullQuery, sortFields);
 
-		return qFullQuery;
+		return fullQuery;
 	}
 
 	/**
 	 * Creates a comparison predicate for a single-day constraint.
 	 *
-	 * @param rAttribute    The attribute to create the comparison for
-	 * @param rCompareValue The compare value
-	 * @param bNegate       TRUE to negate the comparison
+	 * @param attribute    The attribute to create the comparison for
+	 * @param compareValue The compare value
+	 * @param negate       TRUE to negate the comparison
 	 * @return The comparison predicate
 	 */
 	private Predicate<Entity> createSingleDayComparison(
-		RelationType<Date> rAttribute, Date rCompareValue, boolean bNegate) {
-		Calendar rCalendar = Calendar.getInstance();
-		Predicate<Entity> pDayComparison;
-		Predicate<Entity> pLastDate;
+		RelationType<Date> attribute, Date compareValue, boolean negate) {
+		Calendar calendar = Calendar.getInstance();
+		Predicate<Entity> dayComparison;
+		Predicate<Entity> lastDate;
 
-		rCalendar.setTime(rCompareValue);
-		CalendarFunctions.clearTime(rCalendar);
-		rCompareValue = rCalendar.getTime();
+		calendar.setTime(compareValue);
+		CalendarFunctions.clearTime(calendar);
+		compareValue = calendar.getTime();
 
-		if (bNegate) {
-			pDayComparison = rAttribute.is(lessThan(rCompareValue));
+		if (negate) {
+			dayComparison = attribute.is(lessThan(compareValue));
 		} else {
-			pDayComparison = rAttribute.is(greaterOrEqual(rCompareValue));
+			dayComparison = attribute.is(greaterOrEqual(compareValue));
 		}
 
-		rCalendar.add(Calendar.DAY_OF_MONTH, 1);
-		rCompareValue = rCalendar.getTime();
+		calendar.add(Calendar.DAY_OF_MONTH, 1);
+		compareValue = calendar.getTime();
 
-		if (bNegate) {
-			pLastDate = rAttribute.is(greaterOrEqual(rCompareValue));
+		if (negate) {
+			lastDate = attribute.is(greaterOrEqual(compareValue));
 		} else {
-			pLastDate = rAttribute.is(lessThan(rCompareValue));
+			lastDate = attribute.is(lessThan(compareValue));
 		}
 
-		pDayComparison = pDayComparison.and(pLastDate);
+		dayComparison = dayComparison.and(lastDate);
 
-		return pDayComparison;
+		return dayComparison;
 	}
 
 	/**
 	 * Creates a single value comparison query constraint predicate.
 	 *
-	 * @param rAttr       The attribute to create the predicate for
-	 * @param cComparison The comparison to perform
-	 * @param rValue      The comparable value
-	 * @param sConstraint The constraint string
+	 * @param attr           The attribute to create the predicate for
+	 * @param comparisonChar The comparison to perform
+	 * @param value          The comparable value
+	 * @param constraint     The constraint string
 	 * @return A predicate containing the query constraint
 	 */
 	@SuppressWarnings({ "rawtypes", "unchecked" })
-	private Predicate<?> createValueConstraint(RelationType<?> rAttr,
-		char cComparison, Comparable rValue, String sConstraint) {
-		Predicate<?> pAttribute;
-		boolean bNegate = (cComparison == '\u2260'); // !=
+	private Predicate<?> createValueConstraint(RelationType<?> attr,
+		char comparisonChar, Comparable value, String constraint) {
+		Predicate<?> attribute;
+		boolean negate = (comparisonChar == '\u2260'); // !=
 
-		sConstraint = StorageManager.convertToSqlConstraint(sConstraint);
+		constraint = StorageManager.convertToSqlConstraint(constraint);
 
-		if (NULL_CONSTRAINT_VALUE.equals(rValue)) {
-			rValue = null;
+		if (NULL_CONSTRAINT_VALUE.equals(value)) {
+			value = null;
 		}
 
-		if (rValue instanceof Date) {
-			pAttribute = createSingleDayComparison((RelationType<Date>) rAttr,
-				(Date) rValue, bNegate);
+		if (value instanceof Date) {
+			attribute = createSingleDayComparison((RelationType<Date>) attr,
+				(Date) value, negate);
 		} else {
-			Class<?> rDatatype = rAttr.getTargetType();
-			Predicate<Object> pComparison;
+			Class<?> datatype = attr.getTargetType();
+			Predicate<Object> comparison;
 
-			if (sConstraint.indexOf('%') >= 0 ||
-				sConstraint.indexOf('_') >= 0) {
-				pComparison = like(sConstraint);
+			if (constraint.indexOf('%') >= 0 || constraint.indexOf('_') >= 0) {
+				comparison = like(constraint);
 			} else {
-				pComparison = equalTo(rValue);
+				comparison = equalTo(value);
 			}
 
-			if (bNegate) {
-				pComparison = Predicates.not(pComparison);
+			if (negate) {
+				comparison = Predicates.not(comparison);
 			}
 
-			if ((rDatatype == String.class || rDatatype.isEnum()) &&
-				!TextUtil.containsUpperCase(sConstraint)) {
-				Function<Relatable, String> fAttr = StringFunctions
+			if ((datatype == String.class || datatype.isEnum()) &&
+				!TextUtil.containsUpperCase(constraint)) {
+				Function<Relatable, String> attrFunction = StringFunctions
 					.toLowerCase()
-					.from((Function<Relatable, String>) rAttr);
+					.from((Function<Relatable, String>) attr);
 
-				pAttribute =
-					new FunctionPredicate<Entity, String>(fAttr, pComparison);
+				attribute = new FunctionPredicate<Entity, String>(attrFunction,
+					comparison);
 			} else {
-				pAttribute = rAttr.is(pComparison);
+				attribute = attr.is(comparison);
 			}
 		}
 
-		return pAttribute;
+		return attribute;
 	}
 
 	/**
 	 * Executes a storage query with certain parameters. The query object will
 	 * be closed after successful execution.
 	 *
-	 * @param qEntities      The predicate of the query to execute
-	 * @param nStart         The starting index of the entities to query
-	 * @param nLimit         The maximum number of entities to retrieve
-	 * @param aResultRows    The list to store the queried data objects in
-	 * @param rFlagAttribute The attribute that should be set as the data
-	 *                       objects flag
+	 * @param entities      The predicate of the query to execute
+	 * @param start         The starting index of the entities to query
+	 * @param limit         The maximum number of entities to retrieve
+	 * @param resultRows    The list to store the queried data objects in
+	 * @param flagAttribute The attribute that should be set as the data
+	 *                         objects
+	 *                      flag
 	 * @return The total size of the query
 	 * @throws StorageException If accessing the storage fails
 	 * @throws ServiceException If creating a result data object fails
 	 */
-	private int executeQuery(Storage rStorage,
-		QueryPredicate<Entity> qEntities,
-		int nStart, int nLimit, List<DataModel<String>> aResultRows,
-		RelationType<?> rFlagAttribute) throws StorageException {
-		Predicate<? super Entity> pChildCriteria =
-			qEntities.get(HIERARCHY_CHILD_PREDICATE);
+	private int executeQuery(Storage storage,
+		QueryPredicate<Entity> entityQuery, int start, int limit,
+		List<DataModel<String>> resultRows, RelationType<?> flagAttribute)
+		throws StorageException {
+		Predicate<? super Entity> childCriteria =
+			entityQuery.get(HIERARCHY_CHILD_PREDICATE);
 
-		int nQuerySize;
+		int querySize;
 
-		try (Query<Entity> aQuery = rStorage.query(qEntities)) {
-			aQuery.set(StorageRelationTypes.QUERY_LIMIT, nLimit);
-			aQuery.set(StorageRelationTypes.QUERY_OFFSET, nStart);
+		try (Query<Entity> query = storage.query(entityQuery)) {
+			query.set(StorageRelationTypes.QUERY_LIMIT, limit);
+			query.set(StorageRelationTypes.QUERY_OFFSET, start);
 
-			QueryResult<Entity> aEntities = aQuery.execute();
+			QueryResult<Entity> entities = query.execute();
 
-			nQuerySize = aQuery.size();
-			aLastQueryResult = new ArrayList<Entity>(Math.min(nLimit, 1000));
+			querySize = query.size();
+			lastQueryResult = new ArrayList<Entity>(Math.min(limit, 1000));
 
-			while (nLimit-- > 0 && aEntities.hasNext()) {
-				Entity rEntity = aEntities.next();
-				Set<String> aFlags = null;
+			while (limit-- > 0 && entities.hasNext()) {
+				Entity entity = entities.next();
+				Set<String> flags = null;
 
-				if (rFlagAttribute != null) {
-					Object rFlagValue = rEntity.get(rFlagAttribute);
+				if (flagAttribute != null) {
+					Object flagValue = entity.get(flagAttribute);
 
-					if (rFlagValue != null) {
-						aFlags = Collections.singleton(rFlagValue.toString());
+					if (flagValue != null) {
+						flags = Collections.singleton(flagValue.toString());
 					}
 				}
 
-				HierarchicalDataObject aDataObject =
-					rDataElementFactory.createEntityDataObject(rEntity,
-						nStart++, pChildCriteria, pDefaultSortCriteria,
-						fGetAttributes, aFlags, true);
+				HierarchicalDataObject dataObject =
+					dataElementFactory.createEntityDataObject(entity, start++,
+						childCriteria, defaultSortCriteria, getAttributes,
+						flags, true);
 
-				aResultRows.add(aDataObject);
+				resultRows.add(dataObject);
 
-				StorageAdapterId rChildAdapterId =
-					rEntity.get(CHILD_STORAGE_ADAPTER_ID);
+				StorageAdapterId childAdapterId =
+					entity.get(CHILD_STORAGE_ADAPTER_ID);
 
-				if (rChildAdapterId != null) {
-					get(STORAGE_ADAPTER_IDS).add(rChildAdapterId);
-					rEntity.deleteRelation(CHILD_STORAGE_ADAPTER_ID);
+				if (childAdapterId != null) {
+					get(STORAGE_ADAPTER_IDS).add(childAdapterId);
+					entity.deleteRelation(CHILD_STORAGE_ADAPTER_ID);
 				}
 
 				// keep result entities to prevent garbage collection of child
 				// list
 				// storage adapters which are only stored in weak references
-				aLastQueryResult.add(rEntity);
+				lastQueryResult.add(entity);
 			}
 		}
 
-		return nQuerySize;
+		return querySize;
 	}
 
 	/**
 	 * Allows to query the position of an entity with a certain ID in the query
 	 * result of this adapter.
 	 *
-	 * @param rId The ID of the entity to query the position or NULL for the
-	 *            query size
+	 * @param id The ID of the entity to query the position or NULL for the
+	 *           query size
 	 * @return The entity position or -1 if undefined
 	 * @throws StorageException If the database query fails
 	 */
-	private int queryPositionOrSize(Object rId) throws StorageException {
-		int nResult;
+	private int queryPositionOrSize(Object id) throws StorageException {
+		int result;
 
-		aLock.lock();
+		lock.lock();
 
 		try {
-			Storage rStorage =
-				StorageManager.getStorage(qBaseQuery.getQueryType());
+			Storage storage =
+				StorageManager.getStorage(baseQuery.getQueryType());
 
-			try (Query<Entity> rQuery = rStorage.query(
-				createFullQuery(qBaseQuery, null, null))) {
-				nResult =
-					(rId != null ? rQuery.positionOf(rId) : rQuery.size());
+			try (Query<Entity> query = storage.query(
+				createFullQuery(baseQuery, null, null))) {
+				result = (id != null ? query.positionOf(id) : query.size());
 			} finally {
-				rStorage.release();
+				storage.release();
 			}
 		} finally {
-			aLock.unlock();
+			lock.unlock();
 		}
 
-		return nResult;
+		return result;
 	}
 }

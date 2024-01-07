@@ -45,17 +45,17 @@ import static de.esoco.lib.property.StateProperties.CURRENT_SELECTION;
 public class DataElementSwitchPanelManager extends DataElementPanelManager
 	implements EwtEventHandler {
 
-	private SwitchPanel aSwitchPanel;
+	private SwitchPanel switchPanel;
 
-	private String sLabelPrefix;
+	private String labelPrefix;
 
 	/**
 	 * @see DataElementPanelManager#DataElementPanelManager(PanelManager,
 	 * DataElementList)
 	 */
-	public DataElementSwitchPanelManager(PanelManager<?, ?> rParent,
-		DataElementList rDataElementList) {
-		super(rParent, rDataElementList);
+	public DataElementSwitchPanelManager(PanelManager<?, ?> parent,
+		DataElementList dataElementList) {
+		super(parent, dataElementList);
 	}
 
 	/**
@@ -65,10 +65,10 @@ public class DataElementSwitchPanelManager extends DataElementPanelManager
 	 * manager, not the manager itself. Not all switching panels may support
 	 * listener registrations.
 	 *
-	 * @param rListener The listener to notify if a new page is selected
+	 * @param listener The listener to notify if a new page is selected
 	 */
-	public void addPageSelectionListener(EwtEventHandler rListener) {
-		aSwitchPanel.addEventListener(EventType.SELECTION, rListener);
+	public void addPageSelectionListener(EwtEventHandler listener) {
+		switchPanel.addEventListener(EventType.SELECTION, listener);
 	}
 
 	/**
@@ -78,29 +78,29 @@ public class DataElementSwitchPanelManager extends DataElementPanelManager
 	 * @see DataElementPanelManager#collectInput(List)
 	 */
 	@Override
-	public void collectInput(List<DataElement<?>> rModifiedElements) {
-		DataElementList rDataElementList = getDataElementList();
-		int nSelection = getSelectedElement();
+	public void collectInput(List<DataElement<?>> modifiedElements) {
+		DataElementList dataElementList = getDataElementList();
+		int selection = getSelectedElement();
 
-		if (nSelection <= 0) {
-			rDataElementList.removeProperty(CURRENT_SELECTION);
+		if (selection <= 0) {
+			dataElementList.removeProperty(CURRENT_SELECTION);
 		} else {
-			rDataElementList.setProperty(CURRENT_SELECTION, nSelection);
+			dataElementList.setProperty(CURRENT_SELECTION, selection);
 		}
 
-		checkIfDataElementListModified(rModifiedElements);
+		checkIfDataElementListModified(modifiedElements);
 
-		if (nSelection >= 0) {
-			DataElementUI<?> rDataElementUI = getDataElementUI(nSelection);
+		if (selection >= 0) {
+			DataElementUI<?> dataElementUI = getDataElementUI(selection);
 
-			rDataElementUI.collectInput(rModifiedElements);
+			dataElementUI.collectInput(modifiedElements);
 		}
 	}
 
 	@Override
 	public void dispose() {
 		// remove event listener to avoid event handling for non-existing UIs
-		aSwitchPanel.removeEventListener(EventType.SELECTION, this);
+		switchPanel.removeEventListener(EventType.SELECTION, this);
 
 		super.dispose();
 	}
@@ -111,7 +111,7 @@ public class DataElementSwitchPanelManager extends DataElementPanelManager
 	 * @return The selection index
 	 */
 	public int getSelectedElement() {
-		return aSwitchPanel.getSelectionIndex();
+		return switchPanel.getSelectionIndex();
 	}
 
 	/**
@@ -120,21 +120,21 @@ public class DataElementSwitchPanelManager extends DataElementPanelManager
 	 * @see EwtEventHandler#handleEvent(EwtEvent)
 	 */
 	@Override
-	public void handleEvent(EwtEvent rEvent) {
-		int nSelection = getSelectedElement();
+	public void handleEvent(EwtEvent event) {
+		int selection = getSelectedElement();
 
-		if (nSelection >= 0) {
-			getDataElementUI(nSelection).update();
+		if (selection >= 0) {
+			getDataElementUI(selection).update();
 		}
 	}
 
 	/**
 	 * Sets the currently selected page.
 	 *
-	 * @param nElement The index of the page to select
+	 * @param element The index of the page to select
 	 */
-	public void setSelectedElement(int nElement) {
-		aSwitchPanel.setSelection(nElement);
+	public void setSelectedElement(int element) {
+		switchPanel.setSelection(element);
 	}
 
 	@Override
@@ -147,27 +147,26 @@ public class DataElementSwitchPanelManager extends DataElementPanelManager
 	@Override
 	public void updateUI() {
 		@SuppressWarnings("boxing")
-		int nSelection = getDataElementList().getProperty(CURRENT_SELECTION,
-			0);
+		int selection = getDataElementList().getProperty(CURRENT_SELECTION, 0);
 
-		setSelectedElement(nSelection);
+		setSelectedElement(selection);
 
-		if (nSelection >= 0) {
-			getDataElementUI(nSelection).update();
+		if (selection >= 0) {
+			getDataElementUI(selection).update();
 		}
 
 		updatePageTitles();
 	}
 
 	@Override
-	protected void buildDataElementUI(DataElementUI<?> rDataElementUI,
-		StyleData rStyle) {
-		super.buildDataElementUI(rDataElementUI, rStyle);
+	protected void buildDataElementUI(DataElementUI<?> dataElementUI,
+		StyleData style) {
+		super.buildDataElementUI(dataElementUI, style);
 
-		Component rElementComponent = rDataElementUI.getElementComponent();
+		Component elementComponent = dataElementUI.getElementComponent();
 
-		aSwitchPanel.addPage(rElementComponent,
-			getPageTitle(rDataElementUI.getDataElement()), false);
+		switchPanel.addPage(elementComponent,
+			getPageTitle(dataElementUI.getDataElement()), false);
 	}
 
 	/**
@@ -178,80 +177,80 @@ public class DataElementSwitchPanelManager extends DataElementPanelManager
 	protected void buildElementUIs() {
 		super.buildElementUIs();
 
-		if (!aSwitchPanel.getComponents().isEmpty()) {
+		if (!switchPanel.getComponents().isEmpty()) {
 			setSelectedElement(
 				getDataElementList().getProperty(CURRENT_SELECTION, 0));
 		}
 
-		aSwitchPanel.addEventListener(EventType.SELECTION, this);
+		switchPanel.addEventListener(EventType.SELECTION, this);
 	}
 
 	@Override
 	protected ContainerBuilder<? extends Panel> createPanel(
-		ContainerBuilder<?> rBuilder, StyleData rStyleData,
-		LayoutType eDisplayMode) {
-		ContainerBuilder<? extends SwitchPanel> aPanelBuilder;
+		ContainerBuilder<?> builder, StyleData styleData,
+		LayoutType displayMode) {
+		ContainerBuilder<? extends SwitchPanel> panelBuilder;
 
-		switch (eDisplayMode) {
+		switch (displayMode) {
 			case TABS:
-				sLabelPrefix = "$tab";
-				aPanelBuilder = rBuilder.addTabPanel(rStyleData);
+				labelPrefix = "$tab";
+				panelBuilder = builder.addTabPanel(styleData);
 				break;
 
 			case STACK:
-				sLabelPrefix = "$grp";
-				aPanelBuilder = rBuilder.addStackPanel(rStyleData);
+				labelPrefix = "$grp";
+				panelBuilder = builder.addStackPanel(styleData);
 				break;
 
 			case DECK:
-				sLabelPrefix = null;
-				aPanelBuilder = rBuilder.addDeckPanel(rStyleData);
+				labelPrefix = null;
+				panelBuilder = builder.addDeckPanel(styleData);
 				break;
 
 			default:
 				throw new IllegalStateException(
-					"Unsupported DataElementList mode " + eDisplayMode);
+					"Unsupported DataElementList mode " + displayMode);
 		}
 
-		aSwitchPanel = aPanelBuilder.getContainer();
+		switchPanel = panelBuilder.getContainer();
 
-		return aPanelBuilder;
+		return panelBuilder;
 	}
 
 	/**
 	 * Returns a value from a collection at a certain position, relative to the
 	 * iteration order. The first position is zero.
 	 *
-	 * @param nIndex The position index
+	 * @param index The position index
 	 * @return The corresponding value
 	 * @throws IndexOutOfBoundsException If the index is invalid for the
 	 *                                   collection
 	 */
-	private DataElementUI<?> getDataElementUI(int nIndex) {
-		assert nIndex >= 0 && nIndex < getDataElementUIs().size();
+	private DataElementUI<?> getDataElementUI(int index) {
+		assert index >= 0 && index < getDataElementUIs().size();
 
-		Iterator<DataElementUI<?>> rUIs =
+		Iterator<DataElementUI<?>> uIs =
 			getDataElementUIs().values().iterator();
 
-		DataElementUI<?> rResult = null;
+		DataElementUI<?> result = null;
 
-		while (nIndex-- >= 0 && rUIs.hasNext()) {
-			rResult = rUIs.next();
+		while (index-- >= 0 && uIs.hasNext()) {
+			result = uIs.next();
 		}
 
-		return rResult;
+		return result;
 	}
 
 	/**
 	 * Returns the switch panel page title for a certain data element.
 	 *
-	 * @param rDataElement The data element to create the title for
+	 * @param dataElement The data element to create the title for
 	 * @return The page title string
 	 */
-	private String getPageTitle(DataElement<?> rDataElement) {
-		return sLabelPrefix != null ?
-		       DataElementUI.getLabelText(getContext(), rDataElement,
-			       sLabelPrefix) :
+	private String getPageTitle(DataElement<?> dataElement) {
+		return labelPrefix != null ?
+		       DataElementUI.getLabelText(getContext(), dataElement,
+			       labelPrefix) :
 		       "";
 	}
 
@@ -259,11 +258,11 @@ public class DataElementSwitchPanelManager extends DataElementPanelManager
 	 * Updates the page titles from the current state of the data elements.
 	 */
 	private void updatePageTitles() {
-		int nPage = 0;
+		int page = 0;
 
-		for (DataElementUI<?> rElementUI : getDataElementUIs().values()) {
-			aSwitchPanel.setPageTitle(nPage++,
-				getPageTitle(rElementUI.getDataElement()));
+		for (DataElementUI<?> elementUI : getDataElementUIs().values()) {
+			switchPanel.setPageTitle(page++,
+				getPageTitle(elementUI.getDataElement()));
 		}
 	}
 }

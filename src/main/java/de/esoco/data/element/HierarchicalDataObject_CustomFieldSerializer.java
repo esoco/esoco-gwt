@@ -43,123 +43,122 @@ public class HierarchicalDataObject_CustomFieldSerializer
 	 * Not used, implemented in {@link #instantiate(SerializationStreamReader)}
 	 * instead.
 	 *
-	 * @param rReader The stream reader to read the object data from
-	 * @param rObject The object to de-serialize
+	 * @param reader The stream reader to read the object data from
+	 * @param object The object to de-serialize
 	 * @throws SerializationException If the stream access fails
 	 */
-	public static void deserialize(SerializationStreamReader rReader,
-		HierarchicalDataObject rObject) throws SerializationException {
+	public static void deserialize(SerializationStreamReader reader,
+		HierarchicalDataObject object) throws SerializationException {
 	}
 
 	/**
 	 * Restores the complete object hierarchy from a serialization stream.
 	 *
-	 * @param rReader The stream reader to read the object data from
+	 * @param reader The stream reader to read the object data from
 	 * @return The restored object
 	 * @throws SerializationException If the stream access fails
 	 */
 	public static HierarchicalDataObject instantiate(
-		SerializationStreamReader rReader) throws SerializationException {
-		String sId = rReader.readString();
-		int nIndex = rReader.readInt();
-		int nCount = rReader.readInt();
-		boolean bReadonly = rReader.readBoolean();
-		List<String> aValues = new ArrayList<String>(nCount);
-		Set<String> aFlags = null;
-		HierarchicalDataObject rResult;
+		SerializationStreamReader reader) throws SerializationException {
+		String id = reader.readString();
+		int index = reader.readInt();
+		int count = reader.readInt();
+		boolean readonly = reader.readBoolean();
+		List<String> values = new ArrayList<String>(count);
+		Set<String> flags = null;
+		HierarchicalDataObject result;
 
-		for (int i = 0; i < nCount; i++) {
-			aValues.add(rReader.readString());
+		for (int i = 0; i < count; i++) {
+			values.add(reader.readString());
 		}
 
-		nCount = rReader.readInt();
+		count = reader.readInt();
 
-		if (nCount > 0) {
-			aFlags = new HashSet<String>(nCount);
+		if (count > 0) {
+			flags = new HashSet<String>(count);
 
-			for (int i = 0; i < nCount; i++) {
-				aFlags.add(rReader.readString());
+			for (int i = 0; i < count; i++) {
+				flags.add(reader.readString());
 			}
 		}
 
-		nCount = rReader.readInt();
+		count = reader.readInt();
 
-		if (nCount < 0) {
+		if (count < 0) {
 			@SuppressWarnings("unchecked")
-			DataModel<DataModel<String>> aChildren =
-				(DataModel<DataModel<String>>) rReader.readObject();
+			DataModel<DataModel<String>> children =
+				(DataModel<DataModel<String>>) reader.readObject();
 
-			rResult =
-				new HierarchicalDataObject(sId, nIndex, aValues, bReadonly,
-					aFlags, aChildren);
+			result =
+				new HierarchicalDataObject(id, index, values, readonly, flags,
+					children);
 		} else {
-			List<DataModel<String>> aChildren = null;
+			List<DataModel<String>> children = null;
 
-			if (nCount > 0) {
-				aChildren = new ArrayList<DataModel<String>>(nCount);
+			if (count > 0) {
+				children = new ArrayList<DataModel<String>>(count);
 
-				for (int i = 0; i < nCount; i++) {
-					aChildren.add(
-						(HierarchicalDataObject) rReader.readObject());
+				for (int i = 0; i < count; i++) {
+					children.add((HierarchicalDataObject) reader.readObject());
 				}
 			}
 
-			rResult =
-				new HierarchicalDataObject(sId, nIndex, aValues, bReadonly,
-					aFlags, aChildren);
+			result =
+				new HierarchicalDataObject(id, index, values, readonly, flags,
+					children);
 		}
 
-		return rResult;
+		return result;
 	}
 
 	/**
 	 * Writes the complete object hierarchy to a serialization stream.
 	 *
-	 * @param rWriter The stream writer to write the object data to
-	 * @param rObject The object to serialize
+	 * @param writer The stream writer to write the object data to
+	 * @param object The object to serialize
 	 * @throws SerializationException If the stream access fails
 	 */
-	public static void serialize(SerializationStreamWriter rWriter,
-		HierarchicalDataObject rObject) throws SerializationException {
-		rWriter.writeString(rObject.id);
-		rWriter.writeInt(rObject.index);
-		rWriter.writeInt(rObject.values.size());
-		rWriter.writeBoolean(rObject.editable);
+	public static void serialize(SerializationStreamWriter writer,
+		HierarchicalDataObject object) throws SerializationException {
+		writer.writeString(object.id);
+		writer.writeInt(object.index);
+		writer.writeInt(object.values.size());
+		writer.writeBoolean(object.editable);
 
-		for (String sValue : rObject) {
-			rWriter.writeString(sValue);
+		for (String value : object) {
+			writer.writeString(value);
 		}
 
-		Collection<String> rFlags = rObject.getFlags();
+		Collection<String> flags = object.getFlags();
 
-		rWriter.writeInt(rFlags.size());
+		writer.writeInt(flags.size());
 
-		for (String sFlag : rFlags) {
-			rWriter.writeString(sFlag);
+		for (String flag : flags) {
+			writer.writeString(flag);
 		}
 
-		if (rObject.children != null) {
-			if (rObject.children instanceof ListDataModel) {
-				rWriter.writeInt(rObject.children.getElementCount());
+		if (object.children != null) {
+			if (object.children instanceof ListDataModel) {
+				writer.writeInt(object.children.getElementCount());
 
-				for (DataModel<String> rChild : rObject.children) {
-					rWriter.writeObject(rChild);
+				for (DataModel<String> child : object.children) {
+					writer.writeObject(child);
 				}
 			} else {
-				rWriter.writeInt(-1);
-				rWriter.writeObject(rObject.children);
+				writer.writeInt(-1);
+				writer.writeObject(object.children);
 			}
 		} else {
-			rWriter.writeInt(0);
+			writer.writeInt(0);
 		}
 	}
 
 	// ----------------------------------------------------------------
 
 	@Override
-	public void deserializeInstance(SerializationStreamReader rStreamReader,
-		HierarchicalDataObject rInstance) throws SerializationException {
-		deserialize(rStreamReader, rInstance);
+	public void deserializeInstance(SerializationStreamReader streamReader,
+		HierarchicalDataObject instance) throws SerializationException {
+		deserialize(streamReader, instance);
 	}
 
 	@Override
@@ -169,13 +168,13 @@ public class HierarchicalDataObject_CustomFieldSerializer
 
 	@Override
 	public HierarchicalDataObject instantiateInstance(
-		SerializationStreamReader rStreamReader) throws SerializationException {
-		return instantiate(rStreamReader);
+		SerializationStreamReader streamReader) throws SerializationException {
+		return instantiate(streamReader);
 	}
 
 	@Override
-	public void serializeInstance(SerializationStreamWriter rStreamWriter,
-		HierarchicalDataObject rInstance) throws SerializationException {
-		serialize(rStreamWriter, rInstance);
+	public void serializeInstance(SerializationStreamWriter streamWriter,
+		HierarchicalDataObject instance) throws SerializationException {
+		serialize(streamWriter, instance);
 	}
 }

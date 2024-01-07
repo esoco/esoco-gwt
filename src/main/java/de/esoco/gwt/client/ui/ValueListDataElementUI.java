@@ -19,7 +19,6 @@ package de.esoco.gwt.client.ui;
 import de.esoco.data.element.DataElement;
 import de.esoco.data.element.ListDataElement;
 import de.esoco.data.element.SelectionDataElement;
-
 import de.esoco.ewt.EWT;
 import de.esoco.ewt.UserInterfaceContext;
 import de.esoco.ewt.build.ContainerBuilder;
@@ -35,9 +34,7 @@ import de.esoco.ewt.layout.GenericLayout;
 import de.esoco.ewt.layout.TableGridLayout;
 import de.esoco.ewt.style.StyleData;
 import de.esoco.ewt.style.StyleFlag;
-
 import de.esoco.gwt.client.res.EsocoGwtResources;
-
 import de.esoco.lib.property.ContentType;
 import de.esoco.lib.property.LayoutType;
 import de.esoco.lib.property.ListStyle;
@@ -53,9 +50,7 @@ import java.util.List;
 import java.util.Set;
 
 import static de.esoco.data.element.DataElement.ALLOWED_VALUES_CHANGED;
-
 import static de.esoco.ewt.style.StyleData.WEB_ADDITIONAL_STYLES;
-
 import static de.esoco.lib.property.ContentProperties.CONTENT_TYPE;
 import static de.esoco.lib.property.ContentProperties.NULL_VALUE;
 import static de.esoco.lib.property.LayoutProperties.BUTTON_SIZE;
@@ -86,12 +81,11 @@ public class ValueListDataElementUI extends DataElementUI<DataElement<?>>
 	implements EwtEventHandler {
 
 	private static final Collection<PropertyName<?>> BUTTON_STYLE_PROPERTIES =
-		Arrays.<PropertyName<?>>asList(BUTTON_STYLE, BUTTON_SIZE,
-			CHECK_BOX_STYLE, ICON_SIZE, ICON_COLOR, HORIZONTAL_ALIGN,
-			VERTICAL_ALIGN, ICON_ALIGN, FLOAT, NO_EVENT_PROPAGATION,
-			LAYOUT_VISIBILITY);
+		Arrays.asList(BUTTON_STYLE, BUTTON_SIZE, CHECK_BOX_STYLE, ICON_SIZE,
+			ICON_COLOR, HORIZONTAL_ALIGN, VERTICAL_ALIGN, ICON_ALIGN, FLOAT,
+			NO_EVENT_PROPAGATION, LAYOUT_VISIBILITY);
 
-	private List<Button> aListButtons;
+	private List<Button> listButtons;
 
 	/**
 	 * Handles the action event for list buttons.
@@ -99,36 +93,36 @@ public class ValueListDataElementUI extends DataElementUI<DataElement<?>>
 	 * @see EwtEventHandler#handleEvent(EwtEvent)
 	 */
 	@Override
-	public void handleEvent(EwtEvent rEvent) {
-		setButtonSelection(getDataElement(), aListButtons,
-			(Button) rEvent.getSource());
+	public void handleEvent(EwtEvent event) {
+		setButtonSelection(getDataElement(), listButtons,
+			(Button) event.getSource());
 	}
 
 	@Override
-	protected Component createInputUI(ContainerBuilder<?> rBuilder,
-		StyleData rInputStyle, DataElement<?> rDataElement) {
-		return createListComponent(rBuilder, rInputStyle, rDataElement);
+	protected Component createInputUI(ContainerBuilder<?> builder,
+		StyleData inputStyle, DataElement<?> dataElement) {
+		return createListComponent(builder, inputStyle, dataElement);
 	}
 
 	@Override
-	protected void transferInputToDataElement(Component rComponent,
-		DataElement<?> rDataElement) {
-		if (rComponent instanceof ComboBox &&
-			rDataElement instanceof ListDataElement) {
-			Set<String> rValues = ((ComboBox) rComponent).getValues();
+	protected void transferInputToDataElement(Component component,
+		DataElement<?> dataElement) {
+		if (component instanceof ComboBox &&
+			dataElement instanceof ListDataElement) {
+			Set<String> values = ((ComboBox) component).getValues();
 
 			@SuppressWarnings("unchecked")
-			ListDataElement<String> rListDataElement =
-				(ListDataElement<String>) rDataElement;
+			ListDataElement<String> listDataElement =
+				(ListDataElement<String>) dataElement;
 
 			// update validator to allow new values entered into the combo box
-			rListDataElement.addAllowedValues(rValues);
-			rListDataElement.clear();
-			rListDataElement.addAll(rValues);
-		} else if (rComponent instanceof ListControl) {
-			setListSelection(rComponent, rDataElement);
+			listDataElement.addAllowedValues(values);
+			listDataElement.clear();
+			listDataElement.addAll(values);
+		} else if (component instanceof ListControl) {
+			setListSelection(component, dataElement);
 		} else {
-			super.transferInputToDataElement(rComponent, rDataElement);
+			super.transferInputToDataElement(component, dataElement);
 		}
 	}
 
@@ -138,21 +132,20 @@ public class ValueListDataElementUI extends DataElementUI<DataElement<?>>
 	 */
 	@Override
 	protected void updateValue() {
-		Component rComponent = getElementComponent();
-		DataElement<?> rDataElement = getDataElement();
-		List<String> rValues =
-			getListValues(rComponent.getContext(), rDataElement);
+		Component component = getElementComponent();
+		DataElement<?> dataElement = getDataElement();
+		List<String> values =
+			getListValues(component.getContext(), dataElement);
 
-		boolean bAllowedValuesChanged =
-			rDataElement.hasFlag(ALLOWED_VALUES_CHANGED);
+		boolean allowedValuesChanged =
+			dataElement.hasFlag(ALLOWED_VALUES_CHANGED);
 
-		if (rComponent instanceof ListControl) {
-			updateList(rValues, bAllowedValuesChanged);
-		} else if (rComponent instanceof ComboBox) {
-			updateComboBox((ComboBox) rComponent, rValues,
-				bAllowedValuesChanged);
-		} else if (rComponent instanceof Container) {
-			updateButtons(rValues, bAllowedValuesChanged);
+		if (component instanceof ListControl) {
+			updateList(values, allowedValuesChanged);
+		} else if (component instanceof ComboBox) {
+			updateComboBox((ComboBox) component, values, allowedValuesChanged);
+		} else if (component instanceof Container) {
+			updateButtons(values, allowedValuesChanged);
 		}
 
 		super.updateValue();
@@ -164,35 +157,35 @@ public class ValueListDataElementUI extends DataElementUI<DataElement<?>>
 	 * Only components that implement the {@link Selectable} interface will be
 	 * considered, any other components will be ignored.
 	 *
-	 * @param rSelection  The indices of the currently selected values
-	 * @param rComponents A list of components
+	 * @param selection  The indices of the currently selected values
+	 * @param components A list of components
 	 */
-	private void applyCurrentSelection(int[] rSelection,
-		List<? extends Component> rComponents) {
-		int nComponent = 0;
-		int nSelectionIndex = 0;
+	private void applyCurrentSelection(int[] selection,
+		List<? extends Component> components) {
+		int componentIndex = 0;
+		int selectionIndex = 0;
 
-		for (Component rComponent : rComponents) {
-			if (rComponent instanceof Selectable ||
-				rComponent instanceof Button) {
-				boolean bSelected = nSelectionIndex < rSelection.length &&
-					nComponent == rSelection[nSelectionIndex];
+		for (Component component : components) {
+			if (component instanceof Selectable ||
+				component instanceof Button) {
+				boolean selected = selectionIndex < selection.length &&
+					componentIndex == selection[selectionIndex];
 
-				if (rComponent instanceof Selectable) {
-					((Selectable) rComponent).setSelected(bSelected);
+				if (component instanceof Selectable) {
+					((Selectable) component).setSelected(selected);
 				} else {
-					if (bSelected) {
-						rComponent.addStyleName(CSS.gfActive());
+					if (selected) {
+						component.addStyleName(CSS.gfActive());
 					} else {
-						rComponent.removeStyleName(CSS.gfActive());
+						component.removeStyleName(CSS.gfActive());
 					}
 				}
 
-				if (bSelected) {
-					++nSelectionIndex;
+				if (selected) {
+					++selectionIndex;
 				}
 
-				nComponent++;
+				componentIndex++;
 			}
 		}
 	}
@@ -200,158 +193,156 @@ public class ValueListDataElementUI extends DataElementUI<DataElement<?>>
 	/**
 	 * Creates the style data for buttons.
 	 *
-	 * @param rDataElement The data element to determine the buttons style for
+	 * @param dataElement The data element to determine the buttons style for
 	 * @return The button style
 	 */
-	private StyleData createButtonStyle(DataElement<?> rDataElement) {
-		StyleData rButtonStyle = StyleData.DEFAULT.withProperties(rDataElement,
+	private StyleData createButtonStyle(DataElement<?> dataElement) {
+		StyleData buttonStyle = StyleData.DEFAULT.withProperties(dataElement,
 			BUTTON_STYLE_PROPERTIES);
 
-		if (rDataElement.getProperty(CONTENT_TYPE, null) ==
+		if (dataElement.getProperty(CONTENT_TYPE, null) ==
 			ContentType.HYPERLINK) {
-			rButtonStyle = rButtonStyle.setFlags(StyleFlag.HYPERLINK);
+			buttonStyle = buttonStyle.setFlags(StyleFlag.HYPERLINK);
 		}
 
-		return rButtonStyle;
+		return buttonStyle;
 	}
 
 	/**
 	 * Creates and initializes a {@link de.esoco.ewt.component.List} component.
 	 *
-	 * @param rBuilder     The builder to add the list with
-	 * @param rStyle       The style for the list
-	 * @param rDataElement The data element to create the list for
+	 * @param builder     The builder to add the list with
+	 * @param style       The style for the list
+	 * @param dataElement The data element to create the list for
 	 * @return The list component
 	 */
-	private de.esoco.ewt.component.List createList(ContainerBuilder<?> rBuilder,
-		StyleData rStyle, DataElement<?> rDataElement) {
-		de.esoco.ewt.component.List aList = rBuilder.addList(rStyle);
-		int nRows = rDataElement.getIntProperty(ROWS, -1);
+	private de.esoco.ewt.component.List createList(ContainerBuilder<?> builder,
+		StyleData style, DataElement<?> dataElement) {
+		de.esoco.ewt.component.List list = builder.addList(style);
+		int rows = dataElement.getIntProperty(ROWS, -1);
 
-		if (nRows > 1) {
-			aList.setVisibleItems(nRows);
+		if (rows > 1) {
+			list.setVisibleItems(rows);
 		}
 
-		return aList;
+		return list;
 	}
 
 	/**
 	 * Creates a panel that contains buttons for a list of labels.
 	 *
-	 * @param rBuilder          The builder to create the button panel with
-	 * @param rStyle            The style for the button panel
-	 * @param rDataElement      The data element to create the panel for
-	 * @param rButtonLabels     The labels of the buttons to create
-	 * @param eListStyle        The list style
-	 * @param rCurrentSelection The indices of the currently selected Values
+	 * @param builder          The builder to create the button panel with
+	 * @param style            The style for the button panel
+	 * @param dataElement      The data element to create the panel for
+	 * @param buttonLabels     The labels of the buttons to create
+	 * @param listStyle        The list style
+	 * @param currentSelection The indices of the currently selected Values
 	 * @return The container containing the buttons
 	 */
-	private Component createListButtonPanel(ContainerBuilder<?> rBuilder,
-		StyleData rStyle, DataElement<?> rDataElement,
-		List<String> rButtonLabels, ListStyle eListStyle,
-		int[] rCurrentSelection) {
-		int nColumns = rDataElement.getIntProperty(COLUMNS, 1);
+	private Component createListButtonPanel(ContainerBuilder<?> builder,
+		StyleData style, DataElement<?> dataElement, List<String> buttonLabels,
+		ListStyle listStyle, int[] currentSelection) {
+		int columns = dataElement.getIntProperty(COLUMNS, 1);
 
-		LayoutType eLayout =
-			rDataElement.getProperty(LAYOUT, getButtonPanelDefaultLayout());
+		LayoutType layout =
+			dataElement.getProperty(LAYOUT, getButtonPanelDefaultLayout());
 
 		// inline inserts buttons directly into enclosing panels
 		// TODO: return not the parent container from this method as this
 		// causes problems in some configurations as button style updates
 		// will then modify the container
-		if (eLayout != LayoutType.INLINE) {
-			String sButtonPanelStyle =
+		if (layout != LayoutType.INLINE) {
+			String buttonPanelStyle =
 				EsocoGwtResources.INSTANCE.css().gfButtonPanel();
-			GenericLayout aPanelLayout;
+			GenericLayout panelLayout;
 
-			rStyle = rStyle.append(WEB_ADDITIONAL_STYLES, sButtonPanelStyle);
+			style = style.append(WEB_ADDITIONAL_STYLES, buttonPanelStyle);
 
-			setBaseStyle(getBaseStyle().append(WEB_ADDITIONAL_STYLES,
-				sButtonPanelStyle));
+			setBaseStyle(
+				getBaseStyle().append(WEB_ADDITIONAL_STYLES,
+					buttonPanelStyle));
 
-			if (eLayout == LayoutType.TABLE) {
-				aPanelLayout = new TableGridLayout(nColumns);
+			if (layout == LayoutType.TABLE) {
+				panelLayout = new TableGridLayout(columns);
 			} else {
-				aPanelLayout = EWT
+				panelLayout = EWT
 					.getLayoutFactory()
-					.createLayout(rBuilder.getContainer(), rStyle, eLayout);
+					.createLayout(builder.getContainer(), style, layout);
 			}
 
-			rBuilder = rBuilder.addPanel(rStyle, aPanelLayout);
+			builder = builder.addPanel(style, panelLayout);
 		}
 
-		aListButtons = createListButtons(rBuilder, rButtonLabels, eListStyle);
-		applyCurrentSelection(rCurrentSelection, aListButtons);
+		listButtons = createListButtons(builder, buttonLabels, listStyle);
+		applyCurrentSelection(currentSelection, listButtons);
 
-		return rBuilder.getContainer();
+		return builder.getContainer();
 	}
 
 	/**
 	 * Creates buttons for a list of labels.
 	 *
-	 * @param rBuilder      The builder to create the buttons with
-	 * @param rButtonLabels The labels of the buttons to create
-	 * @param eListStyle    The list style of the buttons
+	 * @param builder      The builder to create the buttons with
+	 * @param buttonLabels The labels of the buttons to create
+	 * @param listStyle    The list style of the buttons
 	 * @return A list containing the buttons that have been created
 	 */
-	private List<Button> createListButtons(ContainerBuilder<?> rBuilder,
-		List<String> rButtonLabels, ListStyle eListStyle) {
-		DataElement<?> rDataElement = getDataElement();
-		StyleData rButtonStyle = createButtonStyle(rDataElement);
-		boolean bMultiselect = rDataElement instanceof ListDataElement;
-		String sDisabled = rDataElement.getProperty(DISABLED_ELEMENTS, "");
+	private List<Button> createListButtons(ContainerBuilder<?> builder,
+		List<String> buttonLabels, ListStyle listStyle) {
+		DataElement<?> dataElement = getDataElement();
+		StyleData buttonStyle = createButtonStyle(dataElement);
+		boolean multiselect = dataElement instanceof ListDataElement;
+		String disabled = dataElement.getProperty(DISABLED_ELEMENTS, "");
 
-		List<Button> aButtons = new ArrayList<>(rButtonLabels.size());
+		List<Button> buttons = new ArrayList<>(buttonLabels.size());
 
-		int nValueIndex = 0;
+		int valueIndex = 0;
 
-		for (String sValue : rButtonLabels) {
-			String sText = sValue;
-			Button aButton;
+		for (String value : buttonLabels) {
+			String text = value;
+			Button button;
 
-			if (eListStyle == ListStyle.IMMEDIATE) {
-				if (bMultiselect) {
-					aButton =
-						rBuilder.addToggleButton(rButtonStyle, sText, null);
+			if (listStyle == ListStyle.IMMEDIATE) {
+				if (multiselect) {
+					button = builder.addToggleButton(buttonStyle, text, null);
 				} else {
-					aButton = rBuilder.addButton(rButtonStyle, sText, null);
+					button = builder.addButton(buttonStyle, text, null);
 				}
 			} else {
-				if (bMultiselect) {
-					aButton = rBuilder.addCheckBox(rButtonStyle, sText, null);
+				if (multiselect) {
+					button = builder.addCheckBox(buttonStyle, text, null);
 				} else {
-					aButton =
-						rBuilder.addRadioButton(rButtonStyle, sText, null);
+					button = builder.addRadioButton(buttonStyle, text, null);
 				}
 			}
 
-			if (sDisabled.contains("(" + nValueIndex++ + ")")) {
-				aButton.setEnabled(false);
+			if (disabled.contains("(" + valueIndex++ + ")")) {
+				button.setEnabled(false);
 			}
 
-			aButton.addEventListener(EventType.ACTION, this);
-			aButtons.add(aButton);
+			button.addEventListener(EventType.ACTION, this);
+			buttons.add(button);
 		}
 
-		return aButtons;
+		return buttons;
 	}
 
 	/**
 	 * Creates a {@link ComboBox} component for a list of values.
 	 *
-	 * @param rBuilder     The builder to create the component with
-	 * @param rStyle       The default style for the component
-	 * @param rDataElement The data element to create the list for
-	 * @param rValues      The list of values to display
+	 * @param builder     The builder to create the component with
+	 * @param style       The default style for the component
+	 * @param dataElement The data element to create the list for
+	 * @param values      The list of values to display
 	 * @return The new component
 	 */
-	private ComboBox createListComboBox(ContainerBuilder<?> rBuilder,
-		StyleData rStyle, DataElement<?> rDataElement, List<String> rValues) {
-		ComboBox aComboBox = rBuilder.addComboBox(rStyle, null);
+	private ComboBox createListComboBox(ContainerBuilder<?> builder,
+		StyleData style, DataElement<?> dataElement, List<String> values) {
+		ComboBox comboBox = builder.addComboBox(style, null);
 
-		updateComboBox(aComboBox, rValues, true);
+		updateComboBox(comboBox, values, true);
 
-		return aComboBox;
+		return comboBox;
 	}
 
 	/**
@@ -360,57 +351,55 @@ public class ValueListDataElementUI extends DataElementUI<DataElement<?>>
 	 * element type and the component style different types of components will
 	 * be created.
 	 *
-	 * @param rBuilder     The builder to add the list with
-	 * @param rStyle       The style data for the list
-	 * @param rDataElement The data element to create the component for
+	 * @param builder     The builder to add the list with
+	 * @param style       The style data for the list
+	 * @param dataElement The data element to create the component for
 	 * @return A new list component
 	 */
-	private Component createListComponent(ContainerBuilder<?> rBuilder,
-		StyleData rStyle, DataElement<?> rDataElement) {
-		UserInterfaceContext rContext = rBuilder.getContext();
-		List<String> rValues = getListValues(rContext, rDataElement);
+	private Component createListComponent(ContainerBuilder<?> builder,
+		StyleData style, DataElement<?> dataElement) {
+		UserInterfaceContext context = builder.getContext();
+		List<String> values = getListValues(context, dataElement);
 
-		int[] rCurrentSelection =
-			getCurrentSelection(rContext, rDataElement, rValues);
+		int[] currentSelection =
+			getCurrentSelection(context, dataElement, values);
 
-		ListStyle eListStyle = getListStyle(rDataElement, rValues);
+		ListStyle listStyle = getListStyle(dataElement, values);
 
-		Component aComponent = null;
+		Component component = null;
 
-		if (rDataElement instanceof ListDataElement) {
-			rStyle = rStyle.setFlags(StyleFlag.MULTISELECT);
+		if (dataElement instanceof ListDataElement) {
+			style = style.setFlags(StyleFlag.MULTISELECT);
 
 			setBaseStyle(getBaseStyle().setFlags(StyleFlag.MULTISELECT));
 		}
 
-		switch (eListStyle) {
+		switch (listStyle) {
 			case LIST:
 			case DROP_DOWN:
 
-				ListControl aList = eListStyle == ListStyle.LIST ?
-				                    createList(rBuilder, rStyle,
-					                    rDataElement) :
-				                    rBuilder.addListBox(rStyle);
+				ListControl list = listStyle == ListStyle.LIST ?
+				                   createList(builder, style, dataElement) :
+				                   builder.addListBox(style);
 
-				setListControlValues(aList, rValues, rCurrentSelection);
-				aComponent = aList;
+				setListControlValues(list, values, currentSelection);
+				component = list;
 				break;
 
 			case EDITABLE:
-				aComponent =
-					createListComboBox(rBuilder, rStyle, rDataElement,
-						rValues);
+				component =
+					createListComboBox(builder, style, dataElement, values);
 				break;
 
 			case DISCRETE:
 			case IMMEDIATE:
-				aComponent =
-					createListButtonPanel(rBuilder, rStyle, rDataElement,
-						rValues, eListStyle, rCurrentSelection);
+				component =
+					createListButtonPanel(builder, style, dataElement, values,
+						listStyle, currentSelection);
 				break;
 		}
 
-		return aComponent;
+		return component;
 	}
 
 	/**
@@ -419,72 +408,70 @@ public class ValueListDataElementUI extends DataElementUI<DataElement<?>>
 	 * will
 	 * be sorted in ascending order.
 	 *
-	 * @param rContext     The user interface context
-	 * @param rDataElement The data element to read the current values from
-	 * @param rAllValues   The list of all values to calculate the selection
-	 *                     indexes from
+	 * @param context     The user interface context
+	 * @param dataElement The data element to read the current values from
+	 * @param allValues   The list of all values to calculate the selection
+	 *                    indexes from
 	 * @return The indices of the currently selected values (may be empty but
 	 * will never be NULL)
 	 */
-	private int[] getCurrentSelection(UserInterfaceContext rContext,
-		DataElement<?> rDataElement, List<String> rAllValues) {
-		List<?> rCurrentValues;
-		boolean bNullAllowed = false;
+	private int[] getCurrentSelection(UserInterfaceContext context,
+		DataElement<?> dataElement, List<String> allValues) {
+		List<?> currentValues;
+		boolean nullAllowed = false;
 		int i = 0;
 
-		if (rDataElement instanceof ListDataElement) {
-			rCurrentValues = ((ListDataElement<?>) rDataElement).getElements();
+		if (dataElement instanceof ListDataElement) {
+			currentValues = ((ListDataElement<?>) dataElement).getElements();
 		} else {
-			Object rValue = rDataElement.getValue();
+			Object value = dataElement.getValue();
 
-			if (rValue == null) {
-				bNullAllowed =
-					rDataElement.getProperty(NULL_VALUE, null) != null;
+			if (value == null) {
+				nullAllowed =
+					dataElement.getProperty(NULL_VALUE, null) != null;
 			}
 
-			rCurrentValues = rValue != null ?
-			                 Arrays.asList(rValue) :
-			                 Collections.emptyList();
+			currentValues = value != null ?
+			                Collections.singletonList(value) :
+			                Collections.emptyList();
 		}
 
-		int[] aCurrentValueIndexes = new int[rCurrentValues.size()];
+		int[] currentValueIndexes = new int[currentValues.size()];
 
-		for (Object rValue : rCurrentValues) {
-			if (rValue != null) {
-				String sValue = convertValueToString(rDataElement, rValue);
-				int nIndex =
-					rAllValues.indexOf(rContext.expandResource(sValue));
+		for (Object value : currentValues) {
+			if (value != null) {
+				String text = convertValueToString(dataElement, value);
+				int index = allValues.indexOf(context.expandResource(text));
 
-				if (nIndex >= 0) {
-					aCurrentValueIndexes[i++] =
-						bNullAllowed ? nIndex + 1 : nIndex;
+				if (index >= 0) {
+					currentValueIndexes[i++] = nullAllowed ? index + 1 : index;
 				}
-			} else if (bNullAllowed) {
-				aCurrentValueIndexes[i++] = 0;
+			} else if (nullAllowed) {
+				currentValueIndexes[i++] = 0;
 			}
 		}
 
-		Arrays.sort(aCurrentValueIndexes);
+		Arrays.sort(currentValueIndexes);
 
-		return aCurrentValueIndexes;
+		return currentValueIndexes;
 	}
 
 	/**
 	 * Returns the list style for a certain data element. If no explicit style
 	 * is set a default will be determined from the value list size.
 	 *
-	 * @param rDataElement The data element
-	 * @param rValues      The value list
+	 * @param dataElement The data element
+	 * @param values      The value list
 	 * @return The list style
 	 */
-	private ListStyle getListStyle(DataElement<?> rDataElement,
-		List<String> rValues) {
-		ListStyle eListStyle =
-			rValues.size() > 6 ? ListStyle.LIST : ListStyle.DROP_DOWN;
+	private ListStyle getListStyle(DataElement<?> dataElement,
+		List<String> values) {
+		ListStyle listStyle =
+			values.size() > 6 ? ListStyle.LIST : ListStyle.DROP_DOWN;
 
-		eListStyle = rDataElement.getProperty(LIST_STYLE, eListStyle);
+		listStyle = dataElement.getProperty(LIST_STYLE, listStyle);
 
-		return eListStyle;
+		return listStyle;
 	}
 
 	/**
@@ -494,155 +481,154 @@ public class ValueListDataElementUI extends DataElementUI<DataElement<?>>
 	 * of the type {@link Comparable} the returned list will be sorted by their
 	 * natural order.
 	 *
-	 * @param rContext The user interface context for resource expansion
-	 * @param rElement The data element
+	 * @param context The user interface context for resource expansion
+	 * @param element The data element
 	 * @return The resulting list of display values
 	 */
-	private List<String> getListValues(UserInterfaceContext rContext,
-		DataElement<?> rElement) {
-		Collection<?> rRawValues = rElement.getAllowedValues();
-		List<String> aListValues = new ArrayList<String>();
+	private List<String> getListValues(UserInterfaceContext context,
+		DataElement<?> element) {
+		Collection<?> rawValues = element.getAllowedValues();
+		List<String> listValues = new ArrayList<String>();
 
-		for (Object rValue : rRawValues) {
-			String sValue = convertValueToString(rElement, rValue);
+		for (Object value : rawValues) {
+			String text = convertValueToString(element, value);
 
-			aListValues.add(rContext.expandResource(sValue));
+			listValues.add(context.expandResource(text));
 		}
 
-		if (rElement.hasFlag(SORT) && aListValues.size() > 1) {
-			Collections.sort(aListValues);
+		if (element.hasFlag(SORT) && listValues.size() > 1) {
+			Collections.sort(listValues);
 		}
 
-		String sNullValue = rElement.getProperty(NULL_VALUE, null);
+		String nullValue = element.getProperty(NULL_VALUE, null);
 
-		if (sNullValue != null) {
-			aListValues.add(0, sNullValue);
+		if (nullValue != null) {
+			listValues.add(0, nullValue);
 		}
 
-		return aListValues;
+		return listValues;
 	}
 
 	/**
 	 * Sets the value of the data element from the selection of a button in a
 	 * discrete style list component.
 	 *
-	 * @param rDataElement The data element to read the current state from
-	 * @param rAllButtons  The list of all buttons
-	 * @param rButton      The selected button
+	 * @param dataElement The data element to read the current state from
+	 * @param allButtons  The list of all buttons
+	 * @param button      The selected button
 	 */
-	private void setButtonSelection(DataElement<?> rDataElement,
-		List<Button> rAllButtons, Button rButton) {
-		boolean bSelected = rButton instanceof Selectable ?
-		                    ((Selectable) rButton).isSelected() :
-		                    false;
+	private void setButtonSelection(DataElement<?> dataElement,
+		List<Button> allButtons, Button button) {
+		boolean selected =
+			button instanceof Selectable && ((Selectable) button).isSelected();
 
-		List<?> rValues = rDataElement.getAllowedValues();
-		Object rButtonValue = rValues.get(rAllButtons.indexOf(rButton));
+		List<?> values = dataElement.getAllowedValues();
+		Object buttonValue = values.get(allButtons.indexOf(button));
 
-		setDataElementValueFromList(rDataElement, rButtonValue, bSelected);
+		setDataElementValueFromList(dataElement, buttonValue, selected);
 	}
 
 	/**
 	 * Sets a value from a list control to the data element of this instance.
 	 *
-	 * @param rDataElement The data element to set the value of
-	 * @param rValue       The value to set
-	 * @param bAdd         TRUE to add the value in a {@link ListDataElement},
-	 *                     FALSE to remove
+	 * @param dataElement The data element to set the value of
+	 * @param value       The value to set
+	 * @param add         TRUE to add the value in a {@link ListDataElement},
+	 *                    FALSE to remove
 	 */
 	@SuppressWarnings("unchecked")
-	private void setDataElementValueFromList(DataElement<?> rDataElement,
-		Object rValue, boolean bAdd) {
-		if (rDataElement instanceof ListDataElement) {
-			ListDataElement<Object> rListElement =
+	private void setDataElementValueFromList(DataElement<?> dataElement,
+		Object value, boolean add) {
+		if (dataElement instanceof ListDataElement) {
+			ListDataElement<Object> listElement =
 				(ListDataElement<Object>) getDataElement();
 
-			if (bAdd) {
-				rListElement.addElement(rValue);
+			if (add) {
+				listElement.addElement(value);
 			} else {
-				rListElement.removeElement(rValue);
+				listElement.removeElement(value);
 			}
 		} else {
-			((DataElement<Object>) rDataElement).setValue(rValue);
+			((DataElement<Object>) dataElement).setValue(value);
 		}
 	}
 
 	/**
 	 * Sets the values and the selection of a {@link ListControl} component.
 	 *
-	 * @param rListControl      The component
-	 * @param rValues           The values
-	 * @param rCurrentSelection The current selection
+	 * @param listControl      The component
+	 * @param values           The values
+	 * @param currentSelection The current selection
 	 */
-	private void setListControlValues(ListControl rListControl,
-		List<String> rValues, int[] rCurrentSelection) {
-		for (String sValue : rValues) {
-			rListControl.add(sValue);
+	private void setListControlValues(ListControl listControl,
+		List<String> values, int[] currentSelection) {
+		for (String value : values) {
+			listControl.add(value);
 		}
 
-		if (rCurrentSelection != null) {
-			rListControl.setSelection(rCurrentSelection);
+		if (currentSelection != null) {
+			listControl.setSelection(currentSelection);
 		}
 	}
 
 	/**
 	 * Sets the selection for data elements that are based on a list validator.
 	 *
-	 * @param rComponent   The component to read the input from
-	 * @param rDataElement The data element to set the value of
+	 * @param component   The component to read the input from
+	 * @param dataElement The data element to set the value of
 	 */
-	private void setListSelection(Component rComponent,
-		DataElement<?> rDataElement) {
-		ListControl rList = (ListControl) rComponent;
+	private void setListSelection(Component component,
+		DataElement<?> dataElement) {
+		ListControl list = (ListControl) component;
 
-		if (rDataElement instanceof SelectionDataElement) {
-			String sSelection = Integer.toString(rList.getSelectionIndex());
+		if (dataElement instanceof SelectionDataElement) {
+			String selection = Integer.toString(list.getSelectionIndex());
 
-			((SelectionDataElement) rDataElement).setValue(sSelection);
-		} else if (rDataElement instanceof ListDataElement) {
-			int[] rSelection = rList.getSelectionIndices();
+			((SelectionDataElement) dataElement).setValue(selection);
+		} else if (dataElement instanceof ListDataElement) {
+			int[] selection = list.getSelectionIndices();
 
-			((ListDataElement<?>) rDataElement).clear();
+			((ListDataElement<?>) dataElement).clear();
 
-			for (int nIndex : rSelection) {
-				setListSelection(rDataElement, rList.getItem(nIndex), true);
+			for (int index : selection) {
+				setListSelection(dataElement, list.getItem(index), true);
 			}
 		} else {
-			setListSelection(rDataElement, rList.getSelectedItem(), true);
+			setListSelection(dataElement, list.getSelectedItem(), true);
 		}
 	}
 
 	/**
 	 * Sets the selection for data elements that are based on a list validator.
 	 *
-	 * @param rDataElement The data element to set the value of
-	 * @param sSelection   The string value of the selection to set
-	 * @param bAdd         TRUE to add a value to a list data element, FALSE to
-	 *                     remove
+	 * @param dataElement The data element to set the value of
+	 * @param selection   The string value of the selection to set
+	 * @param add         TRUE to add a value to a list data element, FALSE to
+	 *                    remove
 	 */
 	@SuppressWarnings("unchecked")
-	private void setListSelection(DataElement<?> rDataElement,
-		String sSelection, boolean bAdd) {
-		UserInterfaceContext rContext = getElementComponent().getContext();
+	private void setListSelection(DataElement<?> dataElement, String selection,
+		boolean add) {
+		UserInterfaceContext context = getElementComponent().getContext();
 
-		List<?> rValues = rDataElement.getAllowedValues();
-		String sNullValue = rDataElement.getProperty(NULL_VALUE, null);
+		List<?> values = dataElement.getAllowedValues();
+		String nullValue = dataElement.getProperty(NULL_VALUE, null);
 
-		if (sNullValue != null) {
-			sNullValue = rContext.expandResource(sNullValue);
+		if (nullValue != null) {
+			nullValue = context.expandResource(nullValue);
 		}
 
-		if (sSelection == null || sSelection.equals(sNullValue)) {
-			if (!(rDataElement instanceof ListDataElement)) {
-				((DataElement<Object>) rDataElement).setValue(null);
+		if (selection == null || selection.equals(nullValue)) {
+			if (!(dataElement instanceof ListDataElement)) {
+				dataElement.setValue(null);
 			}
 		} else {
-			for (Object rValue : rValues) {
-				String sValue = rContext.expandResource(
-					convertValueToString(rDataElement, rValue));
+			for (Object value : values) {
+				String text = context.expandResource(
+					convertValueToString(dataElement, value));
 
-				if (sSelection.equals(sValue)) {
-					setDataElementValueFromList(rDataElement, rValue, bAdd);
+				if (selection.equals(text)) {
+					setDataElementValueFromList(dataElement, value, add);
 
 					break;
 				}
@@ -653,98 +639,97 @@ public class ValueListDataElementUI extends DataElementUI<DataElement<?>>
 	/**
 	 * Updates the buttons in a list button panel.
 	 *
-	 * @param rButtonLabels   The button labels
-	 * @param bButtonsChanged TRUE if button text has changed
+	 * @param buttonLabels   The button labels
+	 * @param buttonsChanged TRUE if button text has changed
 	 */
-	private void updateButtons(List<String> rButtonLabels,
-		boolean bButtonsChanged) {
-		Container rContainer = (Container) getElementComponent();
+	private void updateButtons(List<String> buttonLabels,
+		boolean buttonsChanged) {
+		Container container = (Container) getElementComponent();
 
-		if (bButtonsChanged) {
-			if (aListButtons.size() == rButtonLabels.size()) {
-				int nIndex = 0;
+		if (buttonsChanged) {
+			if (listButtons.size() == buttonLabels.size()) {
+				int index = 0;
 
-				for (Button rButton : aListButtons) {
-					rButton.setProperties(rButtonLabels.get(nIndex++));
+				for (Button button : listButtons) {
+					button.setProperties(buttonLabels.get(index++));
 				}
 			} else {
-				ContainerBuilder<?> aBuilder =
-					new ContainerBuilder<>(rContainer);
+				ContainerBuilder<?> builder =
+					new ContainerBuilder<>(container);
 
-				DataElement<?> rDataElement = getDataElement();
+				DataElement<?> dataElement = getDataElement();
 
-				ListStyle eListStyle =
-					getListStyle(rDataElement, rButtonLabels);
+				ListStyle listStyle = getListStyle(dataElement, buttonLabels);
 
-				for (Button rButton : aListButtons) {
-					rContainer.removeComponent(rButton);
+				for (Button button : listButtons) {
+					container.removeComponent(button);
 				}
 
-				aListButtons =
-					createListButtons(aBuilder, rButtonLabels, eListStyle);
+				listButtons =
+					createListButtons(builder, buttonLabels, listStyle);
 
-				setupInteractionHandling(rContainer, true);
+				setupInteractionHandling(container, true);
 			}
 		}
 
-		int[] rCurrentSelection =
-			getCurrentSelection(rContainer.getContext(), getDataElement(),
-				rButtonLabels);
+		int[] currentSelection =
+			getCurrentSelection(container.getContext(), getDataElement(),
+				buttonLabels);
 
-		applyCurrentSelection(rCurrentSelection, aListButtons);
+		applyCurrentSelection(currentSelection, listButtons);
 	}
 
 	/**
 	 * Updates a combo box component with new values.
 	 *
-	 * @param rComboBox       The combo box component
-	 * @param rValues         The value list object
-	 * @param bChoicesChanged TRUE if the combo box choices have changed
+	 * @param comboBox       The combo box component
+	 * @param values         The value list object
+	 * @param choicesChanged TRUE if the combo box choices have changed
 	 */
-	private void updateComboBox(ComboBox rComboBox, List<String> rValues,
-		boolean bChoicesChanged) {
-		DataElement<?> rDataElement = getDataElement();
+	private void updateComboBox(ComboBox comboBox, List<String> values,
+		boolean choicesChanged) {
+		DataElement<?> dataElement = getDataElement();
 
-		if (bChoicesChanged) {
-			rComboBox.clearChoices();
+		if (choicesChanged) {
+			comboBox.clearChoices();
 
-			for (String sValue : rValues) {
-				rComboBox.addChoice(sValue);
+			for (String value : values) {
+				comboBox.addChoice(value);
 			}
 		}
 
-		if (rDataElement instanceof ListDataElement) {
-			rComboBox.clearValues();
+		if (dataElement instanceof ListDataElement) {
+			comboBox.clearValues();
 
-			for (Object rItem : (ListDataElement<?>) rDataElement) {
-				rComboBox.addValue(convertValueToString(rDataElement, rItem));
+			for (Object item : (ListDataElement<?>) dataElement) {
+				comboBox.addValue(convertValueToString(dataElement, item));
 			}
 		} else {
-			rComboBox.setText(
-				convertValueToString(rDataElement, rDataElement.getValue()));
+			comboBox.setText(
+				convertValueToString(dataElement, dataElement.getValue()));
 		}
 	}
 
 	/**
 	 * Updates a list control component with new values.
 	 *
-	 * @param rValues            The list values
-	 * @param bListValuesChanged TRUE if the list values have changed, not only
-	 *                           the current selection
+	 * @param values            The list values
+	 * @param listValuesChanged TRUE if the list values have changed, not only
+	 *                          the current selection
 	 */
-	private void updateList(List<String> rValues, boolean bListValuesChanged) {
-		ListControl rListControl = (ListControl) getElementComponent();
+	private void updateList(List<String> values, boolean listValuesChanged) {
+		ListControl listControl = (ListControl) getElementComponent();
 
-		if (bListValuesChanged) {
-			rListControl.removeAll();
+		if (listValuesChanged) {
+			listControl.removeAll();
 
-			for (String sValue : rValues) {
-				rListControl.add(sValue);
+			for (String value : values) {
+				listControl.add(value);
 			}
 		}
 
-		rListControl.setSelection(
-			getCurrentSelection(rListControl.getContext(), getDataElement(),
-				rValues));
+		listControl.setSelection(
+			getCurrentSelection(listControl.getContext(), getDataElement(),
+				values));
 	}
 }

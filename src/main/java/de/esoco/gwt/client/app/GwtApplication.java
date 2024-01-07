@@ -37,7 +37,7 @@ import com.google.gwt.resources.client.CssResource;
  */
 public abstract class GwtApplication extends EWTEntryPoint {
 
-	private GwtProcessAppRootPanel aRootPanel;
+	private GwtProcessAppRootPanel rootPanel;
 
 	/**
 	 * Returns the root process panel of this application.
@@ -45,7 +45,7 @@ public abstract class GwtApplication extends EWTEntryPoint {
 	 * @return The root panel
 	 */
 	public GwtProcessAppRootPanel getRootPanel() {
-		return aRootPanel;
+		return rootPanel;
 	}
 
 	/**
@@ -89,10 +89,10 @@ public abstract class GwtApplication extends EWTEntryPoint {
 	protected EWTModule getApplicationModule() {
 		return new GwtApplicationModule(ViewStyle.DEFAULT) {
 			@Override
-			protected void createModulePanel(ContainerBuilder<?> rBuilder) {
-				aRootPanel = new GwtProcessAppRootPanel();
+			protected void createModulePanel(ContainerBuilder<?> builder) {
+				rootPanel = new GwtProcessAppRootPanel();
 
-				aRootPanel.buildIn(rBuilder, AlignedPosition.CENTER);
+				rootPanel.buildIn(builder, AlignedPosition.CENTER);
 			}
 		};
 	}

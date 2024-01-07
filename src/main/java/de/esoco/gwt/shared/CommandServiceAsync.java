@@ -31,5 +31,5 @@ public interface CommandServiceAsync {
 	 * @see CommandService#executeCommand(Command, DataElement)
 	 */
 	public <T extends DataElement<?>, R extends DataElement<?>> void executeCommand(
-		Command<T, R> rCommand, T rData, AsyncCallback<R> rCallback);
+		Command<T, R> command, T data, AsyncCallback<R> callback);
 }

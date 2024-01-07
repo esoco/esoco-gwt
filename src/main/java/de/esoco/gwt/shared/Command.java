@@ -39,10 +39,10 @@ public class Command<T extends DataElement<?>, R extends DataElement<?>>
 
 	private static final long serialVersionUID = 1L;
 
-	private static final Map<String, Command<?, ?>> aCommandRegistry =
+	private static final Map<String, Command<?, ?>> commandRegistry =
 		new HashMap<>();
 
-	private String sName;
+	private String name;
 
 	/**
 	 * Default constructor for GWT serialization.
@@ -54,54 +54,54 @@ public class Command<T extends DataElement<?>, R extends DataElement<?>>
 	 * Creates a new instance. Private, only used internally by the factory
 	 * method {@link #newInstance(String)}.
 	 *
-	 * @param sName The name of the instance
+	 * @param name The name of the instance
 	 */
-	private Command(String sName) {
-		this.sName = sName;
+	private Command(String name) {
+		this.name = name;
 	}
 
 	/**
 	 * Factory method that creates a new command instance.
 	 *
-	 * @param sName The name of the new instance
+	 * @param name The name of the new instance
 	 * @return A new command instance
 	 * @throws IllegalArgumentException If the given name is invalid or if a
 	 *                                  command with the given name exists
 	 *                                  already
 	 */
 	public static <T extends DataElement<?>, R extends DataElement<?>> Command<T, R> newInstance(
-		String sName) {
-		if (sName == null || sName.length() == 0) {
+		String name) {
+		if (name == null || name.length() == 0) {
 			throw new NullPointerException("Name must not be NULL");
 		}
 
-		Command<T, R> aCommand;
+		Command<T, R> command;
 
-		if (aCommandRegistry.containsKey(sName)) {
+		if (commandRegistry.containsKey(name)) {
 			throw new IllegalArgumentException(
-				"A command type with name " + sName + " exists already");
+				"A command type with name " + name + " exists already");
 		} else {
-			aCommand = new Command<T, R>(sName);
-			aCommandRegistry.put(sName, aCommand);
+			command = new Command<T, R>(name);
+			commandRegistry.put(name, command);
 		}
 
-		return aCommand;
+		return command;
 	}
 
 	/**
 	 * @see Object#equals(Object)
 	 */
 	@Override
-	public boolean equals(Object rObject) {
-		if (this == rObject) {
+	public boolean equals(Object object) {
+		if (this == object) {
 			return true;
 		}
 
-		if (rObject == null || getClass() != rObject.getClass()) {
+		if (object == null || getClass() != object.getClass()) {
 			return false;
 		}
 
-		return sName.equals(((Command<?, ?>) rObject).sName);
+		return name.equals(((Command<?, ?>) object).name);
 	}
 
 	/**
@@ -110,7 +110,7 @@ public class Command<T extends DataElement<?>, R extends DataElement<?>>
 	 * @return The command name
 	 */
 	public final String getName() {
-		return sName;
+		return name;
 	}
 
 	/**
@@ -118,7 +118,7 @@ public class Command<T extends DataElement<?>, R extends DataElement<?>>
 	 */
 	@Override
 	public int hashCode() {
-		return sName.hashCode() * 17;
+		return name.hashCode() * 17;
 	}
 
 	/**
@@ -126,7 +126,7 @@ public class Command<T extends DataElement<?>, R extends DataElement<?>>
 	 */
 	@Override
 	public String toString() {
-		return "Command[" + sName + "]";
+		return "Command[" + name + "]";
 	}
 
 	/**
@@ -136,12 +136,12 @@ public class Command<T extends DataElement<?>, R extends DataElement<?>>
 	 * @throws IllegalStateException If no matching command could be found
 	 */
 	Object readResolve() {
-		Command<?, ?> rCommand = aCommandRegistry.get(sName);
+		Command<?, ?> command = commandRegistry.get(name);
 
-		if (rCommand == null) {
-			throw new IllegalStateException("Undefined command: " + sName);
+		if (command == null) {
+			throw new IllegalStateException("Undefined command: " + name);
 		}
 
-		return rCommand;
+		return command;
 	}
 }

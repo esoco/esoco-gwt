@@ -16,9 +16,11 @@
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 package de.esoco.gwt.tool;
 
+import com.google.gwt.i18n.tools.I18NSync;
+import com.google.gwt.resources.css.InterfaceGenerator;
 import de.esoco.ewt.app.EWTEntryPoint;
-
 import de.esoco.lib.collection.CollectionUtil;
+import de.esoco.lib.logging.Log;
 import de.esoco.lib.text.TextConvert;
 import de.esoco.lib.text.TextUtil;
 
@@ -28,7 +30,6 @@ import java.io.BufferedWriter;
 import java.io.ByteArrayOutputStream;
 import java.io.Closeable;
 import java.io.File;
-import java.io.FileOutputStream;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.FilenameFilter;
@@ -37,7 +38,8 @@ import java.io.LineNumberReader;
 import java.io.OutputStream;
 import java.io.PrintStream;
 import java.io.Writer;
-
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -50,11 +52,9 @@ import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.regex.Pattern;
-
-import com.google.gwt.i18n.tools.I18NSync;
-import com.google.gwt.resources.css.InterfaceGenerator;
 
 /**
  * Creates the resources for a GEWT application by concatenating all string
@@ -97,12 +97,12 @@ public class BuildAppResources {
 	private static final Map<String, String> SUPPORTED_ARGS =
 		new LinkedHashMap<>();
 
-	private static Set<String> FLAG_ARGS =
+	private static final Set<String> FLAG_ARGS =
 		CollectionUtil.setOf(ARG_HIERARCHICAL);
 
-	private static Map<String, String> aParams;
+	private static final Map<String, String> projectDirMap = new HashMap<>();
 
-	private static Map<String, String> aProjectDirMap = new HashMap<>();
+	private static Map<String, String> params;
 
 	static {
 		SUPPORTED_ARGS.put(ARG_APP_CLASS,
@@ -111,12 +111,10 @@ public class BuildAppResources {
 			"(Directory) The name of the project directory [app_class_name]");
 		SUPPORTED_ARGS.put(ARG_SOURCE_DIR,
 			"(Directory) The project-relative directory to read source files" +
-				" " +
-				"from [src/main/java]");
+				" " + "from [src/main/java]");
 		SUPPORTED_ARGS.put(ARG_WEBAPP_DIR,
 			"(Directory) The project-relative webapp directory to store " +
-				"server" +
-				" resources in [src/main/webapp/data/res]");
+				"server" + " resources in [src/main/webapp/data/res]");
 		SUPPORTED_ARGS.put(ARG_EXTRA_DIRS,
 			"(Directories, comma-separated) Additional project-relative " +
 				"directories to recursively read source files from");
@@ -137,47 +135,47 @@ public class BuildAppResources {
 	 * Appends a properties file for a certain locale to a target file and
 	 * creates the corresponding writer if necessary.
 	 *
-	 * @param sSource  The source file for the given locale
-	 * @param sTarget  The base name (!) of the target file
-	 * @param sLocale  The locale (will be appended to the target name)
-	 * @param aWriters The mapping from locales to writers for lookup and
-	 *                 storing of the locale writer
+	 * @param source  The source file for the given locale
+	 * @param target  The base name (!) of the target file
+	 * @param locale  The locale (will be appended to the target name)
+	 * @param writers The mapping from locales to writers for lookup and
+	 *                   storing
+	 *                of the locale writer
 	 * @throws IOException If an I/O operation fails
 	 */
-	private static void appendLocaleProperties(String sSource, String sTarget,
-		String sLocale, Map<String, Writer> aWriters) throws IOException {
-		Writer aLocaleWriter = aWriters.get(sLocale);
+	private static void appendLocaleProperties(String source, String target,
+		String locale, Map<String, Writer> writers) throws IOException {
+		Writer localeWriter = writers.get(locale);
 
-		if (aLocaleWriter == null) {
-			aLocaleWriter = createPropertiesWriter(sTarget, sLocale, aWriters);
+		if (localeWriter == null) {
+			localeWriter = createPropertiesWriter(target, locale, writers);
 		}
 
-		appendProperties(sSource, aLocaleWriter);
+		appendProperties(source, localeWriter);
 	}
 
 	/**
 	 * Appends a certain properties file to a writer.
 	 *
-	 * @param sFileName     The name of the properties file
-	 * @param aTargetWriter The target writer
+	 * @param fileName     The name of the properties file
+	 * @param targetWriter The target writer
 	 * @throws IOException If an I/O operation fails
 	 */
-	private static void appendProperties(String sFileName,
-		Writer aTargetWriter)
+	private static void appendProperties(String fileName, Writer targetWriter)
 		throws IOException {
-		writePropertiesHeader(sFileName, aTargetWriter);
-		writeFile(sFileName, aTargetWriter);
+		writePropertiesHeader(fileName, targetWriter);
+		writeFile(fileName, targetWriter);
 	}
 
 	/**
 	 * Closes all elements of a collection.
 	 *
-	 * @param rCloseables A collection of {@link Closeable} elements
+	 * @param closeables A collection of {@link Closeable} elements
 	 */
-	private static void closeAll(Collection<? extends Closeable> rCloseables) {
-		for (Closeable rCloseable : rCloseables) {
+	private static void closeAll(Collection<? extends Closeable> closeables) {
+		for (Closeable closeable : closeables) {
 			try {
-				rCloseable.close();
+				closeable.close();
 			} catch (IOException e) {
 				System.err.printf("Error closing collection: %s\n", e);
 				e.printStackTrace();
@@ -190,17 +188,17 @@ public class BuildAppResources {
 	 * directory to
 	 * a collection.
 	 *
-	 * @param rRootDir     The root directory to scan for directories
-	 * @param rDirectories The collection to add the directories to
+	 * @param rootDir     The root directory to scan for directories
+	 * @param directories The collection to add the directories to
 	 */
-	private static void collectDirectories(File rRootDir,
-		Collection<String> rDirectories) {
-		if (rRootDir.exists()) {
-			rDirectories.add(rRootDir.getPath() + File.separatorChar);
+	private static void collectDirectories(File rootDir,
+		Collection<String> directories) {
+		if (rootDir.exists()) {
+			directories.add(rootDir.getPath() + File.separatorChar);
 
-			for (File rFile : rRootDir.listFiles()) {
-				if (rFile.isDirectory()) {
-					collectDirectories(rFile, rDirectories);
+			for (File file : rootDir.listFiles()) {
+				if (file.isDirectory()) {
+					collectDirectories(file, directories);
 				}
 			}
 		}
@@ -210,43 +208,44 @@ public class BuildAppResources {
 	 * Concatenates the CSS files of the target application into a single large
 	 * file.
 	 *
-	 * @param rDirectories    The resource directories from which to read the
-	 *                        CSS files
-	 * @param sTargetBaseName The base name for the target files to write to
+	 * @param directories    The resource directories from which to read the
+	 *                         CSS
+	 *                       files
+	 * @param targetBaseName The base name for the target files to write to
 	 * @throws IOException If reading or writing a file fails
 	 */
-	private static void concatenateCssFiles(Collection<String> rDirectories,
-		String sTargetBaseName) throws IOException {
-		String sTargetFile = sTargetBaseName + ".css";
-		Writer aCssWriter = new BufferedWriter(new FileWriter(sTargetFile));
-		boolean bFirstFile = true;
+	private static void concatenateCssFiles(Collection<String> directories,
+		String targetBaseName) throws IOException {
+		String targetFile = targetBaseName + ".css";
+		Writer cssWriter = new BufferedWriter(new FileWriter(targetFile));
+		boolean firstFile = true;
 
 		try {
-			for (String sDirectory : rDirectories) {
-				File aDirectory = new File(sDirectory);
+			for (String dir : directories) {
+				File directory = new File(dir);
 
-				PatternFilter rFilter = CSS_FILES_FILTER;
-				String[] aCssFiles = aDirectory.list(rFilter);
+				PatternFilter filter = CSS_FILES_FILTER;
+				String[] cssFiles = directory.list(filter);
 
-				for (String sCssFile : aCssFiles) {
-					if (bFirstFile) {
-						System.out.printf("Writing %s\n", sTargetFile);
-						bFirstFile = false;
+				for (String cssFile : cssFiles) {
+					if (firstFile) {
+						System.out.printf("Writing %s\n", targetFile);
+						firstFile = false;
 					}
 
-					String sHeader = String.format(
+					String header = String.format(
 						"\n/*--------------------------------------------------------------------\n" +
 							"  --- %s\n" +
 							"  --------------------------------------------------------------------*/\n\n",
-						sCssFile);
+						cssFile);
 
-					aCssWriter.write(sHeader);
-					writeFile(sDirectory + sCssFile, aCssWriter);
-					System.out.printf(" + %s%s\n", sDirectory, sCssFile);
+					cssWriter.write(header);
+					writeFile(directory + cssFile, cssWriter);
+					System.out.printf(" + %s%s\n", directory, cssFile);
 				}
 			}
 		} finally {
-			aCssWriter.close();
+			cssWriter.close();
 		}
 	}
 
@@ -258,213 +257,212 @@ public class BuildAppResources {
 	 * handled analog to the default files that don't have a locale in their
 	 * file name.
 	 *
-	 * @param sAppName        rAppClass sAppName The application name
-	 * @param rDirectories    The resource directories from which to read the
-	 *                        property files
-	 * @param sTargetBaseName The base name for the target files to write to
+	 * @param appName        appClass sAppName The application name
+	 * @param directories    The resource directories from which to read the
+	 *                       property files
+	 * @param targetBaseName The base name for the target files to write to
 	 * @throws IOException If reading or writing a file fails
 	 */
-	private static void concatenatePropertyFiles(String sAppName,
-		Collection<String> rDirectories, String sTargetBaseName)
+	private static void concatenatePropertyFiles(String appName,
+		Collection<String> directories, String targetBaseName)
 		throws IOException {
-		Map<String, Writer> aWriters = new HashMap<>();
-		Map<String, Writer> aServerWriters = new HashMap<>();
+		Map<String, Writer> writers = new HashMap<>();
+		Map<String, Writer> serverWriters = new HashMap<>();
 
 		try {
-			Set<String> aProcessedFiles = new HashSet<>();
-			Writer aDefaultWriter = null;
-			String sTarget = null;
+			Set<String> processedFiles = new HashSet<>();
+			Writer defaultWriter = null;
+			String target = null;
 
-			String sServerFileBaseName =
-				String.format("%s/%sStrings", aParams.get(ARG_WEBAPP_DIR),
-					sAppName);
+			String serverFileBaseName =
+				String.format("%s/%sStrings", params.get(ARG_WEBAPP_DIR),
+					appName);
 
-			int nTotalLines = -1;
-			int nFileCount = 0;
-			int nMaxLines =
-				Integer.parseInt(aParams.get(ARG_MAX_PROPERTY_LINES));
+			int totalLines = -1;
+			int fileCount = 0;
+			int maxLines =
+				Integer.parseInt(params.get(ARG_MAX_PROPERTY_LINES));
 
-			Writer aServerWriter =
-				createPropertiesWriter(sServerFileBaseName, null,
-					aServerWriters);
+			Writer serverWriter =
+				createPropertiesWriter(serverFileBaseName, null,
+					serverWriters);
 
-			System.out.printf("Writing %s\n", sServerFileBaseName);
+			System.out.printf("Writing %s\n", serverFileBaseName);
 
-			for (String sDirectory : rDirectories) {
-				Collection<String> aDefaultFiles =
-					getDefaultPropertyFiles(sDirectory);
+			for (String directory : directories) {
+				Collection<String> defaultFiles =
+					getDefaultPropertyFiles(directory);
 
 				// first concatenate the default files
-				for (String sInputFile : aDefaultFiles) {
-					String sFile = sDirectory + sInputFile;
+				for (String inputFile : defaultFiles) {
+					String file = directory + inputFile;
 
 					// don't process the same file twice
-					if (!aProcessedFiles.contains(sFile)) {
-						aProcessedFiles.add(sFile);
+					if (!processedFiles.contains(file)) {
+						processedFiles.add(file);
 
-						int nLines = countLines(sFile);
+						int lines = countLines(file);
 
-						if (nTotalLines < 0 ||
-							nTotalLines + nLines > nMaxLines) {
-							sTarget = sTargetBaseName;
-							nTotalLines = nLines;
+						if (totalLines < 0 || totalLines + lines > maxLines) {
+							target = targetBaseName;
+							totalLines = lines;
 
-							closeAll(aWriters.values());
-							aWriters.clear();
+							closeAll(writers.values());
+							writers.clear();
 
-							if (++nFileCount > 1) {
-								sTarget += nFileCount;
+							if (++fileCount > 1) {
+								target += fileCount;
 							}
 
-							aDefaultWriter =
-								createPropertiesWriter(sTarget, null,
-									aWriters);
-							System.out.printf("Writing %s\n", sTarget);
+							defaultWriter =
+								createPropertiesWriter(target, null, writers);
+							System.out.printf("Writing %s\n", target);
 						} else {
-							nTotalLines += nLines;
+							totalLines += lines;
 						}
 
-						appendProperties(sFile, aDefaultWriter);
-						appendProperties(sFile, aServerWriter);
-						System.out.printf(" + %s%s\n", sDirectory, sFile);
+						appendProperties(file, defaultWriter);
+						appendProperties(file, serverWriter);
+						System.out.printf(" + %s%s\n", directory, file);
 
 						// then lookup the locale-specific files for the
 						// current
 						// default file and concatenate them for each locale if
 						// they exist
-						int nDotPos = sInputFile.indexOf('.');
+						int dotPos = inputFile.indexOf('.');
 
-						String sLocalePattern =
-							sInputFile.substring(0, nDotPos) + "_.*" +
-								sInputFile.substring(nDotPos);
+						String localePattern =
+							inputFile.substring(0, dotPos) + "_.*" +
+								inputFile.substring(dotPos);
 
-						String[] aLocaleFiles = new File(sDirectory).list(
-							new PatternFilter(sLocalePattern));
+						String[] localeFiles = new File(directory).list(
+							new PatternFilter(localePattern));
 
-						for (String sLocaleFile : aLocaleFiles) {
-							int nLocaleIndex = sLocaleFile.indexOf('_');
+						for (String localeFile : localeFiles) {
+							int localeIndex = localeFile.indexOf('_');
 
-							String sLocale =
-								sLocaleFile.substring(nLocaleIndex + 1,
-									sLocaleFile.indexOf('.'));
+							String locale =
+								localeFile.substring(localeIndex + 1,
+									localeFile.indexOf('.'));
 
-							String sSource = sDirectory + sLocaleFile;
+							String source = directory + localeFile;
 
-							appendLocaleProperties(sSource, sTarget, sLocale,
-								aWriters);
+							appendLocaleProperties(source, target, locale,
+								writers);
 
-							appendLocaleProperties(sSource,
-								sServerFileBaseName,
-								sLocale, aServerWriters);
+							appendLocaleProperties(source, serverFileBaseName,
+								locale, serverWriters);
 
-							System.out.printf(" + %s%s\n", sDirectory,
-								sLocaleFile);
+							System.out.printf(" + %s%s\n", directory,
+								localeFile);
 						}
 					}
 				}
 			}
 		} finally {
-			closeAll(aWriters.values());
-			closeAll(aServerWriters.values());
+			closeAll(writers.values());
+			closeAll(serverWriters.values());
 		}
 	}
 
 	/**
 	 * Counts the lines in a text file.
 	 *
-	 * @param sFile The name of the file to count the lines of
+	 * @param file The name of the file to count the lines of
 	 * @return The number of lines in the file
 	 * @throws IOException If reading from the file fails
 	 */
-	private static int countLines(String sFile) throws IOException {
-		int nLines;
+	private static int countLines(String file) throws IOException {
+		int lines;
 
-		try (LineNumberReader aReader = new LineNumberReader(
-			new FileReader(sFile))) {
-			while (aReader.skip(Long.MAX_VALUE) > 0) {
+		try (LineNumberReader reader = new LineNumberReader(
+			new FileReader(file))) {
+			while (reader.skip(Long.MAX_VALUE) > 0) {
 			}
 
-			nLines = aReader.getLineNumber() + 1;
+			lines = reader.getLineNumber() + 1;
 		}
 
-		return nLines;
+		return lines;
 	}
 
 	/**
 	 * Creates a writer for the output of property files.
 	 *
-	 * @param sBaseName  The base name
-	 * @param sLocale    The locale or NULL for none
-	 * @param rWriterMap A map to store the writer in with the locale as the
-	 *                     key
-	 *                   (DEFAULT for NULL keys)
+	 * @param baseName  The base name
+	 * @param locale    The locale or NULL for none
+	 * @param writerMap A map to store the writer in with the locale as the key
+	 *                  (DEFAULT for NULL keys)
 	 * @return The new writer
 	 */
-	private static Writer createPropertiesWriter(String sBaseName,
-		String sLocale, Map<String, Writer> rWriterMap) throws IOException {
-		StringBuilder aFileName = new StringBuilder(sBaseName);
+	private static Writer createPropertiesWriter(String baseName,
+		String locale,
+		Map<String, Writer> writerMap) throws IOException {
+		StringBuilder fileName = new StringBuilder(baseName);
 
-		if (sLocale != null) {
-			aFileName.append('_').append(sLocale);
+		if (locale != null) {
+			fileName.append('_').append(locale);
 		}
 
-		aFileName.append(".properties");
+		fileName.append(".properties");
 
-		Writer aWriter =
-			new BufferedWriter(new FileWriter(aFileName.toString()));
+		Writer writer =
+			new BufferedWriter(new FileWriter(fileName.toString()));
 
-		rWriterMap.put(sLocale != null ? sLocale : "DEFAULT", aWriter);
+		writerMap.put(locale != null ? locale : "DEFAULT", writer);
 
-		return aWriter;
+		return writer;
 	}
 
 	/**
 	 * Generates the application CSS classes by invoking
 	 * {@link InterfaceGenerator}.
 	 *
-	 * @param rAppClass The application class
+	 * @param appClass The application class
 	 * @throws IOException If accessing files fails
 	 */
 	@SuppressWarnings("unused")
-	private static void generateCssClasses(Class<?> rAppClass)
+	private static void generateCssClasses(Class<?> appClass)
 		throws IOException {
-		String sPackage = rAppClass.getPackage().getName();
-		String sDirectory = getBaseDir(rAppClass);
+		String appPackage = appClass.getPackage().getName();
+		String directory = getBaseDir(appClass);
 
-		String[] aCssFiles = new File(sDirectory).list(CSS_FILES_FILTER);
+		String[] cssFiles = new File(directory).list(CSS_FILES_FILTER);
 
-		for (String sFile : aCssFiles) {
-			String sTarget = sFile.substring(0, sFile.indexOf('.'));
+		assert cssFiles != null;
 
-			sTarget = TextConvert.capitalizedIdentifier(sTarget);
+		for (String file : cssFiles) {
+			String target = file.substring(0, file.indexOf('.'));
 
-			StringBuilder aTargetName = new StringBuilder(sPackage);
+			target = TextConvert.capitalizedIdentifier(target);
 
-			aTargetName.append('.');
-			aTargetName.append(sTarget);
+			StringBuilder targetName = new StringBuilder(appPackage);
 
-			String[] aArgs =
-				new String[] { "-standalone", "-css", sDirectory + sFile,
-					"-typeName", aTargetName.toString() };
+			targetName.append('.');
+			targetName.append(target);
 
-			System.out.printf("Generating %s.java from %s\n", aTargetName,
-				sFile);
+			String[] args =
+				new String[] { "-standalone", "-css", directory + file,
+					"-typeName", targetName.toString() };
 
-			ByteArrayOutputStream aGeneratedData = new ByteArrayOutputStream();
+			System.out.printf("Generating %s.java from %s\n", targetName,
+				file);
 
-			PrintStream aCaptureOut = new PrintStream(aGeneratedData);
-			PrintStream rStandardOut = System.out;
+			ByteArrayOutputStream generatedData = new ByteArrayOutputStream();
 
-			System.setOut(aCaptureOut);
-			CssInterfaceGenerator.main(aArgs);
-			System.setOut(rStandardOut);
-			aCaptureOut.flush();
+			PrintStream captureOut = new PrintStream(generatedData);
+			PrintStream standardOut = System.out;
 
-			sTarget = sDirectory + sTarget + ".java";
+			System.setOut(captureOut);
+			CssInterfaceGenerator.main(args);
+			System.setOut(standardOut);
+			captureOut.flush();
 
-			try (OutputStream aCssFile = new BufferedOutputStream(
-				new FileOutputStream(sTarget))) {
-				aGeneratedData.writeTo(aCssFile);
+			target = directory + target + ".java";
+
+			try (OutputStream cssFile = new BufferedOutputStream(
+				Files.newOutputStream(Paths.get(target)))) {
+				generatedData.writeTo(cssFile);
 			}
 		}
 	}
@@ -472,25 +470,27 @@ public class BuildAppResources {
 	/**
 	 * Generates the application strings classes by invoking {@link I18NSync}.
 	 *
-	 * @param rAppClass The application class
+	 * @param appClass The application class
 	 * @throws IOException If accessing files fails
 	 */
-	private static void generateStringClasses(Class<?> rAppClass) {
-		String sPackage = rAppClass.getPackage().getName() + GENERATED_PACKAGE;
+	private static void generateStringClasses(Class<?> appClass) {
+		String appPackage =
+			appClass.getPackage().getName() + GENERATED_PACKAGE;
 
-		Collection<String> aPropertyFiles =
-			getDefaultPropertyFiles(getBaseDir(rAppClass) + GENERATED_DIR);
+		Collection<String> propertyFiles =
+			getDefaultPropertyFiles(getBaseDir(appClass) + GENERATED_DIR);
 
-		for (String sFile : aPropertyFiles) {
-			String sTargetClass =
-				sPackage + sFile.substring(0, sFile.indexOf('.'));
+		for (String file : propertyFiles) {
+			String targetClass =
+				appPackage + file.substring(0, file.indexOf('.'));
 
-			String[] aArgs = new String[] { sTargetClass, "-out",
-				aParams.get(ARG_SOURCE_DIR), "-createConstantsWithLookup" };
+			String[] args =
+				new String[] { targetClass, "-out", params.get(ARG_SOURCE_DIR),
+					"-createConstantsWithLookup" };
 
-			System.out.printf("Generating %s.java from %s\n", sTargetClass,
-				sFile);
-			I18NSync.main(aArgs);
+			System.out.printf("Generating %s.java from %s\n", targetClass,
+				file);
+			I18NSync.main(args);
 		}
 	}
 
@@ -498,162 +498,155 @@ public class BuildAppResources {
 	 * Generates the name of the base directory of a GEWT application. Always
 	 * ends with a directory separator.
 	 *
-	 * @param rAppClass The application class
+	 * @param appClass The application class
 	 * @return The base directory of the app
 	 */
-	private static String getBaseDir(Class<?> rAppClass) {
-		String sPackage = rAppClass.getPackage().getName();
-		String sRootDir = rAppClass.getSimpleName();
-		StringBuilder aBaseDir = new StringBuilder();
-		char cDirSep = File.separatorChar;
+	private static String getBaseDir(Class<?> appClass) {
+		String appPackage = appClass.getPackage().getName();
+		String rootDir = appClass.getSimpleName();
+		StringBuilder baseDir = new StringBuilder();
+		char dirSep = File.separatorChar;
 
-		if (aProjectDirMap.containsKey(sRootDir)) {
-			sRootDir = aProjectDirMap.get(sRootDir);
+		if (projectDirMap.containsKey(rootDir)) {
+			rootDir = projectDirMap.get(rootDir);
 		}
 
 		// ../<app-name>/<src-dir>/<package-path>/
-		aBaseDir.append("..").append(cDirSep);
-		aBaseDir.append(sRootDir).append(cDirSep);
-		aBaseDir.append(aParams.get(ARG_SOURCE_DIR)).append(cDirSep);
-		aBaseDir.append(sPackage.replace('.', cDirSep)).append(cDirSep);
+		baseDir.append("..").append(dirSep);
+		baseDir.append(rootDir).append(dirSep);
+		baseDir.append(params.get(ARG_SOURCE_DIR)).append(dirSep);
+		baseDir.append(appPackage.replace('.', dirSep)).append(dirSep);
 
-		return aBaseDir.toString();
+		return baseDir.toString();
 	}
 
 	/**
 	 * Returns a collection of the property files for the default locale (i.e.
 	 * without a locale suffix) in a certain directory.
 	 *
-	 * @param sDirectory The name of the directory to read the files from
+	 * @param directoryName The name of the directory to read the files from
 	 * @return A new collection of property files
 	 */
 	private static Collection<String> getDefaultPropertyFiles(
-		String sDirectory) {
-		File aDirectory = new File(sDirectory);
-		List<String> aFiles = new ArrayList<>();
+		String directoryName) {
+		File directory = new File(directoryName);
+		List<String> files = new ArrayList<>();
 
-		for (String sFile : aDirectory.list(PROPERTY_FILES_FILTER)) {
-			if (sFile.indexOf('_') == -1) {
-				aFiles.add(sFile);
+		for (String file : Objects.requireNonNull(
+			directory.list(PROPERTY_FILES_FILTER))) {
+			if (file.indexOf('_') == -1) {
+				files.add(file);
 			}
 		}
 
-		return aFiles;
+		return files;
 	}
 
 	/**
 	 * Returns the application resource directories to be searched for resource
 	 * files.
 	 *
-	 * @param rAppClass     The class hierarchy
-	 * @param rExtraDirs    Optional extra directories to add to the returned
-	 *                      collection
-	 * @param bIncludeRoots TRUE to include the root resource directories,
-	 *                         FALSE
-	 *                      to only include the sub-directories
+	 * @param appClass     The class hierarchy
+	 * @param extraDirs    Optional extra directories to add to the returned
+	 *                     collection
+	 * @param includeRoots TRUE to include the root resource directories, FALSE
+	 *                     to only include the sub-directories
 	 * @return The class hierarchy
 	 */
-	private static Collection<String> getResourceDirs(Class<?> rAppClass,
-		Collection<String> rExtraDirs, boolean bHierarchical,
-		boolean bIncludeRoots) {
-		Deque<String> aDirectories = new ArrayDeque<>();
+	private static Collection<String> getResourceDirs(Class<?> appClass,
+		Collection<String> extraDirs, boolean hierarchical,
+		boolean includeRoots) {
+		Deque<String> directories = new ArrayDeque<>();
 
 		do {
-			String sResourceDir =
-				getBaseDir(rAppClass) + "res" + File.separatorChar;
+			String resourceDir =
+				getBaseDir(appClass) + "res" + File.separatorChar;
 
-			File aDirectory = new File(sResourceDir);
+			File directory = new File(resourceDir);
 
-			if (aDirectory.exists()) {
-				if (bIncludeRoots) {
-					aDirectories.push(sResourceDir);
+			if (directory.exists()) {
+				if (includeRoots) {
+					directories.push(resourceDir);
 				}
 
-				for (File rFile : aDirectory.listFiles()) {
-					String sFilename = rFile.getName();
+				for (File file : directory.listFiles()) {
+					String filename = file.getName();
 
-					if (rFile.isDirectory() &&
-						!EXCLUDED_DIRS.contains(sFilename)) {
-						aDirectories.push(rFile.getPath() + File.separatorChar);
+					if (file.isDirectory() &&
+						!EXCLUDED_DIRS.contains(filename)) {
+						directories.push(file.getPath() + File.separatorChar);
 					}
 				}
 			}
-		} while (bHierarchical &&
-			(rAppClass = rAppClass.getSuperclass()) != EWTEntryPoint.class);
+		} while (hierarchical &&
+			(appClass = appClass.getSuperclass()) != EWTEntryPoint.class);
 
-		if (rExtraDirs != null) {
-			for (String sDir : rExtraDirs) {
-				File aDirectory = new File(sDir);
+		if (extraDirs != null) {
+			for (String dir : extraDirs) {
+				File directory = new File(dir);
 
-				collectDirectories(aDirectory, aDirectories);
+				collectDirectories(directory, directories);
 			}
 		}
 
-		return aDirectories;
+		return directories;
 	}
 
 	/**
 	 * Executes this application.
 	 *
-	 * @param rArgs The app arguments
+	 * @param args The app arguments
 	 */
-	public static void main(String[] rArgs) {
-		aParams = parseCommandLine(rArgs);
+	public static void main(String[] args) {
+		params = parseCommandLine(args);
 
-		if (!aParams.containsKey(ARG_SOURCE_DIR)) {
-			aParams.put(ARG_SOURCE_DIR, "src/main/java");
+		if (!params.containsKey(ARG_SOURCE_DIR)) {
+			params.put(ARG_SOURCE_DIR, "src/main/java");
 		}
 
-		if (!aParams.containsKey(ARG_WEBAPP_DIR)) {
-			aParams.put(ARG_WEBAPP_DIR, "src/main/webapp/data/res");
+		if (!params.containsKey(ARG_WEBAPP_DIR)) {
+			params.put(ARG_WEBAPP_DIR, "src/main/webapp/data/res");
 		}
 
-		if (!aParams.containsKey(ARG_MAX_PROPERTY_LINES)) {
-			aParams.put(ARG_MAX_PROPERTY_LINES, DEFAULT_MAX_PROPERTY_LINES);
+		if (!params.containsKey(ARG_MAX_PROPERTY_LINES)) {
+			params.put(ARG_MAX_PROPERTY_LINES, DEFAULT_MAX_PROPERTY_LINES);
 		}
 
 		try {
-			String sProjectDir = aParams.get(ARG_PROJECT_DIR);
-			boolean bHierarchical = false;
+			String projectDir = params.get(ARG_PROJECT_DIR);
+			boolean hierarchical = params.containsKey(ARG_HIERARCHICAL);
 
-			if (aParams.containsKey(ARG_HIERARCHICAL)) {
-				bHierarchical = true;
+			Class<?> appClass = Class.forName(params.get(ARG_APP_CLASS));
+
+			if (projectDir != null) {
+				projectDirMap.put(appClass.getSimpleName(), projectDir);
 			}
 
-			Class<?> rAppClass = Class.forName(aParams.get(ARG_APP_CLASS));
+			String targetDir = getBaseDir(appClass) + GENERATED_DIR;
+			String baseName = appClass.getSimpleName();
+			String extraDirs = params.get(ARG_EXTRA_DIRS);
+			Set<String> extraDirSet = new LinkedHashSet<>();
 
-			if (sProjectDir != null) {
-				aProjectDirMap.put(rAppClass.getSimpleName(), sProjectDir);
+			if (extraDirs != null) {
+				Collections.addAll(extraDirSet, extraDirs.split(","));
 			}
 
-			String sTargetDir = getBaseDir(rAppClass) + GENERATED_DIR;
-			String sBaseName = rAppClass.getSimpleName();
-			String sExtraDirs = aParams.get(ARG_EXTRA_DIRS);
-			Set<String> aExtraDirs = new LinkedHashSet<>();
+			String propertiesBase = targetDir + baseName + "Strings";
+			String cssBase = targetDir + baseName + "Css";
 
-			if (sExtraDirs != null) {
-				for (String sDir : sExtraDirs.split(",")) {
-					aExtraDirs.add(sDir);
-				}
-			}
+			Collection<String> stringDirs =
+				getResourceDirs(appClass, extraDirSet, hierarchical, true);
+			Collection<String> cssDirs =
+				getResourceDirs(appClass, extraDirSet, hierarchical, false);
 
-			String sPropertiesBase = sTargetDir + sBaseName + "Strings";
-			String sCssBase = sTargetDir + sBaseName + "Css";
+			concatenatePropertyFiles(appClass.getSimpleName(), stringDirs,
+				propertiesBase);
+			concatenateCssFiles(cssDirs, cssBase);
+			generateStringClasses(appClass);
 
-			Collection<String> aStringDirs =
-				getResourceDirs(rAppClass, aExtraDirs, bHierarchical, true);
-			Collection<String> aCssDirs =
-				getResourceDirs(rAppClass, aExtraDirs, bHierarchical, false);
-
-			concatenatePropertyFiles(rAppClass.getSimpleName(), aStringDirs,
-				sPropertiesBase);
-			concatenateCssFiles(aCssDirs, sCssBase);
-			generateStringClasses(rAppClass);
-
-			System.out.printf("OK\n");
+			System.out.print("OK\n");
 		} catch (Exception e) {
-			System.out.println("Error: " + e.getMessage());
-			e.printStackTrace();
+			Log.error("Error: " + e.getMessage(), e);
 			printUsageAndStop(null);
 		}
 	}
@@ -661,73 +654,73 @@ public class BuildAppResources {
 	/**
 	 * Parses the command line arguments into a map.
 	 *
-	 * @param rArgs The raw command line arguments
+	 * @param args The raw command line arguments
 	 * @return A mapping from parameter names to parameter values
 	 */
-	private static Map<String, String> parseCommandLine(String[] rArgs) {
-		Map<String, String> aArguments = new HashMap<>();
+	private static Map<String, String> parseCommandLine(String[] args) {
+		Map<String, String> arguments = new HashMap<>();
 
-		if (rArgs.length == 0) {
+		if (args.length == 0) {
 			printUsageAndStop(null);
 		}
 
-		for (int i = 0; i < rArgs.length; i++) {
-			String sArg = rArgs[i];
+		for (int i = 0; i < args.length; i++) {
+			String arg = args[i];
 
-			if ("-?".equals(sArg) || "--help".equals(sArg)) {
-				String rHelpArg = "help";
+			if ("-?".equals(arg) || "--help".equals(arg)) {
+				String helpArg = "help";
 
-				if (i < rArgs.length - 1 &&
-					SUPPORTED_ARGS.containsKey(rHelpArg)) {
-					rHelpArg = rArgs[i + 1];
+				if (i < args.length - 1 &&
+					SUPPORTED_ARGS.containsKey(helpArg)) {
+					helpArg = args[i + 1];
 				}
 
-				printUsageAndStop(rHelpArg);
-			} else if (SUPPORTED_ARGS.containsKey(sArg)) {
-				String sArgValue = null;
+				printUsageAndStop(helpArg);
+			} else if (SUPPORTED_ARGS.containsKey(arg)) {
+				String argValue = null;
 
-				if (FLAG_ARGS.contains(sArg)) {
-					sArgValue = Boolean.TRUE.toString();
-				} else if (i < rArgs.length - 1) {
-					sArgValue = rArgs[++i];
+				if (FLAG_ARGS.contains(arg)) {
+					argValue = Boolean.TRUE.toString();
+				} else if (i < args.length - 1) {
+					argValue = args[++i];
 
-					if (sArgValue.startsWith("-")) {
-						printUsageAndStop(sArg);
+					if (argValue.startsWith("-")) {
+						printUsageAndStop(arg);
 					}
 				} else {
 					printUsageAndStop(null);
 				}
 
-				aArguments.put(sArg, sArgValue);
+				arguments.put(arg, argValue);
 			}
 		}
 
-		return aArguments;
+		return arguments;
 	}
 
 	/**
 	 * Prints usage information to the console and terminates this application
 	 * by invoking {@link System#exit(int)}.
 	 *
-	 * @param sArgument The argument to display information for
+	 * @param argument The argument to display information for
 	 */
-	private static void printUsageAndStop(String sArgument) {
+	private static void printUsageAndStop(String argument) {
 		System.out.printf("USAGE: %s [OPTIONS]\n",
 			BuildAppResources.class.getSimpleName());
 
-		if (sArgument != null) {
-			Collection<String> rHelpArgs;
+		if (argument != null) {
+			Collection<String> helpArgs;
 
-			if ("help".equals(sArgument)) {
-				rHelpArgs = SUPPORTED_ARGS.keySet();
+			if ("help".equals(argument)) {
+				helpArgs = SUPPORTED_ARGS.keySet();
 			} else {
-				rHelpArgs = Collections.singletonList("-" + sArgument);
+				helpArgs = Collections.singletonList("-" + argument);
 			}
 
-			for (String sHelpArg : rHelpArgs) {
+			for (String helpArg : helpArgs) {
 				System.out.printf("   %s%s\n",
-					TextUtil.padRight(sHelpArg, 15, ' '),
-					SUPPORTED_ARGS.get(sHelpArg));
+					TextUtil.padRight(helpArg, 15, ' '),
+					SUPPORTED_ARGS.get(helpArg));
 			}
 		}
 
@@ -737,20 +730,20 @@ public class BuildAppResources {
 	/**
 	 * Reads a certain file and writes it to the given output stream.
 	 *
-	 * @param sFile   The name of the file to write
-	 * @param rWriter The target output stream
+	 * @param file   The name of the file to write
+	 * @param writer The target output stream
 	 * @throws IOException If creating the input stream or transferring data
 	 *                     fails
 	 */
-	private static void writeFile(String sFile, Writer rWriter)
+	private static void writeFile(String file, Writer writer)
 		throws IOException {
-		try (BufferedReader aIn = new BufferedReader(new FileReader(sFile))) {
-			String sLine;
+		try (BufferedReader in = new BufferedReader(new FileReader(file))) {
+			String line;
 
-			while ((sLine = aIn.readLine()) != null) {
-				rWriter.write(sLine);
-				rWriter.write("\n");
-				rWriter.flush();
+			while ((line = in.readLine()) != null) {
+				writer.write(line);
+				writer.write("\n");
+				writer.flush();
 			}
 		}
 	}
@@ -758,19 +751,19 @@ public class BuildAppResources {
 	/**
 	 * Writes a separating header into a target stream.
 	 *
-	 * @param sText   The header Text
-	 * @param rWriter The output stream
+	 * @param text   The header Text
+	 * @param writer The output stream
 	 * @throws IOException If writing data fails
 	 */
-	private static void writePropertiesHeader(String sText, Writer rWriter)
+	private static void writePropertiesHeader(String text, Writer writer)
 		throws IOException {
-		String sHeader = String.format(
+		String header = String.format(
 			"\n#--------------------------------------------------------------------\n" +
 				"#--- %s\n" +
 				"#--------------------------------------------------------------------\n\n",
-			sText);
+			text);
 
-		rWriter.write(sHeader);
+		writer.write(header);
 	}
 
 	/**
@@ -780,23 +773,23 @@ public class BuildAppResources {
 	 */
 	static class PatternFilter implements FilenameFilter {
 
-		private Pattern aPattern;
+		private final Pattern pattern;
 
 		/**
 		 * Creates a new instance.
 		 *
-		 * @param sRegex The regular expression pattern
+		 * @param regex The regular expression pattern
 		 */
-		public PatternFilter(String sRegex) {
-			aPattern = Pattern.compile(sRegex);
+		public PatternFilter(String regex) {
+			pattern = Pattern.compile(regex);
 		}
 
 		/**
 		 * {@inheritDoc}
 		 */
 		@Override
-		public boolean accept(File rDir, String sName) {
-			return aPattern.matcher(sName).matches();
+		public boolean accept(File dir, String name) {
+			return pattern.matcher(name).matches();
 		}
 	}
 }
