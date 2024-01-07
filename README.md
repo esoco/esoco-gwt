@@ -1,7 +1,6 @@
 # The esoco-gwt project
 
-[![](https://github.com/esoco/esoco-gwt/workflows/Java%20CI/badge.svg)](https://github.com/esoco/esoco-gwt/actions)
-[![Download](https://api.bintray.com/packages/esoco/sdack/esoco-gwt/images/download.svg)](https://bintray.com/esoco/sdack/esoco-gwt/_latestVersion)
+[![](https://github.com/esoco/esoco-gwt/workflows/Build/badge.svg)](https://github.com/esoco/esoco-gwt/actions)
 
 This project contains the esoco GWT framework library which is a bridge between the esoco-business framework and GEWT. It provides the business back-end (processes and persistent entities) with an automatically generated web application user interface based on GWT's Java-to-Javascript translation. The result is a consistent and easy to use framework for building client-server web applications. It handles the communication between the server side and the client code running in a web browser, automatically transforming business data into visual representations in the browser and transferring user input to the server for process execution and persistence. It also features high-level components that are the building blocks for the implementation of complete web applications.
 

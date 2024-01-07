@@ -22,40 +22,41 @@ import de.esoco.data.element.DataElement.Flag;
 import de.esoco.data.element.DataElementList;
 import de.esoco.data.element.StringDataElement;
 import de.esoco.data.validate.RegExValidator;
+import org.junit.jupiter.api.Test;
 
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.EnumSet;
 
-import org.junit.Test;
-
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
-
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
 
 /********************************************************************
  * Test case for data elements
  *
  * @author eso
  */
-public class DataElementTest
-{
-	//~ Enums ------------------------------------------------------------------
+public class DataElementTest {
+	//~ Enums
+	// ------------------------------------------------------------------
 
 	/********************************************************************
 	 * Test enum
 	 */
-	enum TestEnum { T1, T2, T3, T4 }
+	enum TestEnum {T1, T2, T3, T4}
 
-	//~ Methods ----------------------------------------------------------------
+	//~ Methods
+	// ----------------------------------------------------------------
 
 	/***************************************
 	 * Test attribute query methods.
 	 */
 	@Test
-	public void testAttributes()
-	{
+	public void testAttributes() {
 		StringDataElement e = new StringDataElement("TEST", "VALUE");
 
 		assertEquals("TEST", e.getName());
@@ -83,34 +84,22 @@ public class DataElementTest
 	 * Object, java.util.Collection, java.util.Set)}.
 	 */
 	@Test
-	public void testEnum()
-	{
+	public void testEnum() {
 		DataElementFactory aFactory = new DataElementFactory(null);
 
-		DataElement<?> e1  =
-			aFactory.createEnumDataElement(
-				"TEST",
-				TestEnum.class,
-				TestEnum.T1,
-				null,
-				null);
+		DataElement<?> e1 =
+			aFactory.createEnumDataElement("TEST", TestEnum.class, TestEnum.T1,
+				null, null);
 		DataElement<?> e1a =
-			aFactory.createEnumDataElement(
-				"TEST",
-				TestEnum.class,
-				TestEnum.T1,
-				null,
-				null);
-		DataElement<?> e2  =
-			aFactory.createEnumDataElement(
-				"TEST2",
-				TestEnum.class,
+			aFactory.createEnumDataElement("TEST", TestEnum.class, TestEnum.T1,
+				null, null);
+		DataElement<?> e2 =
+			aFactory.createEnumDataElement("TEST2", TestEnum.class,
 				TestEnum.T2,
-				null,
-				null);
+				null, null);
 
-		assertTrue(e1.equals(e1a));
-		assertFalse(e1.equals(e2));
+		assertEquals(e1, e1a);
+		assertNotEquals(e1, e2);
 		assertEquals(TestEnum.T1.name(), e1.getValue());
 		assertEquals(TestEnum.T2.name(), e2.getValue());
 	}
@@ -119,32 +108,30 @@ public class DataElementTest
 	 * Test method
 	 */
 	@Test
-	public void testEquals()
-	{
+	public void testEquals() {
 		StringDataElement e1 = new StringDataElement("TEST", "VALUE");
 		StringDataElement e2 = new StringDataElement("TEST", "VALUE");
 		StringDataElement e3 = new StringDataElement("TEST!", "VALUE");
 
-		assertTrue(e1.equals(e2));
-		assertFalse(e1.equals(e3));
+		assertEquals(e1, e2);
+		assertNotEquals(e1, e3);
 		e2.setValue("VALUE");
-		assertTrue(e1.equals(e2));
+		assertEquals(e1, e2);
 		e2.setSelected(true);
-		assertFalse(e1.equals(e2));
+		assertNotEquals(e1, e2);
 		e2.setValue("OTHER");
-		assertFalse(e1.equals(e2));
-		assertFalse(e1.equals(new Object()));
-		assertFalse(e1.equals(null));
+		assertNotEquals(e1, e2);
+		assertNotEquals(e1, new Object());
+		assertNotEquals(null, e1);
 	}
 
 	/***************************************
 	 * Test method
 	 */
 	@Test
-	public void testHierarchy()
-	{
+	public void testHierarchy() {
 		DataElementList root = new DataElementList("ROOT", null, null, null);
-		DataElementList sub  = new DataElementList("SUB", null, null, null);
+		DataElementList sub = new DataElementList("SUB", null, null, null);
 
 		assertEquals(0, root.getElementCount());
 
@@ -196,44 +183,31 @@ public class DataElementTest
 	 * Test method
 	 */
 	@Test
-	public void testReadOnly()
-	{
+	public void testReadOnly() {
 		EnumSet<Flag> aImmutableFlag = EnumSet.of(Flag.IMMUTABLE);
 
 		StringDataElement e =
 			new StringDataElement("ELEMENT", "VALUE", null, aImmutableFlag);
-		DataElementList   l =
-			new DataElementList(
-				"PARENT",
-				null,
-				Arrays.asList(e),
+		DataElementList l =
+			new DataElementList("PARENT", null, Collections.singletonList(e),
 				aImmutableFlag);
 
-		try
-		{
+		try {
 			e.setValue("X");
-			assertFalse(true);
-		}
-		catch (UnsupportedOperationException ex)
-		{ // this should happen
+			fail();
+		} catch (UnsupportedOperationException ex) { // this should happen
 		}
 
-		try
-		{
+		try {
 			l.removeElement(e);
-			assertFalse(true);
-		}
-		catch (UnsupportedOperationException ex)
-		{ // this should happen
+			fail();
+		} catch (UnsupportedOperationException ex) { // this should happen
 		}
 
-		try
-		{
+		try {
 			l.addElement(new BooleanDataElement("X", Boolean.TRUE, null));
-			assertFalse(true);
-		}
-		catch (UnsupportedOperationException ex)
-		{ // this should happen
+			fail();
+		} catch (UnsupportedOperationException ex) { // this should happen
 		}
 	}
 
@@ -241,13 +215,9 @@ public class DataElementTest
 	 * Test method
 	 */
 	@Test
-	public void testValidValue()
-	{
+	public void testValidValue() {
 		StringDataElement e =
-			new StringDataElement(
-				"TEST",
-				"1",
-				new RegExValidator("\\d+"),
+			new StringDataElement("TEST", "1", new RegExValidator("\\d+"),
 				null);
 
 		assertTrue(e.isValidValue(e.getValidator(), "2"));
@@ -257,13 +227,10 @@ public class DataElementTest
 		e.setValue("123");
 		assertEquals("123", e.getValue());
 
-		try
-		{
+		try {
 			e.setValue("abc");
-			assertFalse(true);
-		}
-		catch (IllegalArgumentException ex)
-		{ // this should happen
+			fail();
+		} catch (IllegalArgumentException ex) { // this should happen
 		}
 	}
 
@@ -275,13 +242,9 @@ public class DataElementTest
 	 * @param sValuePrefix The prefix for the values
 	 * @param nCount       The number of elements to add
 	 */
-	private void addElements(DataElementList rList,
-							 String			 sNamePrefix,
-							 String			 sValuePrefix,
-							 int			 nCount)
-	{
-		for (int i = 1; i <= nCount; i++)
-		{
+	private void addElements(DataElementList rList, String sNamePrefix,
+		String sValuePrefix, int nCount) {
+		for (int i = 1; i <= nCount; i++) {
 			rList.addElement(
 				new StringDataElement(sNamePrefix + i, sValuePrefix + i));
 		}
