@@ -814,7 +814,7 @@ public class DataElementFactory {
 	 * @param name            The name of the element
 	 * @param metaData        A relatable object containing the meta data for
 	 *                        the element to create
-	 * @param currentEntityId sCurrentValue The current selection or NULL for
+	 * @param currentEntityId currentValue The current selection or NULL for
 	 *                        none
 	 * @param entities        The entities to select from
 	 * @param attributes      The entity attributes to display
@@ -1201,8 +1201,8 @@ public class DataElementFactory {
 	 * This method performs the value conversion that is necessary to set a
 	 * value with a certain relation type.
 	 *
-	 * @param datatype rType The relation type
-	 * @param value    element rValue The raw value
+	 * @param datatype type The relation type
+	 * @param value    element value The raw value
 	 * @return The converted value
 	 */
 	@SuppressWarnings({ "unchecked", "rawtypes" })

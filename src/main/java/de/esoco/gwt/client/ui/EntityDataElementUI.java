@@ -121,7 +121,7 @@ public class EntityDataElementUI extends DataElementListUI {
 		 * selected sub-entity element will then be displayed in a detail data
 		 * element panel.
 		 *
-		 * @param event rTree The tree component to handle the selection of
+		 * @param event tree The tree component to handle the selection of
 		 */
 		@Override
 		public void handleEvent(EwtEvent event) {

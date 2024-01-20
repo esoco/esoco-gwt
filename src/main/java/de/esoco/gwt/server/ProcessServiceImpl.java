@@ -733,7 +733,7 @@ public abstract class ProcessServiceImpl<E extends Entity>
 	 * method returns NULL no data element will be added to the result for the
 	 * respective relation.
 	 *
-	 * @param interactionStep rObject The related object to query the relations
+	 * @param interactionStep object The related object to query the relations
 	 *                        from
 	 * @return A new list containing the resulting data elements
 	 * @throws StorageException If the initialization of a storage-based data

@@ -75,7 +75,7 @@ public class ClientNotificationService {
 	 * at a
 	 * certain path relative to the servlet context.
 	 *
-	 * @param context rWebSocketClass The class of the endpoint
+	 * @param context webSocketClass The class of the endpoint
 	 * @throws ServletException If the endpoint registration failed
 	 */
 	public void start(ServletContext context) throws ServletException {

@@ -172,7 +172,7 @@ public class DataElementUI<D extends DataElement<?>> {
 
 	private boolean interactionEnabled = true;
 
-	private boolean uIEnabled = true;
+	private boolean iEnabled = true;
 
 	private DataElementInteractionHandler<D> interactionHandler;
 
@@ -371,7 +371,7 @@ public class DataElementUI<D extends DataElement<?>> {
 		elementComponent.applyStyle(
 			applyElementStyle(dataElement, getBaseStyle()));
 		applyElementProperties();
-		enableComponent(uIEnabled);
+		enableComponent(iEnabled);
 	}
 
 	/**
@@ -468,7 +468,7 @@ public class DataElementUI<D extends DataElement<?>> {
 	/**
 	 * Returns the text for a label that describes the data element.
 	 *
-	 * @param context rBuilder
+	 * @param context builder
 	 * @return The element label (can be empty but will never be null)
 	 */
 	public String getElementLabelText(UserInterfaceContext context) {
@@ -884,18 +884,18 @@ public class DataElementUI<D extends DataElement<?>> {
 	 */
 	protected Component createHyperlinkDisplayComponent(
 		ContainerBuilder<?> builder, StyleData style, D dataElement) {
-		final String uRL = dataElement.getValue().toString();
+		final String rL = dataElement.getValue().toString();
 		final String title =
 			builder.getContext().expandResource(dataElement.getResourceId());
 
 		style = style.setFlags(StyleFlag.HYPERLINK);
 
-		Component component = builder.addLabel(style, uRL, null);
+		Component component = builder.addLabel(style, rL, null);
 
 		component.addEventListener(EventType.ACTION, new EwtEventHandler() {
 			@Override
 			public void handleEvent(EwtEvent event) {
-				Window.open(uRL, title, "");
+				Window.open(rL, title, "");
 			}
 		});
 
@@ -1180,7 +1180,7 @@ public class DataElementUI<D extends DataElement<?>> {
 		interactionEnabled = enabled;
 
 		if (enabled) {
-			enabled = uIEnabled;
+			enabled = iEnabled;
 		}
 
 		enableComponent(enabled);
@@ -1262,7 +1262,7 @@ public class DataElementUI<D extends DataElement<?>> {
 	 * @param enabled The new enabled state
 	 */
 	protected void setEnabled(boolean enabled) {
-		uIEnabled = enabled;
+		iEnabled = enabled;
 
 		if (interactionEnabled) {
 			enableComponent(enabled);

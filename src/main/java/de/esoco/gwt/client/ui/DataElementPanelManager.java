@@ -915,7 +915,7 @@ public abstract class DataElementPanelManager
 
 		private final DataElementUI<?> mainUI;
 
-		private final Map<DataElementUI<?>, Boolean> uIs =
+		private final Map<DataElementUI<?>, Boolean> is =
 			new LinkedHashMap<DataElementUI<?>, Boolean>(2);
 
 		/**
@@ -929,7 +929,7 @@ public abstract class DataElementPanelManager
 
 			Component component = mainUI.getElementComponent();
 
-			uIs.put(mainUI, false);
+			is.put(mainUI, false);
 
 			if (component instanceof SingleSelection) {
 				component.addEventListener(EventType.SELECTION, this);
@@ -952,7 +952,7 @@ public abstract class DataElementPanelManager
 			boolean isSingleSelection = dependent instanceof SingleSelection;
 			boolean isMutualSelection = main instanceof SingleSelection;
 
-			uIs.put(uI, reverseState);
+			is.put(uI, reverseState);
 
 			if (isSingleSelection && isMutualSelection) {
 				dependent.addEventListener(EventType.SELECTION, this);
@@ -980,7 +980,7 @@ public abstract class DataElementPanelManager
 			if (!handlingSelectionEvent) {
 				handlingSelectionEvent = true;
 
-				for (Entry<DataElementUI<?>, Boolean> entry : uIs.entrySet()) {
+				for (Entry<DataElementUI<?>, Boolean> entry : is.entrySet()) {
 					DataElementUI<?> targetUI = entry.getKey();
 					boolean reverseState = entry.getValue();
 
@@ -1049,7 +1049,7 @@ public abstract class DataElementPanelManager
 		 * Sets the enabled state of a dependent component.
 		 *
 		 * @param dependentUI  The dependent component
-		 * @param enabled      state rSelectedComponent The selected component
+		 * @param enabled      state selectedComponent The selected component
 		 * @param reverseState TRUE to reverse the enabled state
 		 */
 		private void setEnabled(DataElementUI<?> dependentUI, boolean enabled,

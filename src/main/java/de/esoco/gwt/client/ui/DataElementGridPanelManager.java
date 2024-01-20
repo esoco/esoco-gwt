@@ -74,7 +74,7 @@ public class DataElementGridPanelManager extends DataElementLayoutPanelManager {
 	 * A global configuration method to set the grid formatter for all
 	 * grid-based panels.
 	 *
-	 * @param factory rFormatter The global grid formatter
+	 * @param factory formatter The global grid formatter
 	 */
 	public static void setGridFormatterFactory(GridFormatterFactory factory) {
 		gridFormatterFactory = factory;
@@ -114,11 +114,11 @@ public class DataElementGridPanelManager extends DataElementLayoutPanelManager {
 			if (addLabel || elementLayout != LayoutType.GRID_COLUMN) {
 				StyleData columnStyle = StyleData.DEFAULT;
 
-				Alignment hAlign =
+				Alignment align =
 					dataElement.getProperty(HORIZONTAL_ALIGN, null);
 
-				if (hAlign != null) {
-					columnStyle = columnStyle.set(HORIZONTAL_ALIGN, hAlign);
+				if (align != null) {
+					columnStyle = columnStyle.set(HORIZONTAL_ALIGN, align);
 				}
 
 				columnStyle = gridFormatter.applyColumnStyle(uI, columnStyle);
@@ -178,11 +178,11 @@ public class DataElementGridPanelManager extends DataElementLayoutPanelManager {
 	@Override
 	protected ContainerBuilder<?> createPanel(ContainerBuilder<?> builder,
 		StyleData style, LayoutType layout) {
-		Alignment vAlign = style.getProperty(VERTICAL_ALIGN, null);
+		Alignment align = style.getProperty(VERTICAL_ALIGN, null);
 
-		if (vAlign == Alignment.CENTER) {
+		if (align == Alignment.CENTER) {
 			rowStyle = ROW_VALIGN_CENTER_STYLE;
-		} else if (vAlign == Alignment.END) {
+		} else if (align == Alignment.END) {
 			rowStyle = ROW_VALIGN_BOTTOM_STYLE;
 		}
 

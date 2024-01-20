@@ -257,7 +257,7 @@ public class BuildAppResources {
 	 * handled analog to the default files that don't have a locale in their
 	 * file name.
 	 *
-	 * @param appName        appClass sAppName The application name
+	 * @param appName        appClass appName The application name
 	 * @param directories    The resource directories from which to read the
 	 *                       property files
 	 * @param targetBaseName The base name for the target files to write to

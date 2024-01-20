@@ -229,13 +229,13 @@ public class DataElementSwitchPanelManager extends DataElementPanelManager
 	private DataElementUI<?> getDataElementUI(int index) {
 		assert index >= 0 && index < getDataElementUIs().size();
 
-		Iterator<DataElementUI<?>> uIs =
+		Iterator<DataElementUI<?>> is =
 			getDataElementUIs().values().iterator();
 
 		DataElementUI<?> result = null;
 
-		while (index-- >= 0 && uIs.hasNext()) {
-			result = uIs.next();
+		while (index-- >= 0 && is.hasNext()) {
+			result = is.next();
 		}
 
 		return result;

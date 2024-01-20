@@ -58,8 +58,7 @@ public class DataElementTablePanelManager extends DataElementPanelManager {
 	 * Creates a new instance from the elements in a {@link DataElementList}.
 	 *
 	 * @param parent          The parent panel manager
-	 * @param dataElementList sName A name for this instance that will be
-	 *                           set as
+	 * @param dataElementList name A name for this instance that will be set as
 	 *                        an additional GWT style name
 	 */
 	public DataElementTablePanelManager(PanelManager<?, ?> parent,
@@ -259,7 +258,7 @@ public class DataElementTablePanelManager extends DataElementPanelManager {
 	/**
 	 * Adds certain style names to a cell in the grid layout of this instance.
 	 *
-	 * @param styles sLabelCellStyle
+	 * @param styles labelCellStyle
 	 */
 	private void addCellStyles(String... styles) {
 		TableGridLayout layout = getDataElementsLayout();

@@ -173,7 +173,7 @@ public abstract class GwtApplicationPanelManager<C extends Container,
 	/**
 	 * Executes the application process with a certain name.
 	 *
-	 * @param processName rUserData The user data to read the process from
+	 * @param processName userData The user data to read the process from
 	 */
 	protected void executeApplicationProcess(String processName) {
 		executeProcess(APPLICATION_PROCESS_PATH + "/" + processName, null);
@@ -393,7 +393,7 @@ public abstract class GwtApplicationPanelManager<C extends Container,
 	 * Sets the process button states depending on the process requirement for
 	 * an input value and the current selection state of this panel.
 	 *
-	 * @param hasSelection nEntityId The ID of the selected entity or -1 for
+	 * @param hasSelection entityId The ID of the selected entity or -1 for
 	 *                     none
 	 */
 	protected void setProcessButtonStates(boolean hasSelection) {
