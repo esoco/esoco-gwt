@@ -21,10 +21,10 @@ java {
 }
 
 dependencies {
-	api 'de.esoco:esoco-business:1.7.0'
-	api 'de.esoco:gewt:1.4.0'
-	
-	implementation 'javax.websocket:javax.websocket-api:1.1'
+    api 'de.esoco:esoco-business:1.7.0'
+    api 'de.esoco:gewt:1.4.0'
+
+    implementation 'javax.websocket:javax.websocket-api:1.1'
 
     testImplementation platform("org.junit:junit-bom:$junitVersion")
     testImplementation 'org.junit.jupiter:junit-jupiter'
@@ -35,6 +35,7 @@ test {
 }
 
 gwt {
+    module 'de.esoco.GwtFramework'
     gwtVersion = "$gwtVersion"
 }
 

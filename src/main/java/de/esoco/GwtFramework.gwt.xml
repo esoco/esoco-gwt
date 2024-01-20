@@ -1,11 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <module>
-	<inherits name='de.esoco.GEWT' />
-	
-	<source path='gwt/client'/>
- 	<source path='gwt/shared'/>
- 	<source path='lib/property'/>
- 	<source path='data/element'/>
- 	<source path='data/process'/>
- 	<source path='data/validate'/>
+    <inherits name='de.esoco.GEWT'/>
+
+    <source path='gwt/client'/>
+    <source path='gwt/shared'/>
+    <source path='lib/property'/>
+    <source path='data/element'/>
+    <source path='data/process'/>
+    <source path='data/validate'/>
 </module>
